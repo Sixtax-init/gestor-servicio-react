@@ -1,0 +1,31 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { requireRole } from "@/lib/session"
+import { sql } from "@/lib/db"
+
+export async function POST(request: NextRequest) {
+  const user = await requireRole(["maestro"])
+
+  if (!user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
+
+  try {
+    const body = await request.json()
+    const { nombre_grupo, tipo, descripcion } = body
+
+    if (!nombre_grupo || !tipo) {
+      return NextResponse.json({ error: "Nombre y tipo son requeridos" }, { status: 400 })
+    }
+
+    const result = await sql`
+      INSERT INTO cursos (nombre_grupo, tipo, maestro_id, descripcion, activo)
+      VALUES (${nombre_grupo}, ${tipo}, ${user.id}, ${descripcion || null}, true)
+      RETURNING *
+    `
+
+    return NextResponse.json({ curso: result[0] }, { status: 201 })
+  } catch (error) {
+    console.error("[v0] Error creating curso:", error)
+    return NextResponse.json({ error: "Error al crear curso" }, { status: 500 })
+  }
+}
