@@ -1,10 +1,12 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { useState } from "react"
+import { CreateCursoDialog } from "./create-curso-dialog"
+import { CursosList } from "./cursos-list"
 
 export function CursosTab() {
+  const [refreshKey, setRefreshKey] = useState(0)
   return (
     <Card>
       <CardHeader>
@@ -13,14 +15,13 @@ export function CursosTab() {
             <CardTitle>Gestión de Cursos</CardTitle>
             <CardDescription>Administra cursos y servicios sociales</CardDescription>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Curso
-          </Button>
+          <div>
+            <CreateCursoDialog onSuccess={() => setRefreshKey((prev) => prev + 1)} />
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-center py-8 text-muted-foreground">Funcionalidad de cursos en desarrollo</div>
+        <CursosList key={refreshKey} />
       </CardContent>
     </Card>
   )

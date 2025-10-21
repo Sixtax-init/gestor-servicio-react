@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { MisCursosAlumnoTab } from "./mis-cursos-alumno-tab"
 import { CursosDisponiblesTab } from "./cursos-disponibles-tab"
 import { MisHorasTab } from "./mis-horas-tab"
+import { MisTareasTab } from "../maestro/mis-tareas-tab"
 
 interface AlumnoDashboardProps {
   user: SessionUser
@@ -90,6 +91,7 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
           <TabsList>
             <TabsTrigger value="mis-cursos">Mis Cursos</TabsTrigger>
             <TabsTrigger value="disponibles">Cursos Disponibles</TabsTrigger>
+            <TabsTrigger value="tareas">Mis Tareas</TabsTrigger>
             <TabsTrigger value="horas">Mis Horas</TabsTrigger>
           </TabsList>
 
@@ -99,6 +101,10 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
 
           <TabsContent value="disponibles">
             <CursosDisponiblesTab cursos={cursosDisponibles} />
+          </TabsContent>
+
+          <TabsContent value="tareas">
+            <MisTareasTab />
           </TabsContent>
 
           <TabsContent value="horas">

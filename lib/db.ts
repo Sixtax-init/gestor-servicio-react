@@ -1,12 +1,32 @@
-import { neon } from "@neondatabase/serverless"
+import { Pool } from "pg"
+import dotenv from "dotenv"
 
-// Configuración de la conexión a PostgreSQL
-// En producción, usar variable de entorno DATABASE_URL
-const sql = neon(process.env.DATABASE_URL || "")
+dotenv.config({ path: ".env.local" })
 
-export { sql }
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+})
 
-// Tipos TypeScript para las tablas
+// Función sql para usar con template literals
+export async function sql(query: TemplateStringsArray, ...params: any[]) {
+  // Reconstruimos el query con placeholders $1, $2, ...
+  let text = ""
+  for (let i = 0; i < query.length; i++) {
+    text += query[i]
+    if (i < params.length) {
+      text += `$${i + 1}`
+    }
+  }
+
+  const client = await pool.connect()
+  try {
+    const res = await client.query(text, params)
+    return res.rows
+  } finally {
+    client.release()
+  }
+}
+
 export type TipoUsuario = "administrador" | "maestro" | "alumno"
 export type TipoCurso = "servicio_social" | "taller_curso"
 export type Prioridad = "baja" | "media" | "alta" | "urgente"
@@ -24,7 +44,6 @@ export interface Usuario {
   created_at: Date
   updated_at: Date
 }
-
 export interface Curso {
   id: number
   nombre_grupo: string

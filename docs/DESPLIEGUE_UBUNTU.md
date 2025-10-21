@@ -73,8 +73,9 @@ nano .env.local
 Agregar el siguiente contenido (ajusta la contraseña):
 
 \`\`\`env
-DATABASE_URL="postgresql://gestor_admin:tu_password_seguro@localhost:5432/gestor_horas"
-JWT_SECRET="tu_clave_secreta_muy_larga_y_segura_minimo_32_caracteres"
+DATABASE_URL="postgresql://gestor_admin:S3rvicioSocial@localhost:5432/gestor_horas"
+JWT_SECRET="vXzdF8ckUc2XqAsbp8e2/xWkHlhwWq7OVslNxPl5+pVKcW/cfX0ioI0tcKEd+dUe
+"
 \`\`\`
 
 Guardar con `Ctrl+O`, Enter, y salir con `Ctrl+X`.
@@ -83,10 +84,10 @@ Guardar con `Ctrl+O`, Enter, y salir con `Ctrl+X`.
 
 \`\`\`bash
 # Ejecutar scripts de creación de tablas
-PGPASSWORD=tu_password_seguro psql -U gestor_admin -d gestor_horas -f scripts/001-create-schema.sql
+PGPASSWORD=S3rvicioSocial psql -U gestor_admin -d gestor_horas -f scripts/001-create-schema.sql
 
 # Insertar datos de prueba
-PGPASSWORD=tu_password_seguro psql -U gestor_admin -d gestor_horas -f scripts/002-seed-data.sql
+PGPASSWORD=S3rvicioSocial psql -U gestor_admin -d gestor_horas -f scripts/002-seed-data.sql
 \`\`\`
 
 ## Paso 7: Crear Carpeta de Uploads
