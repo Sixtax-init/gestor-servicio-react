@@ -7,6 +7,10 @@
 /.next/
 /out/
 
+#scripts
+/scripts
+/docs
+
 # production
 /build
 
