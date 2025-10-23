@@ -3,6 +3,8 @@
 ## Características
 
  - Autenticación segura con roles (Administrador, Maestro, Alumno)
+ - Interfaz moderna con React y TailwindCSS
+
  - Dashboard de Administrador: Gestión completa de usuarios, cursos y tareas
  - Dashboard de Maestro: Creación y gestión de cursos y tareas propias
  - Dashboard de Alumno: Inscripción a cursos y seguimiento de horas de servicio social
