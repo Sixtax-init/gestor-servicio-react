@@ -53,70 +53,66 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess }: CreateTarea
   const fetchCursos = async () => {
     try {
       const response = await fetch("/api/maestro/cursos")
-      if (response.ok) {
-        const data = await response.json()
-        setCursos(data)
-      }
+      if (!response.ok) throw new Error("Error al obtener cursos")
+
+      const data = await response.json()
+      // ✅ Detecta si data tiene propiedad cursos o es array
+      const cursosList = Array.isArray(data) ? data : data.cursos || []
+      setCursos(cursosList)
     } catch (error) {
-      console.error("Error al cargar cursos:", error)
+      console.error("[v0] Error al cargar cursos:", error)
+      setCursos([]) // evita errores con .map
     }
   }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  e.preventDefault()
+  setLoading(true)
 
-    try {
-      let archivoRuta = null
+  try {
+    const formDataToSend = new FormData()
+    formDataToSend.append("curso_id", formData.curso_id)
+    formDataToSend.append("titulo", formData.titulo)
+    formDataToSend.append("descripcion", formData.descripcion)
+    formDataToSend.append("prioridad", formData.prioridad)
+    formDataToSend.append("fecha_vencimiento", formData.fecha_vencimiento)
 
-      // Subir archivo si existe
-      if (archivoInstrucciones) {
-        const uploadFormData = new FormData()
-        uploadFormData.append("file", archivoInstrucciones)
-        uploadFormData.append("tipo", "instrucciones")
+    if (formData.asignacion_horas)
+      formDataToSend.append("asignacion_horas", formData.asignacion_horas)
+    if (formData.limite_alumnos)
+      formDataToSend.append("limite_alumnos", formData.limite_alumnos)
+    if (archivoInstrucciones)
+      formDataToSend.append("archivo_instrucciones", archivoInstrucciones)
 
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: uploadFormData,
-        })
+    const response = await fetch("/api/maestro/tareas", {
+      method: "POST",
+      body: formDataToSend, // 👈 sin headers JSON
+    })
 
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json()
-          archivoRuta = uploadData.filePath
-        }
-      }
-
-      const response = await fetch("/api/maestro/tareas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          curso_id: Number.parseInt(formData.curso_id),
-          asignacion_horas: formData.asignacion_horas ? Number.parseInt(formData.asignacion_horas) : null,
-          limite_alumnos: formData.limite_alumnos ? Number.parseInt(formData.limite_alumnos) : null,
-          archivo_instrucciones: archivoRuta,
-        }),
+    if (response.ok) {
+      onSuccess()
+      setFormData({
+        curso_id: "",
+        titulo: "",
+        descripcion: "",
+        prioridad: "media",
+        fecha_vencimiento: "",
+        asignacion_horas: "",
+        limite_alumnos: "",
       })
-
-      if (response.ok) {
-        onSuccess()
-        setFormData({
-          curso_id: "",
-          titulo: "",
-          descripcion: "",
-          prioridad: "media",
-          fecha_vencimiento: "",
-          asignacion_horas: "",
-          limite_alumnos: "",
-        })
-        setArchivoInstrucciones(null)
-      }
-    } catch (error) {
-      console.error("Error al crear tarea:", error)
-    } finally {
-      setLoading(false)
+      setArchivoInstrucciones(null)
+    } else {
+      const errorData = await response.json()
+      console.error("Error al crear tarea:", errorData.error)
     }
+  } catch (error) {
+    console.error("Error al crear tarea:", error)
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -222,11 +218,11 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess }: CreateTarea
           <div className="space-y-2">
             <Label>Archivo de instrucciones (opcional)</Label>
             <FileUpload
-                          onFilesSelected={(files) => setArchivoInstrucciones(files[0] ?? null)}
-                          acceptedTypes={["pdf", "doc", "docx", "zip", "rar"]}
-                          maxFiles={1}
-                          maxSize={20}
-                        />
+              onFilesSelected={(files) => setArchivoInstrucciones(files[0] ?? null)}
+              acceptedTypes={["pdf", "doc", "docx", "zip", "rar"]}
+              maxFiles={1}
+              maxSize={20}
+            />
             {archivoInstrucciones && (
               <p className="text-sm text-muted-foreground">Archivo seleccionado: {archivoInstrucciones.name}</p>
             )}

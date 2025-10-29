@@ -9,6 +9,7 @@
     "db:seed": "node scripts/seed-db.js",
     "db:edit-curso": "node scripts/add-curso.js",
     "db:edit-tarea": "node scripts/edit-add-tarea.js",
+    "db:curso-upload":"node scripts/curso-upload.js",
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start"
