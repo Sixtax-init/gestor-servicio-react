@@ -1,17 +1,22 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { BookOpen, Clock } from "lucide-react"
+import { VerTareasDialog } from "./ver-tareas-dialog"
 
 interface MisCursosAlumnoTabProps {
   inscripciones: any[]
 }
 
 export function MisCursosAlumnoTab({ inscripciones }: MisCursosAlumnoTabProps) {
+  const [selectedCurso, setSelectedCurso] = useState<{ id: number; nombre: string } | null>(null)
+
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>Mis Cursos</CardTitle>
@@ -55,7 +60,12 @@ export function MisCursosAlumnoTab({ inscripciones }: MisCursosAlumnoTabProps) {
                       <Progress value={(inscripcion.horas_completadas / 100) * 100} className="h-2" />
                     </div>
                   )}
-                  <Button variant="outline" size="sm" className="w-full mt-4 bg-transparent">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4 bg-transparent"
+                    onClick={() => setSelectedCurso({ id: inscripcion.curso_id, nombre: inscripcion.nombre_grupo })}
+                  >
                     Ver Tareas
                   </Button>
                 </CardContent>
@@ -65,5 +75,13 @@ export function MisCursosAlumnoTab({ inscripciones }: MisCursosAlumnoTabProps) {
         )}
       </CardContent>
     </Card>
+
+    <VerTareasDialog
+      open={!!selectedCurso}
+      onOpenChange={(open) => !open && setSelectedCurso(null)}
+      cursoId={selectedCurso?.id ?? null}
+      cursoNombre={selectedCurso?.nombre}
+    />
+    </>
   )
 }

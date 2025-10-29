@@ -27,19 +27,21 @@ export function MisTareasTab() {
   const [loading, setLoading] = useState(true)
   const [entregandoTarea, setEntregandoTarea] = useState<Tarea | null>(null)
 
+  const cursoId = 1
+
   useEffect(() => {
     fetchTareas()
   }, [])
-
-  const fetchTareas = async () => {
+ const fetchTareas = async () => {
+    setLoading(true)
     try {
       const response = await fetch("/api/alumno/tareas")
       if (response.ok) {
-        const data = await response.json()
+        const data: Tarea[] = await response.json()
         setTareas(data)
       }
     } catch (error) {
-      console.error("Error al cargar tareas:", error)
+      console.error("Error al obtener tareas:", error)
     } finally {
       setLoading(false)
     }
@@ -63,12 +65,14 @@ export function MisTareasTab() {
   const getEstadoColor = (estado: string | null) => {
     if (!estado) return "outline"
     switch (estado) {
+      case "pendiente":
+        return "secondary"
       case "aprobada":
         return "default"
-      case "revisada":
-        return "secondary"
       case "rechazada":
         return "destructive"
+      case "revisada":
+        return "outline"
       default:
         return "outline"
     }
@@ -145,8 +149,9 @@ export function MisTareasTab() {
                       <div className="ml-4">
                         <Button
                           onClick={() => setEntregandoTarea(tarea)}
-                          disabled={tarea.entrega_estado === "aprobada"}
+                          disabled={tarea.entrega_estado === "pendiente" || tarea.entrega_estado === "aprobada"}
                         >
+
                           <Upload className="mr-2 h-4 w-4" />
                           {tarea.entrega_id ? "Reenviar" : "Entregar"}
                         </Button>

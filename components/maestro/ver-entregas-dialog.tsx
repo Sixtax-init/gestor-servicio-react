@@ -4,7 +4,10 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Calendar, User, FileText } from "lucide-react"
+import { Calendar, User, FileText, Download } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { RevisarEntregaDialog } from "./RevisarEntregaDialog"
+
 
 interface Tarea {
   id: number
@@ -21,6 +24,9 @@ interface Entrega {
   comentario: string
   estado: string
   calificacion: number | null
+  archivo_entregado?: string | null // 👈 Nuevo campo
+  archivo_ruta?: string | null    // ✅ nuevo
+  archivo_nombre?: string | null  // ✅ nuevo
 }
 
 interface VerEntregasDialogProps {
@@ -32,11 +38,12 @@ interface VerEntregasDialogProps {
 export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDialogProps) {
   const [entregas, setEntregas] = useState<Entrega[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedEntrega, setSelectedEntrega] = useState<number | null>(null)
+  const [reviewOpen, setReviewOpen] = useState(false)
+
 
   useEffect(() => {
-    if (open) {
-      fetchEntregas()
-    }
+    if (open) fetchEntregas()
   }, [open, tarea.id])
 
   const fetchEntregas = async () => {
@@ -63,6 +70,25 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
         return "destructive"
       default:
         return "outline"
+    }
+  }
+
+  const revisarEntrega = async (entregaId: number, estado: string, comentario: string, calificacion: number) => {
+    try {
+      const response = await fetch(`/api/maestro/tareas/${tarea.id}/entregas/${entregaId}/revisar`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          estado,
+          comentario,
+          calificacion,
+        }),
+      })
+      if (response.ok) {
+        fetchEntregas()
+      }
+    } catch (error) {
+      console.error("Error al revisar entrega:", error)
     }
   }
 
@@ -105,23 +131,63 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
                     <span>Entregado: {new Date(entrega.fecha_entrega).toLocaleString()}</span>
                   </div>
 
+                  {/* ✅ Mostrar comentario */}
                   {entrega.comentario && (
-                    <div className="flex gap-2 text-sm">
+                    <div className="flex gap-2 text-sm mb-3">
                       <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
                       <p className="text-muted-foreground">{entrega.comentario}</p>
                     </div>
                   )}
 
+                  {/* ✅ Mostrar archivo entregado */}
+                  {entrega.archivo_ruta && (
+                    <div className="flex items-center gap-2 mt-2 text-sm">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <a
+                        href={entrega.archivo_ruta}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        {entrega.archivo_nombre || "Ver archivo entregado"}
+                      </a>
+                    </div>
+                  )}
+
+
+                  {/* ✅ Calificación */}
                   {entrega.calificacion !== null && (
                     <div className="mt-3 pt-3 border-t">
                       <span className="text-sm font-medium">Calificación: {entrega.calificacion}/100</span>
                     </div>
                   )}
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEntrega(entrega.id)
+                        setReviewOpen(true)
+                      }}
+                    >
+                      Revisar
+                    </Button>
+                  </div>
+
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+        {selectedEntrega && (
+          <RevisarEntregaDialog
+            open={reviewOpen}
+            onOpenChange={setReviewOpen}
+            tareaId={tarea.id}
+            entregaId={selectedEntrega}
+            onSuccess={fetchEntregas}
+          />
+        )}
+
       </DialogContent>
     </Dialog>
   )

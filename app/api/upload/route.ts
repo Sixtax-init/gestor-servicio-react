@@ -4,50 +4,93 @@ import { sql } from "@/lib/db"
 import { saveFile } from "@/lib/file-upload"
 
 export async function POST(request: NextRequest) {
-  const user = await getSession()
+  console.log("[upload] Request received")
 
+  const user = await getSession()
   if (!user) {
+    console.log("[upload] ❌ No user session found")
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
+
+  console.log("[upload] ✅ User authenticated:", { id: user.id, tipo_usuario: user.tipo_usuario })
 
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File
-    const entregaId = formData.get("entrega_id") as string
 
-    if (!file || !entregaId) {
-      return NextResponse.json({ error: "Archivo y ID de entrega requeridos" }, { status: 400 })
+    // ✅ Nuevos parámetros (opcionales y compatibles)
+    const type = (formData.get("type") as string) || "entregas"
+    const referenceId =
+      (formData.get("referenceId") as string) || (formData.get("entregaId") as string) || "0"
+
+    console.log("[upload] Form data received:", {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileSize: file?.size,
+      type,
+      referenceId,
+    })
+
+    if (!file) {
+      return NextResponse.json({ error: "Archivo requerido" }, { status: 400 })
     }
 
-    // Verificar que la entrega pertenece al usuario
-    const entrega = await sql`
-      SELECT * FROM entregas 
-      WHERE id = ${Number.parseInt(entregaId)} AND alumno_id = ${user.id}
-    `
+    // 🔐 Si el tipo es 'entregas', verificamos permisos como antes
+    if (type === "entregas") {
+      if (!referenceId || referenceId === "0") {
+        return NextResponse.json({ error: "Falta entregaId" }, { status: 400 })
+      }
 
-    if (entrega.length === 0) {
-      return NextResponse.json({ error: "Entrega no encontrada" }, { status: 404 })
+      let entrega: any[] = []
+      if (user.tipo_usuario === "alumno") {
+        entrega = await sql`
+          SELECT * FROM entregas
+          WHERE id = ${Number(referenceId)} AND alumno_id = ${user.id}
+        `
+      } else if (user.tipo_usuario === "maestro" || user.tipo_usuario === "administrador") {
+        entrega = await sql`
+          SELECT * FROM entregas
+          WHERE id = ${Number(referenceId)}
+        `
+      }
+
+      if (entrega.length === 0) {
+        console.log("[upload] ❌ Entrega not found or no permission")
+        return NextResponse.json({ error: "Entrega no encontrada o sin permisos" }, { status: 404 })
+      }
     }
 
-    // Guardar archivo
-    const rutaArchivo = await saveFile(file, Number.parseInt(entregaId))
+    // 💾 Guardar archivo según tipo
+    console.log(`[upload] Saving file to uploads/${type}`)
+    const rutaArchivo = await saveFile(file, Number(referenceId) || 0, type as "entregas" | "tareas" | "cursos")
+    console.log("[upload] File saved at:", rutaArchivo)
 
-    // Registrar en base de datos
-    const result = await sql`
-      INSERT INTO archivos (entrega_id, nombre_archivo, ruta_archivo, tipo_mime, tamano_bytes)
-      VALUES (
-        ${Number.parseInt(entregaId)},
-        ${file.name},
-        ${rutaArchivo},
-        ${file.type},
-        ${file.size}
-      )
-      RETURNING *
-    `
+    // 🧾 Registrar en DB solo si es entrega
+    if (type === "entregas" && referenceId !== "0") {
+      await sql`
+        INSERT INTO archivos (entrega_id, nombre_archivo, ruta_archivo, tipo_mime, tamano_bytes)
+        VALUES (${Number(referenceId)}, ${file.name}, ${rutaArchivo}, ${file.type}, ${file.size})
+      `
+    }
 
-    return NextResponse.json({ archivo: result[0] }, { status: 201 })
+    console.log("[upload] ✅ File uploaded successfully")
+    return NextResponse.json(
+      {
+        nombre: file.name,
+        ruta: rutaArchivo,
+        tipo: file.type,
+        size: file.size,
+      },
+      { status: 201 },
+    )
   } catch (error) {
-    console.error("[v0] Error uploading file:", error)
-    return NextResponse.json({ error: "Error al subir archivo" }, { status: 500 })
+    console.error("[upload] 💥 Error uploading file:", error)
+    return NextResponse.json(
+      {
+        error: "Error al subir archivo",
+        details: error instanceof Error ? error.message : "Error desconocido",
+      },
+      { status: 500 },
+    )
   }
 }

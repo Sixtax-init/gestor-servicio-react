@@ -1,26 +1,59 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Clock } from "lucide-react"
+import { Clock, RefreshCcw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
-interface MisHorasTabProps {
-  inscripciones: any[]
-}
+export function MisHorasTab() {
+  const [inscripciones, setInscripciones] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const metaHoras = 480 // Meta de horas de servicio social
 
-export function MisHorasTab({ inscripciones }: MisHorasTabProps) {
+  // ✅ Cargar inscripciones reales desde el backend
+  const fetchInscripciones = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("./api/alumno/inscripciones")
+      if (!response.ok) throw new Error("Error al cargar inscripciones")
+      const data = await response.json()
+      setInscripciones(data)
+    } catch (error) {
+      console.error("Error al obtener inscripciones:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchInscripciones()
+  }, [])
+
   const serviciosSociales = inscripciones.filter((i) => i.tipo === "servicio_social")
   const horasTotales = serviciosSociales.reduce((sum, insc) => sum + (insc.horas_completadas || 0), 0)
-  const metaHoras = 100 // Meta de horas de servicio social
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Seguimiento de Horas</CardTitle>
-        <CardDescription>Horas de servicio social completadas</CardDescription>
+      <CardHeader className="flex items-center justify-between">
+        <div>
+          <CardTitle>Seguimiento de Horas</CardTitle>
+          <CardDescription>Horas de servicio social completadas</CardDescription>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={fetchInscripciones}
+          disabled={loading}
+          title="Actualizar"
+        >
+          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+        </Button>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-6">
+          {/* ✅ Total de Horas */}
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
@@ -36,14 +69,18 @@ export function MisHorasTab({ inscripciones }: MisHorasTabProps) {
               <p className="text-sm text-muted-foreground mt-2">
                 {metaHoras - horasTotales > 0
                   ? `Te faltan ${metaHoras - horasTotales} horas para completar tu servicio social`
-                  : "Has completado tu servicio social"}
+                  : "Has completado tu servicio social 🎉"}
               </p>
             </CardContent>
           </Card>
 
+          {/* ✅ Desglose por curso */}
           <div className="space-y-4">
             <h3 className="font-semibold">Desglose por Curso</h3>
-            {serviciosSociales.length === 0 ? (
+
+            {loading ? (
+              <p className="text-center text-muted-foreground py-8">Cargando...</p>
+            ) : serviciosSociales.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No estás inscrito en ningún servicio social
               </p>

@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import {
   Dialog,
@@ -28,7 +26,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [maestros, setMaestros] = useState<any[]>([])
-  const [uploadedFile, setUploadedFile] = useState<{ url: string; name: string } | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [formData, setFormData] = useState({
     nombre_grupo: "",
     tipo: "servicio_social",
@@ -37,9 +35,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
   })
 
   useEffect(() => {
-    if (open) {
-      fetchMaestros()
-    }
+    if (open) fetchMaestros()
   }, [open])
 
   const fetchMaestros = async () => {
@@ -53,31 +49,14 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
     }
   }
 
-  const handleFileUpload = async (files: File[]) => {
-    if (files.length === 0) return
-
-    const file = files[0]
-    const formDataUpload = new FormData()
-    formDataUpload.append("file", file)
-
-    try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formDataUpload,
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setUploadedFile({ url: data.url, name: file.name })
-      } else {
-        alert("Error al subir archivo")
-      }
-    } catch (error) {
-      console.error("[v0] Error uploading file:", error)
-      alert("Error al subir archivo")
+  // 1️⃣ Solo guarda el archivo en memoria
+  const handleFileSelect = (files: File[]) => {
+    if (files.length > 0) {
+      setSelectedFile(files[0])
     }
   }
 
+  // 2️⃣ Crea el curso primero
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -89,20 +68,52 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
         body: JSON.stringify({
           ...formData,
           maestro_id: formData.maestro_id ? Number.parseInt(formData.maestro_id) : null,
-          archivo_adjunto: uploadedFile?.url || null,
-          archivo_nombre: uploadedFile?.name || null,
         }),
       })
 
-      if (response.ok) {
-        setFormData({ nombre_grupo: "", tipo: "servicio_social", maestro_id: "", descripcion: "" })
-        setUploadedFile(null)
-        setOpen(false)
-        onSuccess()
-      } else {
-        const data = await response.json()
+      const data = await response.json()
+      console.log("[create-curso-dialog] Respuesta del backend:", data)
+
+      if (!response.ok) {
         alert(data.error || "Error al crear curso")
+        return
       }
+
+      const cursoId = data.id || data.curso?.id
+      if (!cursoId) {
+        console.error("[frontend] No se recibió un ID de curso en la respuesta:", data)
+        alert("Error: el backend no devolvió un ID de curso.")
+        return
+      }
+
+      console.log("[frontend] Curso creado con ID:", cursoId)
+
+      // 3️⃣ Si hay archivo seleccionado, subirlo ahora
+      if (selectedFile) {
+        const uploadData = new FormData()
+        uploadData.append("file", selectedFile)
+        uploadData.append("cursoId", cursoId.toString())
+
+        const uploadResponse = await fetch("/api/cursos/upload", {
+          method: "POST",
+          body: uploadData,
+        })
+
+        const uploadResult = await uploadResponse.json()
+
+        if (!uploadResponse.ok) {
+          console.error(uploadResult)
+          alert(uploadResult.error || "Error al subir archivo del curso")
+        } else {
+          console.log("[frontend] Archivo subido:", uploadResult)
+        }
+      }
+
+      alert("Curso creado con éxito 🎉")
+      setFormData({ nombre_grupo: "", tipo: "servicio_social", maestro_id: "", descripcion: "" })
+      setSelectedFile(null)
+      setOpen(false)
+      onSuccess()
     } catch (error) {
       console.error("[v0] Error creating curso:", error)
       alert("Error al crear curso")
@@ -124,6 +135,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
           <DialogTitle>Crear Nuevo Curso</DialogTitle>
           <DialogDescription>Agrega un nuevo curso o servicio social al sistema</DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="grid gap-2">
@@ -135,6 +147,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
                 required
               />
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="tipo">Tipo de Curso</Label>
               <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
@@ -147,6 +160,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="maestro">Maestro Responsable</Label>
               <Select
@@ -165,6 +179,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="descripcion">Descripción</Label>
               <Textarea
@@ -174,20 +189,22 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
                 rows={3}
               />
             </div>
+
             <div className="grid gap-2">
               <Label>Archivo Adjunto (Syllabus, Material, etc.)</Label>
               <FileUpload
-                onFilesSelected={handleFileUpload}
+                onFilesSelected={handleFileSelect}
                 maxFiles={1}
                 acceptedTypes={["pdf", "doc", "docx", "png", "jpg", "jpeg"]}
               />
-              {uploadedFile && (
+              {selectedFile && (
                 <div className="text-sm text-muted-foreground">
-                  Archivo subido: <span className="font-medium">{uploadedFile.name}</span>
+                  Archivo seleccionado: <span className="font-medium">{selectedFile.name}</span>
                 </div>
               )}
             </div>
           </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar

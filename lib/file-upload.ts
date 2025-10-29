@@ -2,33 +2,35 @@ import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 
-export async function saveFile(file: File, entregaId: number): Promise<string> {
+// ✅ Ahora acepta un tercer parámetro opcional `type`
+export async function saveFile(file: File, id: number, type: "entregas" | "cursos" | "tareas" = "entregas"): Promise<string> {
   try {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Crear directorio si no existe
-    const uploadDir = join(process.cwd(), "uploads", "entregas", entregaId.toString())
+    // 📁 Directorio según tipo
+    const uploadDir = join(process.cwd(), "uploads", type, id.toString())
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // Generar nombre único para el archivo
+    // 🧾 Nombre único del archivo
     const timestamp = Date.now()
     const fileName = `${timestamp}-${file.name}`
     const filePath = join(uploadDir, fileName)
 
-    // Guardar archivo
+    // 💾 Guardar archivo físicamente
     await writeFile(filePath, buffer)
 
-    // Retornar ruta relativa
-    return `/uploads/entregas/${entregaId}/${fileName}`
+    // 🔗 Retornar ruta relativa pública
+    return `/uploads/${type}/${id}/${fileName}`
   } catch (error) {
     console.error("[v0] Error saving file:", error)
     throw new Error("Error al guardar archivo")
   }
 }
 
+// 🔍 Utilidades existentes (sin cambios)
 export function getFileExtension(filename: string): string {
   return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2)
 }
