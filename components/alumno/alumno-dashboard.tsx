@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { MisCursosAlumnoTab } from "./mis-cursos-alumno-tab"
 import { CursosDisponiblesTab } from "./cursos-disponibles-tab"
 import { MisHorasTab } from "./mis-horas-tab"
-import { MisTareasTab } from "../maestro/mis-tareas-tab"
+import { MisTareasTab } from "./mis-tareas-tab"
 
 interface AlumnoDashboardProps {
   user: SessionUser

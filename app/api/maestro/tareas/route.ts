@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { getSession } from "@/lib/session"
+import path from "path"
+import fs from "fs/promises"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,8 +12,6 @@ export async function GET(request: NextRequest) {
     }
 
     const db = sql
-
-    // Obtener tareas de los cursos del maestro
     const tareas = await db`
       SELECT 
         t.*,
@@ -41,32 +41,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const {
-      curso_id,
-      titulo,
-      descripcion,
-      prioridad,
-      fecha_vencimiento,
-      asignacion_horas,
-      limite_alumnos,
-      archivo_instrucciones,
-    } = body
+    // 🧩 Procesar FormData en lugar de JSON
+    const formData = await request.formData()
+    const curso_id = formData.get("curso_id")
+    const titulo = formData.get("titulo")
+    const descripcion = formData.get("descripcion")
+    const prioridad = formData.get("prioridad")
+    const fecha_vencimiento = formData.get("fecha_vencimiento")
+    const asignacion_horas = formData.get("asignacion_horas")
+    const limite_alumnos = formData.get("limite_alumnos")
+    const archivo = formData.get("archivo_instrucciones") as File | null
+
+    let archivo_instrucciones = null
+
+    // 📂 Guardar el archivo si se adjuntó
+    if (archivo) {
+      const uploadDir = path.join(process.cwd(), "public/uploads/curso")
+      await fs.mkdir(uploadDir, { recursive: true })
+
+      const filePath = path.join(uploadDir, archivo.name)
+      const buffer = Buffer.from(await archivo.arrayBuffer())
+      await fs.writeFile(filePath, buffer)
+
+      // Ruta accesible desde el navegador
+      archivo_instrucciones = `/uploads/curso/${archivo.name}`
+    }
 
     const db = sql
 
-    // Verificar que el curso pertenece al maestro
+    // 🧠 Verificar que el curso pertenece al maestro
     const curso = await db`
       SELECT id FROM cursos WHERE id = ${curso_id} AND maestro_id = ${session.id}
     `
-
     if (curso.length === 0) {
       return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
     }
 
+    // 🗄️ Guardar la tarea en la base de datos
     const [tarea] = await db`
-      INSERT INTO tareas (curso_id, titulo, descripcion, prioridad, fecha_vencimiento, asignacion_horas, limite_alumnos, archivo_instrucciones)
-      VALUES (${curso_id}, ${titulo}, ${descripcion}, ${prioridad}, ${fecha_vencimiento}, ${asignacion_horas || null}, ${limite_alumnos || null}, ${archivo_instrucciones || null})
+      INSERT INTO tareas (
+        curso_id,
+        titulo,
+        descripcion,
+        prioridad,
+        fecha_vencimiento,
+        asignacion_horas,
+        limite_alumnos,
+        archivo_instrucciones
+      ) VALUES (
+        ${curso_id},
+        ${titulo},
+        ${descripcion},
+        ${prioridad},
+        ${fecha_vencimiento},
+        ${asignacion_horas || null},
+        ${limite_alumnos || null},
+        ${archivo_instrucciones || null}
+      )
       RETURNING *
     `
 
@@ -76,4 +107,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Error al crear tarea" }, { status: 500 })
   }
 }
-

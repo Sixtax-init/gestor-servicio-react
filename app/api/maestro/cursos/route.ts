@@ -2,6 +2,30 @@ import { type NextRequest, NextResponse } from "next/server"
 import { requireRole } from "@/lib/session"
 import { sql } from "@/lib/db"
 
+// ✅ Obtener los cursos del maestro
+export async function GET() {
+  try {
+    const user = await requireRole(["maestro"])
+
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    }
+
+    const cursos = await sql`
+      SELECT id, nombre_grupo
+      FROM cursos
+      WHERE maestro_id = ${user.id} AND activo = true
+      ORDER BY nombre_grupo ASC
+    `
+
+    return NextResponse.json({ cursos })
+  } catch (error) {
+    console.error("[v0] Error fetching cursos del maestro:", error)
+    return NextResponse.json({ error: "Error al obtener cursos" }, { status: 500 })
+  }
+}
+
+// ✅ Crear nuevo curso
 export async function POST(request: NextRequest) {
   const user = await requireRole(["maestro"])
 
