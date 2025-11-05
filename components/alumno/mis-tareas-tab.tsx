@@ -27,8 +27,6 @@ export function MisTareasTab() {
   const [loading, setLoading] = useState(true)
   const [entregandoTarea, setEntregandoTarea] = useState<Tarea | null>(null)
 
-  const cursoId = 1
-
   useEffect(() => {
     fetchTareas()
   }, [])
