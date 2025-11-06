@@ -9,7 +9,7 @@ export async function saveFile(file: File, id: number, type: "entregas" | "curso
     const buffer = Buffer.from(bytes)
 
     // 📁 Directorio según tipo
-    const uploadDir = join(process.cwd(), "uploads", type, id.toString())
+    const uploadDir = join(process.cwd(), "public/uploads", type, id.toString())
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true })
     }

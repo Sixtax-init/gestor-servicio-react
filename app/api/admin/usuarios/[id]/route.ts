@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { requireRole } from "@/lib/session"
+import bcrypt from "bcryptjs"
 
 // Actualizar usuario
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
@@ -13,18 +14,40 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const { id } = params
     const body = await request.json()
-    const { matricula, nombre, apellidos, email, tipo_usuario, activo } = body
+    const { matricula, nombre, apellidos, email, tipo_usuario, activo, password } = body
 
-    const result = await sql`
-      UPDATE usuarios
-        SET matricula = ${matricula},
-            nombre = ${nombre},
-            apellidos = ${apellidos},
-            email = ${email},
-            tipo_usuario = ${tipo_usuario},
-            activo = ${activo}
-      WHERE id = ${id}
-      RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo`
+    let hashedPass = null
+    if (password && password.trim() != "") {
+      hashedPass = await bcrypt.hash(password, 10)
+    }
+
+    let result
+
+    if (hashedPass) {
+      result = await sql`
+    UPDATE usuarios
+      SET matricula = ${matricula},
+          nombre = ${nombre},
+          apellidos = ${apellidos},
+          email = ${email},
+          tipo_usuario = ${tipo_usuario},
+          activo = ${activo},
+          password_hash = ${hashedPass}
+    WHERE id = ${id}
+    RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo`
+    } else {
+      result = await sql`
+    UPDATE usuarios
+      SET matricula = ${matricula},
+          nombre = ${nombre},
+          apellidos = ${apellidos},
+          email = ${email},
+          tipo_usuario = ${tipo_usuario},
+          activo = ${activo}
+    WHERE id = ${id}
+    RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo`
+    }
+
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
