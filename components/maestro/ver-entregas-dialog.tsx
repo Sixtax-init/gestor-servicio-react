@@ -27,6 +27,7 @@ interface Entrega {
   archivo_entregado?: string | null // 👈 Nuevo campo
   archivo_ruta?: string | null    // ✅ nuevo
   archivo_nombre?: string | null  // ✅ nuevo
+  tiene_avance_final: boolean
 }
 
 interface VerEntregasDialogProps {
@@ -40,10 +41,13 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
   const [loading, setLoading] = useState(true)
   const [selectedEntrega, setSelectedEntrega] = useState<number | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [avances, setAvances] = useState<any[]>([])
+
 
 
   useEffect(() => {
     if (open) fetchEntregas()
+    fetchAvances()
   }, [open, tarea.id])
 
   const fetchEntregas = async () => {
@@ -59,6 +63,20 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
       setLoading(false)
     }
   }
+  const fetchAvances = async () => {
+    try {
+      const response = await fetch(`/api/maestro/tareas/${tarea.id}/avances`)
+      if (response.ok) {
+        const data = await response.json()
+        setAvances(data)
+      } else {
+        console.error("Error al cargar avances:", await response.text())
+      }
+    } catch (error) {
+      console.error("Error al cargar avances:", error)
+    }
+  }
+
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
@@ -165,12 +183,29 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
                     <Button
                       size="sm"
                       onClick={() => {
-                        setSelectedEntrega(entrega.id)
-                        setReviewOpen(true)
+                        if (entrega.tiene_avance_final) {
+                          setSelectedEntrega(entrega.id)
+                          setReviewOpen(true)
+                        } else {
+                          alert("⚠️ El alumno aún no ha marcado un avance final. No se puede revisar.")
+                        }
                       }}
+                      disabled={!entrega.tiene_avance_final}
+                      title={
+                        entrega.tiene_avance_final
+                          ? "Revisar entrega"
+                          : "El alumno no tiene un avance final (deshabilitado)"
+                      }
                     >
                       Revisar
                     </Button>
+
+                    {entrega.tiene_avance_final && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Este alumno ya marcó un avance como entrega final.
+                      </p>
+                    )}
+
                   </div>
 
                 </CardContent>
@@ -181,11 +216,73 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
         {selectedEntrega && (
           <RevisarEntregaDialog
             open={reviewOpen}
-            onOpenChange={setReviewOpen}
+            onOpenChange={(open) => {
+              setReviewOpen(open)
+              if (!open) setSelectedEntrega(null) // ✅ limpia la selección al cerrar
+            }}
             tareaId={tarea.id}
             entregaId={selectedEntrega}
             onSuccess={fetchEntregas}
           />
+
+        )}
+        {/* 🔽 Sección de avances */}
+        <hr className="my-6" />
+
+        <h3 className="text-lg font-semibold">Avances de los alumnos</h3>
+
+        {avances.length === 0 ? (
+          <p className="text-sm text-muted-foreground mt-2">
+            No hay avances registrados aún.
+          </p>
+        ) : (
+          <div className="space-y-3 mt-3">
+            {avances.map((a) => (
+              <Card key={a.id}>
+                <CardContent className="pt-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-semibold">
+                        {a.nombre} {a.apellidos}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {a.matricula} • {a.email}
+                      </p>
+                    </div>
+                    {a.es_final && (
+                      <Badge variant="secondary">Final</Badge>
+                    )}
+                  </div>
+
+                  {a.comentario && (
+                    <p className="text-sm mb-2">{a.comentario}</p>
+                  )}
+
+                  {a.archivo_url && (
+                    <a
+                      href={a.archivo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary text-sm hover:underline flex items-center gap-1"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Ver archivo
+                    </a>
+                  )}
+
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Estado: {a.estado} • {new Date(a.fecha_entrega).toLocaleString()}
+                  </p>
+
+                  {a.horas_asignadas > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Horas asignadas: {a.horas_asignadas}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
       </DialogContent>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2, FilePlus2 } from "lucide-react"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
+import { EntregarAvanceDialog } from "./entregar-avance-dialog"
 import type { Entrega } from "@/lib/db"
 
 interface VerTareasDialogProps {
@@ -32,6 +33,7 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
   const [tareas, setTareas] = useState<TareaConEntrega[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedTarea, setSelectedTarea] = useState<TareaConEntrega | null>(null)
+  const [selectedAvance, setSelectedAvance] = useState<TareaConEntrega | null>(null)
 
   useEffect(() => {
     if (open && cursoId) {
@@ -86,14 +88,15 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                             tarea.prioridad === "alta"
                               ? "destructive"
                               : tarea.prioridad === "urgente"
-                              ? "destructive"
-                              : "secondary"
+                                ? "destructive"
+                                : "secondary"
                           }
                         >
                           Prioridad: {tarea.prioridad}
                         </Badge>
                       </div>
                     </div>
+
 
                     <div className="flex flex-col gap-2 items-end">
                       {tarea.entrega_estado ? (
@@ -102,15 +105,15 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                             tarea.entrega_estado === "pendiente"
                               ? "secondary"
                               : tarea.entrega_estado === "completada"
-                              ? "default"
-                              : "outline"
+                                ? "default"
+                                : "outline"
                           }
                         >
                           {tarea.entrega_estado === "pendiente"
                             ? "Pendiente de revisión"
                             : tarea.entrega_estado === "completada"
-                            ? "Completada"
-                            : "Sin estado"}
+                              ? "Completada"
+                              : "Sin estado"}
                         </Badge>
                       ) : (
                         <Button
@@ -122,6 +125,13 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                           Agregar Envío
                         </Button>
                       )}
+                      {
+                        <Button size="sm" variant="outline" onClick={() => setSelectedAvance(tarea)}
+                          className="flex items-center gap-1">
+                          <FilePlus2 className="w-4 h-4" />
+                          Ver/Agregar Avance
+                        </Button>
+                      }
                     </div>
                   </div>
                 ))}
@@ -142,6 +152,13 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
             fecha_vencimiento: selectedTarea.fecha_vencimiento,
           }}
           onSuccess={fetchTareas}
+        />
+      )}
+      {selectedAvance && (
+        <EntregarAvanceDialog
+          open={!!selectedAvance}
+          onOpenChange={(open) => !open && setSelectedAvance(null)}
+          tareaId={selectedAvance.id}
         />
       )}
     </>
