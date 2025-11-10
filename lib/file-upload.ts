@@ -3,7 +3,7 @@ import { join } from "path"
 import { existsSync } from "fs"
 
 // ✅ Ahora acepta un tercer parámetro opcional `type`
-export async function saveFile(file: File, id: number, type: "entregas" | "cursos" | "tareas" = "entregas"): Promise<string> {
+export async function saveFile(file: File, id: number, type: "entregas" | "cursos" | "tareas" | "avances" = "entregas"): Promise<string> {
   try {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)

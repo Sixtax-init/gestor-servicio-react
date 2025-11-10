@@ -3,9 +3,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { getSession } from "@/lib/session"
 
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await context.params
+    // ✅ Evita advertencia de Next: `params` puede ser una promesa
+    const { id } = await params
+
     const session = await getSession()
     if (!session || session.tipo_usuario !== "maestro") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
@@ -13,7 +15,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     const tareaId = Number.parseInt(id)
 
-    // Verificar que la tarea pertenece al maestro
+    // ✅ Verificar que la tarea pertenece al maestro
     const [tarea] = await sql`
       SELECT t.id 
       FROM tareas t
@@ -24,20 +26,24 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: "Tarea no encontrada o no autorizada" }, { status: 404 })
     }
 
-    // Obtener entregas con información del alumno y, si existe, el archivo asociado
+    // ✅ Obtener entregas con archivo (JOIN con tabla `archivos`)
     const entregas = await sql`
       SELECT 
         e.id,
-        e.fecha_entrega,
-        e.estado,
-        e.comentario,
-        e.calificacion,
-        a.ruta_archivo   AS archivo_ruta,
-        a.nombre_archivo AS archivo_nombre,
         u.nombre,
         u.apellidos,
         u.matricula,
-        u.email
+        u.email,
+        e.fecha_entrega,
+        e.comentario,
+        e.estado,
+        e.calificacion,
+        a.ruta_archivo AS archivo_ruta,
+        a.nombre_archivo AS archivo_nombre,
+        EXISTS (
+          SELECT 1 FROM entregas_avances ea
+          WHERE ea.entrega_id = e.id AND ea.es_final = true
+        ) AS tiene_avance_final
       FROM entregas e
       INNER JOIN usuarios u ON e.alumno_id = u.id
       LEFT JOIN archivos a ON a.entrega_id = e.id
@@ -47,7 +53,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     return NextResponse.json(entregas)
   } catch (error) {
-    console.error("Error al obtener entregas:", error)
+    console.error("❌ Error al obtener entregas:", error)
     return NextResponse.json({ error: "Error al obtener entregas" }, { status: 500 })
   }
 }

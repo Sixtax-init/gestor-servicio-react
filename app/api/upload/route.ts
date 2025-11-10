@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get("file") as File
 
-    // ✅ Nuevos parámetros (opcionales y compatibles)
+    // ✅ Nuevos parámetros (opcionales)
     const type = (formData.get("type") as string) || "entregas"
     const referenceId =
       (formData.get("referenceId") as string) || (formData.get("entregaId") as string) || "0"
@@ -35,34 +35,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Archivo requerido" }, { status: 400 })
     }
 
-    // 🔐 Si el tipo es 'entregas', verificamos permisos como antes
+    // ✅ Validación solo para ENTREGAS (no para AVANCES)
     if (type === "entregas") {
       if (!referenceId || referenceId === "0") {
         return NextResponse.json({ error: "Falta entregaId" }, { status: 400 })
       }
 
-      let entrega: any[] = []
-      if (user.tipo_usuario === "alumno") {
-        entrega = await sql`
-          SELECT * FROM entregas
-          WHERE id = ${Number(referenceId)} AND alumno_id = ${user.id}
-        `
-      } else if (user.tipo_usuario === "maestro" || user.tipo_usuario === "administrador") {
-        entrega = await sql`
-          SELECT * FROM entregas
-          WHERE id = ${Number(referenceId)}
-        `
-      }
-
+      const entrega = await sql`
+        SELECT * FROM entregas
+        WHERE id = ${Number(referenceId)} 
+          AND (${user.tipo_usuario} != 'alumno' OR alumno_id = ${user.id})
+      `
       if (entrega.length === 0) {
         console.log("[upload] ❌ Entrega not found or no permission")
         return NextResponse.json({ error: "Entrega no encontrada o sin permisos" }, { status: 404 })
       }
     }
 
-    // 💾 Guardar archivo según tipo
+    // 💾 Guardar archivo según tipo (agregamos 'avances')
     console.log(`[upload] Saving file to uploads/${type}`)
-    const rutaArchivo = await saveFile(file, Number(referenceId) || 0, type as "entregas" | "tareas" | "cursos")
+    const rutaArchivo = await saveFile(
+      file,
+      Number(referenceId) || 0,
+      type as "entregas" | "tareas" | "cursos" | "avances"
+    )
     console.log("[upload] File saved at:", rutaArchivo)
 
     // 🧾 Registrar en DB solo si es entrega
@@ -73,6 +69,7 @@ export async function POST(request: NextRequest) {
       `
     }
 
+    // ⚠️ Si es 'avances', solo guardamos físicamente el archivo y devolvemos la ruta
     console.log("[upload] ✅ File uploaded successfully")
     return NextResponse.json(
       {
@@ -81,7 +78,7 @@ export async function POST(request: NextRequest) {
         tipo: file.type,
         size: file.size,
       },
-      { status: 201 },
+      { status: 201 }
     )
   } catch (error) {
     console.error("[upload] 💥 Error uploading file:", error)
@@ -90,7 +87,7 @@ export async function POST(request: NextRequest) {
         error: "Error al subir archivo",
         details: error instanceof Error ? error.message : "Error desconocido",
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
