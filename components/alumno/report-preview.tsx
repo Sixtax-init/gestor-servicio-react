@@ -1,19 +1,9 @@
-import type { ReportData } from "@/app/api/reporte/page"
 import Image from "next/image"
+import { ReportData, Actividad } from "@/types/report"
+
 interface ReportPreviewProps {
   data: ReportData
   actividades: Actividad[]
-}
-
-interface Actividad {
-  actividad: string
-  descripcion?: string
-  fecha_entrega?: string
-  calificacion?: number
-  retroalimentacion?: string | null
-  curso?: string
-  estado?: string
-  fecha_revision?: string
 }
 
 export function ReportPreview({ data, actividades = [] }: ReportPreviewProps) {
