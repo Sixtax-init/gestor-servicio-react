@@ -1,5 +1,5 @@
 "use client"
-
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -49,6 +49,13 @@ export function MisHorasTab() {
         >
           <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
+
+        <div className="flex gap-4 justify-center pt-4">
+            <Link href="/report-form">
+              <Button size="lg">Reporte</Button>
+            </Link>
+          </div>
+
       </CardHeader>
 
       <CardContent>
