@@ -2,8 +2,11 @@ import { cookies } from "next/headers"
 import { SignJWT, jwtVerify } from "jose"
 import type { SessionUser } from "./auth"
 
-const SECRET_KEY = new TextEncoder().encode(process.env.SESSION_SECRET || "default-secret-key-change-in-production")
-
+if (!process.env.SESSION_SECRET) {  
+  throw new Error("SESSION_SECRET environment variable is required but not set")  
+}  
+  
+const SECRET_KEY = new TextEncoder().encode(process.env.SESSION_SECRET)
 const COOKIE_NAME = "session"
 const COOKIE_OPTIONS = {
   httpOnly: true,

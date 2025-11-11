@@ -2,8 +2,11 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify } from "jose"
 
-const SECRET_KEY = new TextEncoder().encode(process.env.SESSION_SECRET || "default-secret-key-change-in-production")
-
+if (!process.env.SESSION_SECRET) {  
+  throw new Error("SESSION_SECRET environment variable is required but not set")  
+}  
+  
+const SECRET_KEY = new TextEncoder().encode(process.env.SESSION_SECRET)
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
