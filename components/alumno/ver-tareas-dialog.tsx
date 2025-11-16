@@ -82,7 +82,12 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                       <h3 className="font-semibold">{tarea.titulo}</h3>
                       <p className="text-sm text-muted-foreground">{tarea.descripcion}</p>
                       <div className="flex gap-2 mt-2 text-sm">
-                        <Badge variant="outline">Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}</Badge>
+                        {tarea.fecha_vencimiento && (
+                          <Badge variant="outline">
+                            Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}
+                          </Badge>
+                        )}
+
                         <Badge
                           variant={
                             tarea.prioridad === "alta"
@@ -104,16 +109,20 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                           variant={
                             tarea.entrega_estado === "pendiente"
                               ? "secondary"
-                              : tarea.entrega_estado === "completada"
+                              : tarea.entrega_estado === "aprobada"
                                 ? "default"
-                                : "outline"
+                                : tarea.entrega_estado === "rechazada"
+                                  ? "destructive"
+                                  : "outline"
                           }
                         >
                           {tarea.entrega_estado === "pendiente"
                             ? "Pendiente de revisión"
-                            : tarea.entrega_estado === "completada"
-                              ? "Completada"
-                              : "Sin estado"}
+                            : tarea.entrega_estado === "aprobada"
+                              ? "Aprobada"
+                              : tarea.entrega_estado === "rechazada"
+                                ? "Rechazada"
+                                : "Sin estado"}
                         </Badge>
                       ) : (
                         <Button

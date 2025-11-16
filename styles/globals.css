@@ -123,3 +123,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fade-in para hero y secciones */
+/* Animación de fade-in */
+@layer utilities {
+  .animate-fade-in-up {
+    @apply opacity-0 translate-y-4;
+    animation: fadeInUp 0.8s forwards;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Carrusel infinito */
+  @keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-var(--scroll-width)); }
+}
+
+.scroll-container {
+  --scroll-width: 2000px; /* ancho total de la mitad de las cards */
+  display: flex;
+  animation: scroll 20s linear infinite;
+}
+
+  .animate-scroll {
+    display: flex;
+    animation: scroll 20s linear infinite;
+  }
+}

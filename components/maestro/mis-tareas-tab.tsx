@@ -32,6 +32,7 @@ export function MisTareasTab() {
       </Card>
 
       <CreateTareaDialog
+        cursoId={null}
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onSuccess={() => {
