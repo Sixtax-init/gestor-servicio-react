@@ -24,7 +24,7 @@ interface Tarea {
   titulo: string
   descripcion: string
   prioridad: string
-  fecha_vencimiento: string
+  fecha_vencimiento: string | null
   asignacion_horas: number | null
   limite_alumnos: number | null
   archivo_instrucciones: string | null
@@ -44,7 +44,7 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
     titulo: tarea.titulo,
     descripcion: tarea.descripcion,
     prioridad: tarea.prioridad,
-    fecha_vencimiento: tarea.fecha_vencimiento.slice(0, 16),
+    fecha_vencimiento: tarea.fecha_vencimiento?.slice(0, 16),
     asignacion_horas: tarea.asignacion_horas?.toString() || "",
     limite_alumnos: tarea.limite_alumnos?.toString() || "",
     activo: tarea.activo,
@@ -56,7 +56,7 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
       titulo: tarea.titulo,
       descripcion: tarea.descripcion,
       prioridad: tarea.prioridad,
-      fecha_vencimiento: tarea.fecha_vencimiento.slice(0, 16),
+      fecha_vencimiento: tarea.fecha_vencimiento?.slice(0, 16),
       asignacion_horas: tarea.asignacion_horas?.toString() || "",
       limite_alumnos: tarea.limite_alumnos?.toString() || "",
       activo: tarea.activo,
@@ -156,7 +156,7 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
               </Select>
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="fecha_vencimiento">Fecha de vencimiento</Label>
               <Input
                 id="fecha_vencimiento"
@@ -165,7 +165,7 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
                 onChange={(e) => setFormData({ ...formData, fecha_vencimiento: e.target.value })}
                 required
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
