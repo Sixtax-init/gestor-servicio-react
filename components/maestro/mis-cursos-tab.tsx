@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, BookOpen } from "lucide-react"
 import { CreateCursoDialog } from "./create-curso-dialog"
+import { CreateTareaDialog } from "./create-tarea-dialog"
 
 interface MisCursosTabProps {
   cursos: Curso[]
@@ -15,10 +16,16 @@ interface MisCursosTabProps {
 export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [cursos, setCursos] = useState(initialCursos)
+  const [showTareaDialog, setShowTareaDialog] = useState(false)
+  const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null)
 
   const handleCursoCreated = (newCurso: Curso) => {
     setCursos([newCurso, ...cursos])
     setShowCreateDialog(false)
+  }
+
+  const handleTareaCreated = () => {
+    setShowTareaDialog(false)
   }
 
   return (
@@ -63,8 +70,9 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Button variant="outline" size="sm" className="w-full bg-transparent">
-                      Ver Detalles
+                    <Button variant="outline" size="sm" className="w-full bg-transparent" onClick={() => {setSelectedCursoId(curso.id); setShowTareaDialog(true)}}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Agregar Tarea
                     </Button>
                   </CardContent>
                 </Card>
@@ -75,6 +83,7 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
       </Card>
 
       <CreateCursoDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={handleCursoCreated} />
+      <CreateTareaDialog open={showTareaDialog} onOpenChange={setShowTareaDialog} onSuccess={handleTareaCreated} cursoId={selectedCursoId} />
     </>
   )
 }

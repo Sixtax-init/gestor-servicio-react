@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       LEFT JOIN entregas e ON t.id = e.tarea_id
       WHERE c.maestro_id = ${session.id}
       GROUP BY t.id, c.nombre_grupo, c.tipo
-      ORDER BY t.fecha_vencimiento DESC
+      ORDER BY t.created_at DESC
     `
 
     return NextResponse.json(tareas)
@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
     const titulo = formData.get("titulo")
     const descripcion = formData.get("descripcion")
     const prioridad = formData.get("prioridad")
-    const fecha_vencimiento = formData.get("fecha_vencimiento")
     const asignacion_horas = formData.get("asignacion_horas")
     const limite_alumnos = formData.get("limite_alumnos")
     const archivo = formData.get("archivo_instrucciones") as File | null
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
         titulo,
         descripcion,
         prioridad,
-        fecha_vencimiento,
         asignacion_horas,
         limite_alumnos,
         archivo_instrucciones
@@ -93,7 +91,6 @@ export async function POST(request: NextRequest) {
         ${titulo},
         ${descripcion},
         ${prioridad},
-        ${fecha_vencimiento},
         ${asignacion_horas || null},
         ${limite_alumnos || null},
         ${archivo_instrucciones || null}

@@ -22,6 +22,7 @@ interface CreateTareaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  cursoId: number | null
 }
 
 interface Curso {
@@ -30,15 +31,14 @@ interface Curso {
   tipo: string
 }
 
-export function CreateTareaDialog({ open, onOpenChange, onSuccess }: CreateTareaDialogProps) {
+export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: CreateTareaDialogProps) {
   const [cursos, setCursos] = useState<Curso[]>([])
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    curso_id: "",
+    curso_id: cursoId ? cursoId.toString() : "",
     titulo: "",
     descripcion: "",
     prioridad: "media",
-    fecha_vencimiento: "",
     asignacion_horas: "",
     limite_alumnos: "",
   })
@@ -50,68 +50,75 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess }: CreateTarea
     }
   }, [open])
 
+  useEffect(() => {
+    if (cursoId) {
+      setFormData((prev) => ({ ...prev, curso_id: cursoId.toString() }))
+    }
+  }, [cursoId])
+
+
   const fetchCursos = async () => {
     try {
       const response = await fetch("/api/maestro/cursos")
       if (!response.ok) throw new Error("Error al obtener cursos")
 
       const data = await response.json()
-      // ✅ Detecta si data tiene propiedad cursos o es array
+
       const cursosList = Array.isArray(data) ? data : data.cursos || []
       setCursos(cursosList)
     } catch (error) {
       console.error("[v0] Error al cargar cursos:", error)
-      setCursos([]) // evita errores con .map
+      setCursos([])
     }
   }
 
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setLoading(true)
+    e.preventDefault()
+    setLoading(true)
 
-  try {
-    const formDataToSend = new FormData()
-    formDataToSend.append("curso_id", formData.curso_id)
-    formDataToSend.append("titulo", formData.titulo)
-    formDataToSend.append("descripcion", formData.descripcion)
-    formDataToSend.append("prioridad", formData.prioridad)
-    formDataToSend.append("fecha_vencimiento", formData.fecha_vencimiento)
+    try {
+      const formDataToSend = new FormData()
+      formDataToSend.append("curso_id", formData.curso_id)
+      formDataToSend.append("titulo", formData.titulo)
+      formDataToSend.append("descripcion", formData.descripcion)
+      formDataToSend.append("prioridad", formData.prioridad)
 
-    if (formData.asignacion_horas)
-      formDataToSend.append("asignacion_horas", formData.asignacion_horas)
-    if (formData.limite_alumnos)
-      formDataToSend.append("limite_alumnos", formData.limite_alumnos)
-    if (archivoInstrucciones)
-      formDataToSend.append("archivo_instrucciones", archivoInstrucciones)
+      if (formData.asignacion_horas)
+        formDataToSend.append("asignacion_horas", formData.asignacion_horas)
 
-    const response = await fetch("/api/maestro/tareas", {
-      method: "POST",
-      body: formDataToSend, // 👈 sin headers JSON
-    })
+      if (formData.limite_alumnos)
+        formDataToSend.append("limite_alumnos", formData.limite_alumnos)
 
-    if (response.ok) {
-      onSuccess()
-      setFormData({
-        curso_id: "",
-        titulo: "",
-        descripcion: "",
-        prioridad: "media",
-        fecha_vencimiento: "",
-        asignacion_horas: "",
-        limite_alumnos: "",
+      if (archivoInstrucciones)
+        formDataToSend.append("archivo_instrucciones", archivoInstrucciones)
+
+      const response = await fetch("/api/maestro/tareas", {
+        method: "POST",
+        body: formDataToSend,
       })
-      setArchivoInstrucciones(null)
-    } else {
-      const errorData = await response.json()
-      console.error("Error al crear tarea:", errorData.error)
+
+      if (response.ok) {
+        onSuccess()
+        setFormData({
+          curso_id: cursoId ? cursoId.toString() : "",
+          titulo: "",
+          descripcion: "",
+          prioridad: "media",
+          asignacion_horas: "",
+          limite_alumnos: "",
+        })
+        setArchivoInstrucciones(null)
+      } else {
+        const errorData = await response.json()
+        console.error("Error al crear tarea:", errorData.error)
+      }
+    } catch (error) {
+      console.error("Error al crear tarea:", error)
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    console.error("Error al crear tarea:", error)
-  } finally {
-    setLoading(false)
   }
-}
 
 
   return (
@@ -123,21 +130,36 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess }: CreateTarea
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
           <div className="space-y-2">
             <Label htmlFor="curso_id">Curso</Label>
-            <Select value={formData.curso_id} onValueChange={(value) => setFormData({ ...formData, curso_id: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona un curso" />
-              </SelectTrigger>
-              <SelectContent>
-                {cursos.map((curso) => (
-                  <SelectItem key={curso.id} value={curso.id.toString()}>
-                    {curso.nombre_grupo} ({curso.tipo === "servicio_social" ? "Servicio Social" : "Taller/Curso"})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+            {cursoId ? (
+              <>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {cursos.find(c => c.id === cursoId)?.nombre_grupo || "Curso seleccionado"}
+                </p>
+                <input type="hidden" name="curso_id" value={formData.curso_id} />
+              </>
+            ) : (
+              <Select
+                value={formData.curso_id}
+                onValueChange={(value) => setFormData({ ...formData, curso_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un curso" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cursos.map((curso) => (
+                    <SelectItem key={curso.id} value={curso.id.toString()}>
+                      {curso.nombre_grupo} ({curso.tipo === "servicio_social" ? "Servicio Social" : "Taller/Curso"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="titulo">Título</Label>
@@ -176,17 +198,6 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess }: CreateTarea
                   <SelectItem value="urgente">Urgente</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fecha_vencimiento">Fecha de vencimiento</Label>
-              <Input
-                id="fecha_vencimiento"
-                type="datetime-local"
-                value={formData.fecha_vencimiento}
-                onChange={(e) => setFormData({ ...formData, fecha_vencimiento: e.target.value })}
-                required
-              />
             </div>
           </div>
 
@@ -241,4 +252,3 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess }: CreateTarea
     </Dialog>
   )
 }
-
