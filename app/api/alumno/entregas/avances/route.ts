@@ -17,10 +17,18 @@ export async function GET(request: NextRequest) {
     }
 
     const avances = await sql`
-      SELECT id, comentario, archivo_url, estado, es_final, fecha_entrega
-      FROM entregas_avances
-      WHERE tarea_id = ${tareaId} AND alumno_id = ${session.id}
-      ORDER BY fecha_entrega DESC
+      SELECT 
+        ea.id, 
+        ea.comentario, 
+        ea.archivo_url, 
+        ea.estado, 
+        ea.es_final, 
+        ea.fecha_entrega,
+        e.estado AS estado_entrega_principal
+      FROM entregas_avances ea
+      LEFT JOIN entregas e ON ea.tarea_id = e.tarea_id AND ea.alumno_id = e.alumno_id
+      WHERE ea.tarea_id = ${tareaId} AND ea.alumno_id = ${session.id}
+      ORDER BY ea.fecha_entrega DESC
     `;
 
     return NextResponse.json(avances, { status: 200 });
@@ -63,8 +71,10 @@ export async function POST(request: NextRequest) {
     `
 
     const [finalExistente] = await sql`
-      SELECT id FROM entregas_avances
-      WHERE tarea_id = ${tarea_id} AND alumno_id = ${session.id} AND es_final = true
+      SELECT ea.id FROM entregas_avances ea
+      LEFT JOIN entregas e ON ea.tarea_id = e.tarea_id AND ea.alumno_id = e.alumno_id
+      WHERE ea.tarea_id = ${tarea_id} AND ea.alumno_id = ${session.id} AND ea.es_final = true
+      AND (e.estado IS NULL OR e.estado != 'rechazada')
     `
     if (finalExistente) {
       //Se avisa al usuario que ya no puede subir las entregas

@@ -109,16 +109,20 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                           variant={
                             tarea.entrega_estado === "pendiente"
                               ? "secondary"
-                              : tarea.entrega_estado === "completada"
+                              : tarea.entrega_estado === "aprobada"
                                 ? "default"
-                                : "outline"
+                                : tarea.entrega_estado === "rechazada"
+                                  ? "destructive"
+                                  : "outline"
                           }
                         >
                           {tarea.entrega_estado === "pendiente"
                             ? "Pendiente de revisión"
-                            : tarea.entrega_estado === "completada"
-                              ? "Completada"
-                              : "Sin estado"}
+                            : tarea.entrega_estado === "aprobada"
+                              ? "Aprobada"
+                              : tarea.entrega_estado === "rechazada"
+                                ? "Rechazada"
+                                : "Sin estado"}
                         </Badge>
                       ) : (
                         <Button

@@ -22,6 +22,7 @@ interface Avance {
     estado: string
     es_final: boolean
     fecha_entrega: string
+    estado_entrega_principal?: string | null
 }
 
 export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAvanceDialogProps) {
@@ -37,9 +38,9 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
             const data = await res.json()
             setAvances(data)
 
-            // ✅ Si ya hay un avance final, deshabilita el formulario
-            const tieneFinal = data.some((a: Avance) => a.es_final)
-            if (tieneFinal) {
+            // ✅ Si ya hay un avance final y la entrega no está rechazada, deshabilita el formulario
+            const tieneFinalBloqueante = data.some((a: Avance) => a.es_final && a.estado_entrega_principal !== 'rechazada')
+            if (tieneFinalBloqueante) {
                 setSubiendo(true) // bloquea el botón de envío
             } else {
                 setSubiendo(false)
@@ -141,7 +142,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
                     </div>
 
                     <DialogFooter>
-                        {avances.some((a) => a.es_final) ? (
+                        {avances.some((a) => a.es_final && a.estado_entrega_principal !== 'rechazada') ? (
                             <p className="text-sm text-muted-foreground">
                                 ⚠️ Ya has marcado un avance como final. No puedes subir más avances.
                             </p>
@@ -168,7 +169,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
                             <Badge variant={a.es_final ? "default" : "secondary"}>
                                 {a.es_final ? "Final" : a.estado}
                             </Badge>
-                            {!a.es_final && (
+                            {!a.es_final && (!a.estado_entrega_principal || a.estado_entrega_principal !== 'aprobada') && (
                                 <Button size="sm" className="ml-2" onClick={() => marcarComoFinal(a.id)}>
                                     Marcar como final
                                 </Button>

@@ -190,11 +190,13 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
                           alert("⚠️ El alumno aún no ha marcado un avance final. No se puede revisar.")
                         }
                       }}
-                      disabled={!entrega.tiene_avance_final}
+                      disabled={!entrega.tiene_avance_final || entrega.estado == "aprobada"}
                       title={
-                        entrega.tiene_avance_final
-                          ? "Revisar entrega"
-                          : "El alumno no tiene un avance final (deshabilitado)"
+                        entrega.estado === "aprobada"
+                          ? "Entrega ya aprobada (no se puede modificar)"
+                          : entrega.tiene_avance_final
+                            ? "Revisar entrega"
+                            : "El alumno no tiene un avance final (deshabilitado)"
                       }
                     >
                       Revisar
