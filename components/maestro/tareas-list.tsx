@@ -113,7 +113,12 @@ export function TareasList() {
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      <span>Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}</span>
+                      <span>
+                        Vence: {tarea.fecha_vencimiento
+                          ? new Date(tarea.fecha_vencimiento).toLocaleDateString()
+                          : "Sin fecha"}
+                      </span>
+
                     </div>
 
                     {tarea.asignacion_horas && (

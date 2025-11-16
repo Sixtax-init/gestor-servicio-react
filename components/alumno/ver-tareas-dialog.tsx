@@ -82,7 +82,12 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                       <h3 className="font-semibold">{tarea.titulo}</h3>
                       <p className="text-sm text-muted-foreground">{tarea.descripcion}</p>
                       <div className="flex gap-2 mt-2 text-sm">
-                        <Badge variant="outline">Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}</Badge>
+                        {tarea.fecha_vencimiento && (
+                          <Badge variant="outline">
+                            Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}
+                          </Badge>
+                        )}
+
                         <Badge
                           variant={
                             tarea.prioridad === "alta"
