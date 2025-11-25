@@ -49,7 +49,7 @@ export async function PUT(
     const [actualizada] = await sql`
       UPDATE entregas
       SET estado = ${estado},
-          comentario = ${comentario},
+          comentario_revision = ${comentario},
           calificacion = ${calificacion},
           fecha_entrega = fecha_entrega, -- conservar fecha original
           fecha_revision = CURRENT_TIMESTAMP

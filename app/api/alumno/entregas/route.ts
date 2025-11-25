@@ -25,18 +25,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No estás inscrito en este curso" }, { status: 403 })
     }
 
-    // 🔹 Verificar si ya existe un avance final (no rechazado)
+    // 🔹 Verificar si ya existe un avance final
     const [avanceFinalExistente] = await sql`
-      SELECT ea.id 
+      SELECT ea.id, e.estado
       FROM entregas_avances ea
       LEFT JOIN entregas e ON ea.tarea_id = e.tarea_id AND ea.alumno_id = e.alumno_id
       WHERE ea.tarea_id = ${tarea_id} 
         AND ea.alumno_id = ${session.id} 
         AND ea.es_final = true
-        AND (e.estado IS NULL OR e.estado != 'rechazada')
     `
 
-    if (avanceFinalExistente) {
+    // Solo bloquear si existe un avance final Y no está rechazado
+    if (avanceFinalExistente && avanceFinalExistente.estado !== 'rechazada') {
       return NextResponse.json(
         { error: "Ya has marcado un avance como final. No puedes enviar otra entrega directa." },
         { status: 400 }
@@ -45,17 +45,19 @@ export async function POST(request: NextRequest) {
 
     // Verificar si ya existe una entrega
     const [entregaExistente] = await sql`
-      SELECT id FROM entregas WHERE tarea_id = ${tarea_id} AND alumno_id = ${session.id}
+      SELECT id, estado FROM entregas WHERE tarea_id = ${tarea_id} AND alumno_id = ${session.id}
     `
 
     let entrega
     if (entregaExistente) {
-      // Actualizar entrega existente
+      // Actualizar entrega existente y resetear estado a pendiente
       ;[entrega] = await sql`
         UPDATE entregas
         SET comentario = ${comentario},
             fecha_entrega = CURRENT_TIMESTAMP,
-            estado = 'pendiente'
+            estado = 'pendiente',
+            calificacion = NULL,
+            fecha_revision = NULL
         WHERE id = ${entregaExistente.id}
         RETURNING *
       `
@@ -76,18 +78,21 @@ export async function POST(request: NextRequest) {
       `
     }
 
-    // 🔹 Crear automáticamente un avance marcado como final
-    // Verificar si ya existe un avance para esta entrega
+    // 🔹 Crear o actualizar avance marcado como final
+    // Siempre verificar si ya existe un avance para esta entrega (después de crear/actualizar la entrega)
     const [avanceExistente] = await sql`
       SELECT id FROM entregas_avances 
       WHERE entrega_id = ${entrega.id} AND tarea_id = ${tarea_id} AND alumno_id = ${session.id}
     `
 
     if (avanceExistente) {
-      // Actualizar el avance existente
+      // Actualizar el avance existente y resetear estado
       await sql`
         UPDATE entregas_avances
-        SET es_final = true, comentario = 'Entrega directa', estado = 'pendiente'
+        SET es_final = true, 
+            comentario = 'Entrega directa', 
+            estado = 'pendiente',
+            fecha_entrega = CURRENT_TIMESTAMP
         WHERE id = ${avanceExistente.id}
       `
     } else {

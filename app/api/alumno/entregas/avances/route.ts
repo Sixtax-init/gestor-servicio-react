@@ -63,12 +63,14 @@ export async function POST(request: NextRequest) {
 
     // 🔹 Verificar si ya existe un avance final (incluyendo entregas directas)
     const [finalExistente] = await sql`
-      SELECT ea.id, ea.comentario FROM entregas_avances ea
+      SELECT ea.id, ea.comentario, e.estado
+      FROM entregas_avances ea
       LEFT JOIN entregas e ON ea.tarea_id = e.tarea_id AND ea.alumno_id = e.alumno_id
       WHERE ea.tarea_id = ${tarea_id} AND ea.alumno_id = ${session.id} AND ea.es_final = true
-      AND (e.estado IS NULL OR e.estado != 'rechazada')
     `
-    if (finalExistente) {
+
+    // Solo bloquear si existe un avance final Y no está rechazado
+    if (finalExistente && finalExistente.estado !== 'rechazada') {
       const esEntregaDirecta = finalExistente.comentario === 'Entrega directa'
       return NextResponse.json(
         {
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
       INSERT INTO entregas (tarea_id, alumno_id, estado)
       VALUES (${tarea_id}, ${session.id}, 'pendiente')
       ON CONFLICT (tarea_id, alumno_id)
-      DO UPDATE SET fecha_entrega = CURRENT_TIMESTAMP
+      DO UPDATE SET fecha_entrega = CURRENT_TIMESTAMP, estado = 'pendiente'
       RETURNING id
     `
 
