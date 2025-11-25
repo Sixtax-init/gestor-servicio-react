@@ -61,6 +61,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No estás inscrito en este curso" }, { status: 403 })
     }
 
+    // 🔹 Verificar si ya existe un avance final (incluyendo entregas directas)
+    const [finalExistente] = await sql`
+      SELECT ea.id, ea.comentario FROM entregas_avances ea
+      LEFT JOIN entregas e ON ea.tarea_id = e.tarea_id AND ea.alumno_id = e.alumno_id
+      WHERE ea.tarea_id = ${tarea_id} AND ea.alumno_id = ${session.id} AND ea.es_final = true
+      AND (e.estado IS NULL OR e.estado != 'rechazada')
+    `
+    if (finalExistente) {
+      const esEntregaDirecta = finalExistente.comentario === 'Entrega directa'
+      return NextResponse.json(
+        {
+          error: esEntregaDirecta
+            ? "Ya has enviado una entrega final directa. No puedes subir avances."
+            : "Ya has marcado un avance final, no puedes subir más avances."
+        },
+        { status: 400 }
+      )
+    }
+
     // 🔹 Buscar o crear la entrega principal
     const [entrega] = await sql`
       INSERT INTO entregas (tarea_id, alumno_id, estado)
@@ -70,19 +89,6 @@ export async function POST(request: NextRequest) {
       RETURNING id
     `
 
-    const [finalExistente] = await sql`
-      SELECT ea.id FROM entregas_avances ea
-      LEFT JOIN entregas e ON ea.tarea_id = e.tarea_id AND ea.alumno_id = e.alumno_id
-      WHERE ea.tarea_id = ${tarea_id} AND ea.alumno_id = ${session.id} AND ea.es_final = true
-      AND (e.estado IS NULL OR e.estado != 'rechazada')
-    `
-    if (finalExistente) {
-      //Se avisa al usuario que ya no puede subir las entregas
-      return NextResponse.json(
-        { error: "Ya has marcado un avance final, no puedes subir más avances." },
-        { status: 400 }
-      )
-    }
     // 🔹 Insertar el avance, ligándolo a esa entrega
     const [avance] = await sql`
       INSERT INTO entregas_avances (entrega_id, tarea_id, alumno_id, archivo_url, comentario)

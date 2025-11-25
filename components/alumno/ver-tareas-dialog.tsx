@@ -134,13 +134,21 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                           Agregar Envío
                         </Button>
                       )}
-                      {
-                        <Button size="sm" variant="outline" onClick={() => setSelectedAvance(tarea)}
-                          className="flex items-center gap-1">
-                          <FilePlus2 className="w-4 h-4" />
-                          Ver/Agregar Avance
-                        </Button>
-                      }
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedAvance(tarea)}
+                        disabled={!!(tarea.entrega_estado && tarea.entrega_estado !== 'rechazada')}
+                        title={
+                          tarea.entrega_estado && tarea.entrega_estado !== 'rechazada'
+                            ? "Ya has enviado una entrega final. No puedes agregar avances."
+                            : "Ver o agregar avances parciales"
+                        }
+                        className="flex items-center gap-1"
+                      >
+                        <FilePlus2 className="w-4 h-4" />
+                        Ver/Agregar Avance
+                      </Button>
                     </div>
                   </div>
                 ))}

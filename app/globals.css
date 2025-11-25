@@ -123,3 +123,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Carousel Infinite Scroll Animation */
+@keyframes scroll-carousel {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* Movemos exactamente 1/3 del ancho total (5 tarjetas de 15 totales) */
+    transform: translateX(calc(-320px * 5 - 1.5rem * 5));
+  }
+}
+
+.carousel-track {
+  animation: scroll-carousel 30s linear infinite;
+  will-change: transform;
+}
+
+/* Pausa la animación al hacer hover */
+.carousel-track-container:hover .carousel-track {
+  animation-play-state: paused;
+}
