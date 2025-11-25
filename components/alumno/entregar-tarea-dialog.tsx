@@ -87,6 +87,13 @@ export function EntregarTareaDialog({ open, onOpenChange, tarea, onSuccess }: En
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ⚠️ Mensaje de advertencia */}
+          <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              ⚠️ Esta será tu <strong>entrega final</strong>. Una vez enviada, no podrás agregar avances parciales.
+            </p>
+          </div>
+
           <div>
             <Label>Tarea</Label>
             <p className="text-sm font-medium">{tarea?.titulo}</p>

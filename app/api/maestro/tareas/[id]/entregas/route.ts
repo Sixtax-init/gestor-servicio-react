@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // ✅ Obtener entregas con archivo (JOIN con tabla `archivos`)
     const entregas = await sql`
-      SELECT 
+      SELECT DISTINCT ON (e.id)
         e.id,
         u.nombre,
         u.apellidos,
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       INNER JOIN usuarios u ON e.alumno_id = u.id
       LEFT JOIN archivos a ON a.entrega_id = e.id
       WHERE e.tarea_id = ${tareaId}
-      ORDER BY e.fecha_entrega DESC
+      ORDER BY e.id, e.fecha_entrega DESC
     `
 
     return NextResponse.json(entregas)

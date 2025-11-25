@@ -5,7 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2, FilePlus2 } from "lucide-react"
+import { Loader2, FilePlus2, MessageSquare, AlertCircle } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
 import { EntregarAvanceDialog } from "./entregar-avance-dialog"
 import type { Entrega } from "@/lib/db"
@@ -27,6 +29,8 @@ interface TareaConEntrega {
   entrega_id: number | null
   entrega_estado: string | null
   fecha_entrega: string | null
+  calificacion: number | null
+  comentario_maestro: string | null
 }
 
 export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: VerTareasDialogProps) {
@@ -76,72 +80,118 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                 {tareas.map((tarea) => (
                   <div
                     key={tarea.id}
-                    className="p-4 border rounded-lg flex justify-between items-center hover:bg-muted transition"
+                    className="p-4 border rounded-lg flex flex-col gap-3 hover:bg-muted transition"
                   >
-                    <div>
-                      <h3 className="font-semibold">{tarea.titulo}</h3>
-                      <p className="text-sm text-muted-foreground">{tarea.descripcion}</p>
-                      <div className="flex gap-2 mt-2 text-sm">
-                        {tarea.fecha_vencimiento && (
-                          <Badge variant="outline">
-                            Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}
-                          </Badge>
-                        )}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{tarea.titulo}</h3>
+                        <p className="text-sm text-muted-foreground">{tarea.descripcion}</p>
+                        <div className="flex gap-2 mt-2 text-sm">
+                          {tarea.fecha_vencimiento && (
+                            <Badge variant="outline">
+                              Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}
+                            </Badge>
+                          )}
 
-                        <Badge
-                          variant={
-                            tarea.prioridad === "alta"
-                              ? "destructive"
-                              : tarea.prioridad === "urgente"
+                          <Badge
+                            variant={
+                              tarea.prioridad === "alta"
                                 ? "destructive"
-                                : "secondary"
-                          }
-                        >
-                          Prioridad: {tarea.prioridad}
-                        </Badge>
-                      </div>
-                    </div>
-
-
-                    <div className="flex flex-col gap-2 items-end">
-                      {tarea.entrega_estado ? (
-                        <Badge
-                          variant={
-                            tarea.entrega_estado === "pendiente"
-                              ? "secondary"
-                              : tarea.entrega_estado === "aprobada"
-                                ? "default"
-                                : tarea.entrega_estado === "rechazada"
+                                : tarea.prioridad === "urgente"
                                   ? "destructive"
-                                  : "outline"
-                          }
-                        >
-                          {tarea.entrega_estado === "pendiente"
-                            ? "Pendiente de revisión"
-                            : tarea.entrega_estado === "aprobada"
-                              ? "Aprobada"
-                              : tarea.entrega_estado === "rechazada"
-                                ? "Rechazada"
-                                : "Sin estado"}
-                        </Badge>
-                      ) : (
+                                  : "secondary"
+                            }
+                          >
+                            Prioridad: {tarea.prioridad}
+                          </Badge>
+                        </div>
+                      </div>
+
+
+                      <div className="flex flex-col gap-2 items-end">
+                        {tarea.entrega_estado && tarea.entrega_estado !== 'rechazada' ? (
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                tarea.entrega_estado === "pendiente"
+                                  ? "secondary"
+                                  : tarea.entrega_estado === "aprobada"
+                                    ? "default"
+                                    : tarea.entrega_estado === "rechazada"
+                                      ? "destructive"
+                                      : "outline"
+                              }
+                            >
+                              {tarea.entrega_estado === "pendiente"
+                                ? "Pendiente de revisión"
+                                : tarea.entrega_estado === "aprobada"
+                                  ? "Aprobada"
+                                  : tarea.entrega_estado === "rechazada"
+                                    ? "Rechazada"
+                                    : "Sin estado"}
+                            </Badge>
+
+                            {tarea.comentario_maestro && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="outline" className="cursor-help flex items-center gap-1">
+                                      <MessageSquare className="w-3 h-3" />
+                                      Ver comentario
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-sm">
+                                    <p className="text-sm font-medium mb-1">Comentario del maestro:</p>
+                                    <p className="text-sm">{tarea.comentario_maestro}</p>
+                                    {tarea.fecha_entrega && (
+                                      <p className="text-xs text-muted-foreground mt-2">
+                                        {new Date(tarea.fecha_entrega).toLocaleString()}
+                                      </p>
+                                    )}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => setSelectedTarea(tarea)}
+                            className="flex items-center gap-1"
+                          >
+                            <FilePlus2 className="w-4 h-4" />
+                            {tarea.entrega_estado === 'rechazada' ? 'Reenviar' : 'Agregar Envío'}
+                          </Button>
+                        )}
                         <Button
                           size="sm"
-                          onClick={() => setSelectedTarea(tarea)}
+                          variant="outline"
+                          onClick={() => setSelectedAvance(tarea)}
+                          disabled={!!(tarea.entrega_estado && tarea.entrega_estado !== 'rechazada')}
+                          title={
+                            tarea.entrega_estado && tarea.entrega_estado !== 'rechazada'
+                              ? "Ya has enviado una entrega final. No puedes agregar avances."
+                              : "Ver o agregar avances parciales"
+                          }
                           className="flex items-center gap-1"
                         >
                           <FilePlus2 className="w-4 h-4" />
-                          Agregar Envío
-                        </Button>
-                      )}
-                      {
-                        <Button size="sm" variant="outline" onClick={() => setSelectedAvance(tarea)}
-                          className="flex items-center gap-1">
-                          <FilePlus2 className="w-4 h-4" />
                           Ver/Agregar Avance
                         </Button>
-                      }
+                      </div>
                     </div>
+
+                    {/* Alert para entregas rechazadas */}
+                    {tarea.entrega_estado === 'rechazada' && tarea.comentario_maestro && (
+                      <Alert variant="destructive" className="w-full">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Entrega rechazada</AlertTitle>
+                        <AlertDescription>
+                          <p className="font-medium mb-1">Comentario del maestro:</p>
+                          <p>{tarea.comentario_maestro}</p>
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                 ))}
               </div>

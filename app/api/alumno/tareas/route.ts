@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
           e.estado AS entrega_estado,
           e.fecha_entrega,
           e.calificacion,
-          e.comentario AS comentario_maestro
+          e.comentario_revision AS comentario_maestro
         FROM tareas t
         INNER JOIN cursos c ON t.curso_id = c.id
         INNER JOIN inscripciones i ON c.id = i.curso_id
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
           e.estado AS entrega_estado,
           e.fecha_entrega,
           e.calificacion,
-          e.comentario AS comentario_maestro
+          e.comentario_revision AS comentario_maestro
         FROM tareas t
         INNER JOIN cursos c ON t.curso_id = c.id
         INNER JOIN inscripciones i ON c.id = i.curso_id

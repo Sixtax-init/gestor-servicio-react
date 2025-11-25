@@ -30,7 +30,7 @@ export function MisTareasTab() {
   useEffect(() => {
     fetchTareas()
   }, [])
- const fetchTareas = async () => {
+  const fetchTareas = async () => {
     setLoading(true)
     try {
       const response = await fetch("/api/alumno/tareas")
@@ -151,7 +151,7 @@ export function MisTareasTab() {
                         >
 
                           <Upload className="mr-2 h-4 w-4" />
-                          {tarea.entrega_id ? "Reenviar" : "Entregar"}
+                          {tarea.entrega_id ? (tarea.entrega_estado === 'rechazada' ? 'Reenviar' : 'Reenviar') : 'Entregar'}
                         </Button>
                       </div>
                     </div>
