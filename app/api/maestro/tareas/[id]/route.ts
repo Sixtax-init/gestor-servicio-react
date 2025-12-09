@@ -1,16 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession()
     if (!session || session.tipo_usuario !== "maestro") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
+    const { id } = await params
     const db = sql
-    const tareaId = Number.parseInt(params.id)
+    const tareaId = Number.parseInt(id)
 
     const [tarea] = await db`
       SELECT t.*, c.nombre_grupo as curso_nombre
@@ -30,13 +31,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession()
     if (!session || session.tipo_usuario !== "maestro") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const {
       titulo,
@@ -49,7 +51,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       activo,
     } = body
     const db = sql
-    const tareaId = Number.parseInt(params.id)
+    const tareaId = Number.parseInt(id)
 
     // Verificar que la tarea pertenece a un curso del maestro
     const [tareaExistente] = await db`
@@ -83,15 +85,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession()
     if (!session || session.tipo_usuario !== "maestro") {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
+    const { id } = await params
     const db = sql
-    const tareaId = Number.parseInt(params.id)
+    const tareaId = Number.parseInt(id)
 
     // Verificar que la tarea pertenece a un curso del maestro
     const [tareaExistente] = await db`

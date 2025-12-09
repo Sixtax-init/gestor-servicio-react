@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 import { redirect } from "next/navigation"
 import { sql } from "@/lib/db"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"

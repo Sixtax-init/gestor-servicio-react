@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; entregaId: string } },
+  { params }: { params: Promise<{ id: string; entregaId: string }> },
 ) {
   try {
     const session = await getSession()
@@ -12,8 +12,9 @@ export async function PUT(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const tareaId = Number(params.id)
-    const entregaId = Number(params.entregaId)
+    const { id, entregaId: entregaIdParam } = await params
+    const tareaId = Number(id)
+    const entregaId = Number(entregaIdParam)
     const { estado, comentario, calificacion } = await request.json()
 
     // ✅ Verificar que la entrega pertenece a una tarea del maestro

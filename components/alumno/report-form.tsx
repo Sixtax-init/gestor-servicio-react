@@ -4,17 +4,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { ReportData } from "@/app/report-form"
+import type { ReportData, Actividad } from "@/types/report"
 
-export interface Actividad {
-  actividad: string
-  descripcion: string
-  fecha_entrega: string
-  calificacion?: number
-  retroalimentacion?: string | null
-  curso: string
-  estado?: string
-}
+
 
 interface ReportFormProps {
   data: ReportData

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 import { saveFile } from "@/lib/file-upload"
 import path from "path"
 

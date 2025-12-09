@@ -1,5 +1,6 @@
+//typescript
 import { type NextRequest, NextResponse } from "next/server"
-import { requireRole } from "@/lib/session"
+import { getSession, requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 
 // ✅ Obtener los cursos del maestro
@@ -16,7 +17,7 @@ export async function GET() {
       FROM cursos
       WHERE maestro_id = ${user.id} AND activo = true
       ORDER BY nombre_grupo ASC
-    `
+  `
 
     return NextResponse.json({ cursos })
   } catch (error) {
@@ -42,10 +43,10 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await sql`
-      INSERT INTO cursos (nombre_grupo, tipo, maestro_id, descripcion, activo)
-      VALUES (${nombre_grupo}, ${tipo}, ${user.id}, ${descripcion || null}, true)
-      RETURNING *
-    `
+      INSERT INTO cursos(nombre_grupo, tipo, maestro_id, descripcion, activo)
+VALUES(${nombre_grupo}, ${tipo}, ${user.id}, ${descripcion || null}, true)
+RETURNING *
+  `
 
     return NextResponse.json({ curso: result[0] }, { status: 201 })
   } catch (error) {

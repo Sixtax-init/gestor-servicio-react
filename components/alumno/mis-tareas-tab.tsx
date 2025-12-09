@@ -108,10 +108,12 @@ export function MisTareasTab() {
                         <p className="text-sm text-muted-foreground mb-3">{tarea.descripcion}</p>
 
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>Vence: {new Date(tarea.fecha_vencimiento).toLocaleString()}</span>
-                          </div>
+                          {tarea.fecha_vencimiento && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              <span>Vence: {new Date(tarea.fecha_vencimiento).toLocaleString()}</span>
+                            </div>
+                          )}
 
                           {tarea.asignacion_horas && (
                             <div className="flex items-center gap-1">

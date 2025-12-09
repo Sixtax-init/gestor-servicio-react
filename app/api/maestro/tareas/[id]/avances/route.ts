@@ -1,7 +1,7 @@
 // app/api/maestro/tareas/[id]/avances/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
