@@ -101,29 +101,29 @@ export function MisAlumnosTab() {
         {/* MOSTRAR RESULTADOS GLOBALES */}
         {search.length > 0 && (
           <div className="mb-6">
-            <p className="text-sm text-gray-500 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               Resultados: {alumnosFiltrados.length} alumno(s)
             </p>
 
             {alumnosFiltrados.length === 0 && (
-              <p className="text-gray-500 text-sm">No se encontraron alumnos.</p>
+              <p className="text-muted-foreground text-sm">No se encontraron alumnos.</p>
             )}
 
             {alumnosFiltrados.map((al: any) => (
               <div
                 key={al.id}
-                className="p-4 border rounded-xl mb-3 bg-white shadow-sm"
+                className="p-4 border rounded-xl mb-3 bg-card shadow-sm"
               >
-                <p className="font-semibold">{al.nombre} {al.apellidos}</p>
-                <p className="text-sm text-gray-600">{al.email}</p>
+                <p className="font-semibold text-card-foreground">{al.nombre} {al.apellidos}</p>
+                <p className="text-sm text-muted-foreground">{al.email}</p>
 
                 <div className="mt-2">
-                  <span className="text-xs font-bold bg-black text-white px-2 py-1 rounded">
+                  <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-1 rounded">
                     {al.matricula}
                   </span>
                 </div>
 
-                <div className="mt-3 text-sm text-blue-600">
+                <div className="mt-3 text-sm text-primary">
                   <p className="font-semibold">Cursos:</p>
                   <ul className="list-disc ml-5">
                     {al.cursos.map((curso: any) => (
@@ -135,7 +135,7 @@ export function MisAlumnosTab() {
             ))}
 
 
-            <hr className="my-6" />
+            <hr className="my-6 border-border" />
           </div>
         )}
 

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,38 +41,10 @@ const features = [
 ]
 
 export default function HomePage() {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [cardWidth, setCardWidth] = useState(0)
   const [mounted, setMounted] = useState(false)
 
   // Indicamos que estamos en cliente para evitar hydration mismatch
   useEffect(() => setMounted(true), [])
-
-  // Calculamos ancho de cada card + gap
-  useEffect(() => {
-    if (!scrollRef.current) return
-    const firstCard = scrollRef.current.querySelector<HTMLDivElement>(".carousel-card")
-    if (!firstCard) return
-    const style = getComputedStyle(firstCard)
-    const width = firstCard.offsetWidth + parseInt(style.marginRight)
-    setCardWidth(width)
-  }, [mounted])
-
-  // Scroll infinito suave
-  useEffect(() => {
-    if (!scrollRef.current || cardWidth === 0) return
-    const el = scrollRef.current
-    const totalScrollWidth = cardWidth * features.length
-    let scrollLeft = 0
-
-    const interval = setInterval(() => {
-      scrollLeft += 1
-      if (scrollLeft >= totalScrollWidth) scrollLeft -= totalScrollWidth
-      el.scrollLeft = scrollLeft
-    }, 16)
-
-    return () => clearInterval(interval)
-  }, [cardWidth])
 
   if (!mounted) return null
 
@@ -111,30 +83,46 @@ export default function HomePage() {
       </section>
 
       {/* Features Carousel */}
-      <section id="features" className="container mx-auto px-4 py-16">
-        <h3 className="text-3xl font-bold text-center mb-8">Características Principales</h3>
-        <div ref={scrollRef} className="flex gap-6 overflow-hidden">
-          {features.concat(features).map((feature, idx) => (
-            <div key={idx} className="carousel-card flex-shrink-0 w-80">
-              <Card className="transition-transform duration-300 hover:scale-105 hover:shadow-lg">
-                <CardHeader>
-                  {React.createElement(feature.icon, { className: "h-10 w-10 text-primary mb-2" })}
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    {feature.items.map((item, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+      <section id="features" className="py-16 relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <h3 className="text-3xl font-bold text-center mb-12">Características Principales</h3>
+        </div>
+
+        {/* Carousel Container with Gradients */}
+        <div className="relative">
+          {/* Left Gradient Overlay */}
+          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
+
+          {/* Right Gradient Overlay */}
+          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
+
+          {/* Scrolling Container */}
+          <div className="carousel-track-container overflow-hidden">
+            <div className="carousel-track flex gap-6">
+              {/* Triplicamos las features para un loop más suave */}
+              {features.concat(features, features).map((feature, idx) => (
+                <div key={idx} className="carousel-card flex-shrink-0 w-80">
+                  <Card className="h-full transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/10">
+                    <CardHeader>
+                      {React.createElement(feature.icon, { className: "h-10 w-10 text-primary mb-2" })}
+                      <CardTitle>{feature.title}</CardTitle>
+                      <CardDescription>{feature.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        {feature.items.map((item, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 

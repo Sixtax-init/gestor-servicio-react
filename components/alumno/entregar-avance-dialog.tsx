@@ -38,8 +38,9 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
             const data = await res.json()
             setAvances(data)
 
-            // ✅ Si ya hay un avance final y la entrega no está rechazada, deshabilita el formulario
+            // ✅ Bloquear si hay avance final O entrega directa
             const tieneFinalBloqueante = data.some((a: Avance) => a.es_final && a.estado_entrega_principal !== 'rechazada')
+
             if (tieneFinalBloqueante) {
                 setSubiendo(true) // bloquea el botón de envío
             } else {
@@ -144,7 +145,9 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
                     <DialogFooter>
                         {avances.some((a) => a.es_final && a.estado_entrega_principal !== 'rechazada') ? (
                             <p className="text-sm text-muted-foreground">
-                                ⚠️ Ya has marcado un avance como final. No puedes subir más avances.
+                                ⚠️ {avances.some((a) => a.es_final && a.comentario === 'Entrega directa')
+                                    ? 'Ya has enviado una entrega final directa. No puedes subir más avances.'
+                                    : 'Ya has marcado un avance como final. No puedes subir más avances.'}
                             </p>
                         ) : (
                             <Button type="submit" disabled={subiendo}>
