@@ -6,9 +6,13 @@ import { Progress } from "@/components/ui/progress"
 import { Clock, RefreshCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export function MisHorasTab() {
-  const [inscripciones, setInscripciones] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+interface MisHorasTabProps {
+  inscripciones?: any[]
+}
+
+export function MisHorasTab({ inscripciones: initialInscripciones = [] }: MisHorasTabProps) {
+  const [inscripciones, setInscripciones] = useState<any[]>(initialInscripciones)
+  const [loading, setLoading] = useState(false)
   const metaHoras = 480 // Meta de horas de servicio social
 
   // ✅ Cargar inscripciones reales desde el backend
@@ -27,7 +31,9 @@ export function MisHorasTab() {
   }
 
   useEffect(() => {
-    fetchInscripciones()
+    if (initialInscripciones.length === 0) {
+      fetchInscripciones()
+    }
   }, [])
 
   const serviciosSociales = inscripciones.filter((i) => i.tipo === "servicio_social")
@@ -51,10 +57,10 @@ export function MisHorasTab() {
         </Button>
 
         <div className="flex gap-4 justify-center pt-4">
-            <Link href="/report-form">
-              <Button size="lg">Reporte</Button>
-            </Link>
-          </div>
+          <Link href="/report-form">
+            <Button size="lg">Reporte</Button>
+          </Link>
+        </div>
 
       </CardHeader>
 

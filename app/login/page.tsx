@@ -59,9 +59,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--background)] transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background transition-colors duration-300 animate-fade-in">
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md backdrop-blur-md bg-card/80 border-white/20 shadow-xl animate-slide-up">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Gestor de Horas</CardTitle>
           <CardDescription className="text-center">Ingresa tu matrícula y contraseña para acceder</CardDescription>
