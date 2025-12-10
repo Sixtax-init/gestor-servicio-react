@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { requireRole } from "@/lib/session"
+import { getSession, requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 
 export async function GET(
@@ -27,7 +27,7 @@ export async function GET(
       AND maestro_id = ${user.id}
       AND activo = true
       LIMIT 1
-    `
+  `
 
     if (curso.length === 0) {
       return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
@@ -35,17 +35,17 @@ export async function GET(
 
     // 👨‍🎓 Obtener alumnos inscritos
     const alumnos = await sql`
-      SELECT 
-        u.id, 
-        u.nombre, 
-        u.apellidos, 
-        u.matricula, 
-        u.email
+SELECT
+u.id,
+  u.nombre,
+  u.apellidos,
+  u.matricula,
+  u.email
       FROM inscripciones i
       INNER JOIN usuarios u ON u.id = i.alumno_id
       WHERE i.curso_id = ${cursoId}
       ORDER BY u.apellidos ASC, u.nombre ASC
-    `
+  `
 
     return NextResponse.json({ alumnos }, { status: 200 })
   } catch (error) {

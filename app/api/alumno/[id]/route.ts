@@ -1,17 +1,19 @@
 // app/api/alumno/[id]/route.ts
 import { NextResponse } from "next/server"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
+
+    const { id } = await params
 
     const alumno = await sql`
       SELECT 
@@ -21,7 +23,7 @@ export async function GET(
         apellidos,
         horas_acumuladas
       FROM usuarios
-      WHERE id = ${params.id}
+      WHERE id = ${id}
       AND tipo_usuario = 'alumno'
       AND activo = true
     `

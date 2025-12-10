@@ -10,15 +10,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTheme } from "next-themes"
 
+import { Eye, EyeOff } from "lucide-react"
+
 export default function LoginPage() {
   const router = useRouter()
   const [matricula, setMatricula] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const { theme, setTheme } = useTheme()
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // ... (rest of handleSubmit is unchanged, but included for context if needed, or I can just target the specific blocks)
     e.preventDefault()
     setError("")
     setLoading(true)
@@ -55,9 +59,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--background)] transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background transition-colors duration-300 animate-fade-in">
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md backdrop-blur-md bg-card/80 border-white/20 shadow-xl animate-slide-up">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Gestor de Horas</CardTitle>
           <CardDescription className="text-center">Ingresa tu matrícula y contraseña para acceder</CardDescription>
@@ -78,14 +82,24 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             {error && (

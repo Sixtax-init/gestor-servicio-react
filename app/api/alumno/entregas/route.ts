@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +11,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { tarea_id, comentario, archivo_entrega } = body
+
+    if (!archivo_entrega) {
+      return NextResponse.json({ error: "Es necesario adjuntar un archivo para realizar la entrega." }, { status: 400 })
+    }
 
     // Verificar que el alumno está inscrito en el curso de la tarea
     const [verificacion] = await sql`

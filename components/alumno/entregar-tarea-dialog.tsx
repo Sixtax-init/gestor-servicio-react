@@ -36,34 +36,52 @@ export function EntregarTareaDialog({ open, onOpenChange, tarea, onSuccess }: En
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!tarea?.id) return
+
+    if (!archivo) {
+      alert("⚠️ Debes adjuntar un archivo para realizar la entrega.")
+      return
+    }
+
     setSubiendo(true)
 
     try {
-      // 1️⃣ Crear o actualizar la entrega (sin archivo)
+      // 1️⃣ Subir el archivo primero
+      const formData = new FormData()
+      formData.append("file", archivo)
+      formData.append("type", "avances") // Usamos 'avances' para que no pida entregaId
+      formData.append("referenceId", "0")
+
+      const resUpload = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!resUpload.ok) {
+        const errorData = await resUpload.json()
+        throw new Error(errorData.error || "Error al subir archivo")
+      }
+
+      const archivoSubido = await resUpload.json()
+
+      // 2️⃣ Crear la entrega con la info del archivo
       const resEntrega = await fetch("/api/alumno/entregas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tarea_id: tarea.id,
           comentario: comentario.trim(),
+          archivo_entrega: {
+            nombre: archivoSubido.nombre,
+            ruta: archivoSubido.ruta,
+            tipo: archivoSubido.tipo,
+            size: archivoSubido.size
+          }
         }),
       })
 
-      if (!resEntrega.ok) throw new Error("Error al registrar entrega")
-      const entrega = await resEntrega.json()
-
-      // 2️⃣ Subir el archivo si existe
-      if (archivo) {
-        const formData = new FormData()
-        formData.append("file", archivo)
-        formData.append("entregaId", entrega.id.toString())
-
-        const resUpload = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        })
-
-        if (!resUpload.ok) throw new Error("Error al subir archivo")
+      if (!resEntrega.ok) {
+        const errorData = await resEntrega.json()
+        throw new Error(errorData.error || "Error al registrar entrega")
       }
 
       alert("✅ Entrega enviada correctamente")
@@ -73,7 +91,7 @@ export function EntregarTareaDialog({ open, onOpenChange, tarea, onSuccess }: En
       onOpenChange(false)
     } catch (error) {
       console.error("[entregar-tarea-dialog] Error:", error)
-      alert("❌ Error al enviar la entrega")
+      alert(error instanceof Error ? error.message : "❌ Error al enviar la entrega")
     } finally {
       setSubiendo(false)
     }

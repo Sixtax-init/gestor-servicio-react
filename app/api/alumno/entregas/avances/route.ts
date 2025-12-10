@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 import { toast } from "sonner";
 
 
@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { tarea_id, comentario, archivo_url } = body
+
+    if (!archivo_url) {
+      return NextResponse.json({ error: "Es necesario adjuntar un archivo para subir un avance." }, { status: 400 })
+    }
 
     // Validar que el alumno esté inscrito
     const [valido] = await sql`

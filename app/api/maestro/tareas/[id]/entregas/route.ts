@@ -1,7 +1,7 @@
 // app/api/maestro/tareas/[id]/entregas/route.ts
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session"
+import { getSession } from "@/lib/session.server"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {

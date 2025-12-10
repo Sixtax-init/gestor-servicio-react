@@ -8,6 +8,7 @@ import { Edit, Trash2, Eye, Calendar, Clock, Users } from "lucide-react"
 import { EditTareaDialog } from "./edit-tarea-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { VerEntregasDialog } from "./ver-entregas-dialog"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 interface Tarea {
   id: number
@@ -94,72 +95,91 @@ export function TareasList() {
     )
   }
 
+  const groupedTareas = tareas.reduce((acc, tarea) => {
+    if (!acc[tarea.curso_nombre]) {
+      acc[tarea.curso_nombre] = []
+    }
+    acc[tarea.curso_nombre].push(tarea)
+    return acc
+  }, {} as Record<string, Tarea[]>)
+
   return (
     <>
-      <div className="grid gap-4">
-        {tareas.map((tarea) => (
-          <Card key={tarea.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-lg">{tarea.titulo}</h3>
-                    <Badge variant={getPrioridadColor(tarea.prioridad)}>{tarea.prioridad}</Badge>
-                    {!tarea.activo && <Badge variant="outline">Inactiva</Badge>}
-                  </div>
-
-                  <p className="text-sm text-muted-foreground mb-3">{tarea.descripcion}</p>
-
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        Vence: {tarea.fecha_vencimiento
-                          ? new Date(tarea.fecha_vencimiento).toLocaleDateString()
-                          : "Sin fecha"}
-                      </span>
-
-                    </div>
-
-                    {tarea.asignacion_horas && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{tarea.asignacion_horas} horas</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{tarea.total_entregas} entregas</span>
-                      {tarea.entregas_pendientes > 0 && (
-                        <Badge variant="secondary" className="ml-1">
-                          {tarea.entregas_pendientes} pendientes
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-2">
-                    <Badge variant="outline">{tarea.curso_nombre}</Badge>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 ml-4">
-                  <Button variant="outline" size="icon" onClick={() => setViewingEntregas(tarea)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => setEditingTarea(tarea)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={() => setDeletingTarea(tarea)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+      <Accordion type="multiple" className="w-full space-y-4">
+        {Object.entries(groupedTareas).map(([cursoNombre, cursoTareas], index) => (
+          <AccordionItem key={index} value={`item-${index}`} className="border rounded-lg px-4 bg-card">
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex items-center gap-4 text-left">
+                <span className="font-semibold text-lg">{cursoNombre}</span>
+                <Badge variant="secondary" className="ml-2">
+                  {cursoTareas.length} tareas
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4 pb-4">
+              <div className="grid gap-4">
+                {cursoTareas.map((tarea) => (
+                  <Card key={tarea.id} className="border-l-4 border-l-primary/50">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{tarea.titulo}</h3>
+                            <Badge variant={getPrioridadColor(tarea.prioridad)}>{tarea.prioridad}</Badge>
+                            {!tarea.activo && <Badge variant="outline">Inactiva</Badge>}
+                          </div>
+
+                          <p className="text-sm text-muted-foreground mb-3">{tarea.descripcion}</p>
+
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                Vence: {tarea.fecha_vencimiento
+                                  ? new Date(tarea.fecha_vencimiento).toLocaleDateString()
+                                  : "Sin fecha"}
+                              </span>
+                            </div>
+
+                            {tarea.asignacion_horas && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{tarea.asignacion_horas} horas</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              <span>{tarea.total_entregas} entregas</span>
+                              {tarea.entregas_pendientes > 0 && (
+                                <Badge variant="secondary" className="ml-1">
+                                  {tarea.entregas_pendientes} pendientes
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 ml-4">
+                          <Button variant="outline" size="icon" onClick={() => setViewingEntregas(tarea)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => setEditingTarea(tarea)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => setDeletingTarea(tarea)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
         ))}
-      </div>
+      </Accordion>
 
       {editingTarea && (
         <EditTareaDialog

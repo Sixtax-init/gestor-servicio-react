@@ -5,28 +5,7 @@ import { ReportForm } from "@/components/alumno/report-form"
 import { ReportPreview } from "@/components/alumno/report-preview"
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
-
-export interface ReportData {
-  reportNumber: string
-  apellidoPaterno: string
-  apellidoMaterno: string
-  nombre: string
-  carrera: string
-  numeroControl: string
-  fechaInicioDia: string
-  fechaInicioMes: string
-  fechaInicioAno: string
-  fechaFinDia: string
-  fechaFinMes: string
-  fechaFinAno: string
-  dependencia: string
-  programa: string
-  resumenActividades: string
-  horasReporte: string
-  horasAcumuladas: string
-  nombreJefe: string
-  puestoJefe: string
-}
+import { ReportData } from "@/types/report"
 
 export default function Page() {
   console.log("[v0] Page component rendering")
@@ -51,6 +30,7 @@ export default function Page() {
     horasAcumuladas: "",
     nombreJefe: "",
     puestoJefe: "",
+    actividades: []
   })
 
   const [showPreview, setShowPreview] = useState(false)
@@ -71,7 +51,11 @@ export default function Page() {
 
         {!showPreview ? (
           <div className="space-y-6">
-            <ReportForm data={reportData} onDataChange={setReportData} />
+            <ReportForm
+              data={reportData}
+              onDataChange={setReportData}
+              actividades={reportData.actividades}
+            />
             <div className="flex gap-4">
               <Button onClick={() => setShowPreview(true)} size="lg">
                 Ver Vista Previa
@@ -90,7 +74,10 @@ export default function Page() {
               </Button>
             </div>
             <div className="border rounded-lg p-8 bg-white print:border-0 print:rounded-none print:p-0">
-              <ReportPreview data={reportData} />
+              <ReportPreview
+                data={reportData}
+                actividades={reportData.actividades}
+              />
             </div>
           </div>
         )}

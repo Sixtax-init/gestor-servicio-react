@@ -10,6 +10,7 @@
     "db:edit-curso": "node scripts/add-curso.js",
     "db:edit-tarea": "node scripts/edit-add-tarea.js",
     "db:curso-upload": "node scripts/curso-upload.js",
+    "db:setup-complete": "node scripts/setup-complete-db.js",
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start"

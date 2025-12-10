@@ -6,30 +6,8 @@ import { ReportForm } from "@/components/alumno/report-form"
 import { ReportPreview } from "@/components/alumno/report-preview"
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
-import { getSession } from "@/lib/session"
 import { useRouter } from "next/navigation"
-
-export interface ReportData {
-  reportNumber: string
-  apellidoPaterno: string
-  apellidoMaterno: string
-  nombre: string
-  carrera: string
-  numeroControl: string
-  fechaInicioDia: string
-  fechaInicioMes: string
-  fechaInicioAno: string
-  fechaFinDia: string
-  fechaFinMes: string
-  fechaFinAno: string
-  dependencia: string
-  programa: string
-  resumenActividades: string
-  horasReporte: string
-  horasAcumuladas: string
-  nombreJefe: string
-  puestoJefe: string
-}
+import { ReportData } from "@/types/report"
 
 export default function ReportePage() {
   const router = useRouter()
@@ -53,6 +31,7 @@ export default function ReportePage() {
     horasAcumuladas: "0",
     nombreJefe: "",
     puestoJefe: "Jefe de Departamento",
+    actividades: []
   })
 
   const [showPreview, setShowPreview] = useState(false)
@@ -61,7 +40,13 @@ export default function ReportePage() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const session = await getSession()
+        const sessionResponse = await fetch('/api/auth/session')
+        if (!sessionResponse.ok) {
+          router.push('/login')
+          return
+        }
+        const session = await sessionResponse.json()
+
         if (!session) {
           router.push('/login')
           return
@@ -119,8 +104,8 @@ export default function ReportePage() {
 
     return tareas
       .map((tarea, index) => {
-        const fecha = tarea.fecha_vencimiento 
-          ? new Date(tarea.fecha_vencimiento).toLocaleDateString() 
+        const fecha = tarea.fecha_vencimiento
+          ? new Date(tarea.fecha_vencimiento).toLocaleDateString()
           : 'Sin fecha'
         return `${index + 1}. ${tarea.titulo || 'Sin título'}${tarea.asignacion_horas ? ` (${tarea.asignacion_horas} horas)` : ''} - ${fecha}`
       })
@@ -152,13 +137,14 @@ export default function ReportePage() {
 
         {!showPreview ? (
           <div className="space-y-6">
-            <ReportForm 
-              data={reportData} 
-              onDataChange={setReportData} 
+            <ReportForm
+              data={reportData}
+              onDataChange={setReportData}
+              actividades={reportData.actividades}
             />
             <div className="flex gap-4">
-              <Button 
-                onClick={() => setShowPreview(true)} 
+              <Button
+                onClick={() => setShowPreview(true)}
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -169,15 +155,15 @@ export default function ReportePage() {
         ) : (
           <div className="space-y-6">
             <div className="flex gap-4 print:hidden">
-              <Button 
-                onClick={() => setShowPreview(false)} 
+              <Button
+                onClick={() => setShowPreview(false)}
                 variant="outline"
                 className="border-gray-300"
               >
                 Editar Formulario
               </Button>
-              <Button 
-                onClick={handlePrint} 
+              <Button
+                onClick={handlePrint}
                 className="gap-2 bg-blue-600 hover:bg-blue-700"
               >
                 <Printer className="h-4 w-4" />
@@ -185,7 +171,10 @@ export default function ReportePage() {
               </Button>
             </div>
             <div className="border rounded-lg p-8 bg-white print:border-0 print:rounded-none print:p-0">
-              <ReportPreview data={reportData} />
+              <ReportPreview
+                data={reportData}
+                actividades={reportData.actividades}
+              />
             </div>
           </div>
         )}

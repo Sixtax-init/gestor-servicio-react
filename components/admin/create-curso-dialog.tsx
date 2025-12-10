@@ -40,10 +40,10 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
 
   const fetchMaestros = async () => {
     try {
-      const response = await fetch("/api/admin/usuarios")
+      // Fetch active teachers only, with a high limit to avoid pagination issues in dropdown
+      const response = await fetch("/api/admin/usuarios?tipo=maestro&status=active&limit=100")
       const data = await response.json()
-      const maestrosList = data.usuarios?.filter((u: any) => u.tipo_usuario === "maestro") || []
-      setMaestros(maestrosList)
+      setMaestros(data.usuarios || [])
     } catch (error) {
       console.error("[v0] Error fetching maestros:", error)
     }
