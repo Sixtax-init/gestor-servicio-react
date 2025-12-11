@@ -137,28 +137,30 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
           <div className="text-center py-8 text-muted-foreground">No hay entregas para esta tarea</div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted">
-              <TabsTrigger value="pendiente" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background">
-                <span className="font-medium">Pendientes</span>
-                <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("pendiente").length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="revisada" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background">
-                <span className="font-medium">Revisadas</span>
-                <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("revisada").length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="aprobada" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background">
-                <span className="font-medium">Aprobadas</span>
-                <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("aprobada").length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="rechazada" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background">
-                <span className="font-medium">Rechazadas</span>
-                <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("rechazada").length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="todas" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background">
-                <span className="font-medium">Todas</span>
-                <Badge variant="secondary" className="text-xs">{entregas.length}</Badge>
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
+              <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-5 h-auto p-1 bg-muted">
+                <TabsTrigger value="pendiente" className="flex flex-col gap-1 py-2 px-3 whitespace-nowrap data-[state=active]:bg-background">
+                  <span className="font-medium text-xs sm:text-sm">Pendientes</span>
+                  <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("pendiente").length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="revisada" className="flex flex-col gap-1 py-2 px-3 whitespace-nowrap data-[state=active]:bg-background">
+                  <span className="font-medium text-xs sm:text-sm">Revisadas</span>
+                  <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("revisada").length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="aprobada" className="flex flex-col gap-1 py-2 px-3 whitespace-nowrap data-[state=active]:bg-background">
+                  <span className="font-medium text-xs sm:text-sm">Aprobadas</span>
+                  <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("aprobada").length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="rechazada" className="flex flex-col gap-1 py-2 px-3 whitespace-nowrap data-[state=active]:bg-background">
+                  <span className="font-medium text-xs sm:text-sm">Rechazadas</span>
+                  <Badge variant="secondary" className="text-xs">{getEntregasPorEstado("rechazada").length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="todas" className="flex flex-col gap-1 py-2 px-3 whitespace-nowrap data-[state=active]:bg-background">
+                  <span className="font-medium text-xs sm:text-sm">Todas</span>
+                  <Badge variant="secondary" className="text-xs">{entregas.length}</Badge>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {["pendiente", "revisada", "aprobada", "rechazada", "todas"].map((estado) => (
               <TabsContent key={estado} value={estado} className="mt-4">
@@ -171,13 +173,13 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
                     {getEntregasPorEstado(estado).map((entrega) => (
                       <AccordionItem key={entrega.id} value={String(entrega.id)}>
                         <AccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center justify-between w-full pr-4">
-                            <div className="flex items-center gap-3">
-                              <User className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full pr-4 gap-2">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                               <span className="font-medium">{entrega.nombre} {entrega.apellidos}</span>
                               <Badge variant="outline" className="text-xs">{entrega.matricula}</Badge>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 self-start sm:self-center">
                               <Badge variant={getEstadoColor(entrega.estado)}>{entrega.estado}</Badge>
                               {entrega.calificacion !== null && (
                                 <Badge variant="secondary">{entrega.calificacion}/100</Badge>

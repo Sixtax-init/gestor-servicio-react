@@ -6,11 +6,15 @@ import type { Curso } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { BookOpen, ClipboardList, Users, LogOut } from "lucide-react"
+import { BookOpen, ClipboardList, Users, LogOut, HelpCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { MisCursosTab } from "./mis-cursos-tab"
 import { MisTareasTab } from "./mis-tareas-tab"
 import { MisAlumnosTab } from "./mis-alumnos-tab"
+import { useTour } from "@/lib/hooks/use-tour"
+import { TourStep } from "@/components/ui/tour-step"
+import { TourOverlay } from "@/components/ui/tour-overlay"
+import { maestroTour } from "@/lib/tours/maestro-tour"
 
 interface MaestroDashboardProps {
   user: SessionUser
@@ -25,6 +29,8 @@ interface MaestroDashboardProps {
 export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("cursos")
+  const tour = useTour(maestroTour, setActiveTab)
 
   const handleLogout = async () => {
     setLoading(true)
@@ -35,7 +41,7 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
   return (
     <div className="min-h-screen bg-background animate-fade-in">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden border-b bg-card">
+      <div className="relative overflow-hidden border-b bg-card" data-tour="welcome-banner">
         <div className="absolute inset-0 bg-background/10 backdrop-blur-[1px]" />
         <div className="container mx-auto px-4 py-8 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -45,10 +51,16 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
                 Bienvenido, <span className="font-semibold">{user.nombre} {user.apellidos}</span>
               </p>
             </div>
-            <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
-              <LogOut className="mr-2 h-4 w-4" />
-              Cerrar Sesión
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={tour.resetTour} className="shadow-lg">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Manual
+              </Button>
+              <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
+                <LogOut className="mr-2 h-4 w-4" />
+                Cerrar Sesión
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -56,7 +68,7 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
       <main className="container mx-auto px-4 py-8 -mt-6 relative z-20">
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-3 mb-8 animate-slide-up">
-          <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-courses">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Mis Cursos</CardTitle>
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
@@ -69,7 +81,7 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-tasks">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Tareas Asignadas</CardTitle>
               <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
@@ -82,7 +94,7 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-students">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Alumnos Inscritos</CardTitle>
               <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
@@ -96,11 +108,11 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
           </Card>
         </div>
 
-        <Tabs defaultValue="cursos" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl">
-            <TabsTrigger value="cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Mis Cursos</TabsTrigger>
-            <TabsTrigger value="tareas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Tareas</TabsTrigger>
-            <TabsTrigger value="alumnos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Alumnos</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
+            <TabsTrigger value="cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-cursos">Mis Cursos</TabsTrigger>
+            <TabsTrigger value="tareas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-tareas">Tareas</TabsTrigger>
+            <TabsTrigger value="alumnos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-alumnos">Alumnos</TabsTrigger>
           </TabsList>
 
           <div className="animate-fade-in">
@@ -118,6 +130,23 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
           </div>
         </Tabs>
       </main>
+
+      {/* Tour Components */}
+      <TourOverlay targetSelector={tour.currentStepData?.target || ""} isActive={tour.isRunning} />
+      {tour.isRunning && tour.currentStepData && (
+        <TourStep
+          targetSelector={tour.currentStepData.target}
+          title={tour.currentStepData.title}
+          content={tour.currentStepData.content}
+          currentStep={tour.currentStep}
+          totalSteps={tour.totalSteps}
+          onNext={tour.nextStep}
+          onPrev={tour.prevStep}
+          onSkip={tour.skipTour}
+          isActive={tour.isRunning}
+          placement={tour.currentStepData.placement}
+        />
+      )}
     </div>
   )
 }

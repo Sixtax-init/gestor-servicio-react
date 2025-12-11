@@ -95,9 +95,9 @@ export function MisTareasTab() {
               {tareas.map((tarea) => (
                 <Card key={tarea.id}>
                   <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
                           <h3 className="font-semibold text-lg">{tarea.titulo}</h3>
                           <Badge variant={getPrioridadColor(tarea.prioridad)}>{tarea.prioridad}</Badge>
                           {tarea.entrega_estado && (
@@ -146,10 +146,11 @@ export function MisTareasTab() {
                         )}
                       </div>
 
-                      <div className="ml-4">
+                      <div className="flex justify-end">
                         <Button
                           onClick={() => setEntregandoTarea(tarea)}
                           disabled={tarea.entrega_estado === "pendiente" || tarea.entrega_estado === "aprobada"}
+                          className="w-full sm:w-auto"
                         >
 
                           <Upload className="mr-2 h-4 w-4" />

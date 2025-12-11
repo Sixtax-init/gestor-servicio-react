@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { ReportForm } from "@/components/alumno/report-form"
 import { ReportPreview } from "@/components/alumno/report-preview"
 import { Button } from "@/components/ui/button"
-import { Printer, Loader2 } from "lucide-react"
+import { Printer, Loader2, Monitor, Smartphone } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export interface ReportData {
   reportNumber: string
@@ -33,6 +34,7 @@ export interface ReportData {
 export default function Page() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
   const [actividades, setActividades] = useState<Array<{
     actividad: string
     descripcion: string
@@ -67,13 +69,25 @@ export default function Page() {
 
   const [showPreview, setShowPreview] = useState(false)
 
+  // Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024) // Bloquear en pantallas menores a 1024px
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   useEffect(() => {
     const cargarDatosAlumno = async () => {
       try {
         setIsLoading(true)
-        
+
         console.log('Iniciando carga de datos del alumno...')
-        
+
         // Obtener datos del alumno
         const [resAlumno, resActividades] = await Promise.all([
           fetch('/api/auth/me').then(async res => {
@@ -101,20 +115,20 @@ export default function Page() {
         const alumno = resAlumno.user; // Asegurarse de acceder a la propiedad 'user'
         const actividadesData = resActividades;
 
-          // Separar apellidos (manejar el caso en que apellidos sea null o undefined)
+        // Separar apellidos (manejar el caso en que apellidos sea null o undefined)
         const apellidos = alumno.apellidos || ''
         const [apellidoPaterno, ...restoApellidos] = apellidos.split(' ')
         const apellidoMaterno = restoApellidos.join(' ')
 
         // Formatear actividades para el resumen
-        const resumenActividades = actividadesData && Array.isArray(actividadesData) 
+        const resumenActividades = actividadesData && Array.isArray(actividadesData)
           ? actividadesData.map((act: any) => {
-              return `• ${act.actividad}: ${act.descripcion || 'Sin descripción'}`;
-            }).join('\n\n')
+            return `• ${act.actividad}: ${act.descripcion || 'Sin descripción'}`;
+          }).join('\n\n')
           : 'No hay actividades registradas'
 
         setActividades(actividadesData || [])
-        
+
         // Actualizar el estado con los datos del alumno
         setReportData(prev => ({
           ...prev,
@@ -168,6 +182,48 @@ export default function Page() {
     )
   }
 
+  // Mostrar pantalla de bloqueo en móvil
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full space-y-6">
+          <div className="flex justify-center">
+            <div className="relative">
+              <Monitor className="h-24 w-24 text-primary" />
+              <Smartphone className="h-12 w-12 text-muted-foreground absolute -bottom-2 -right-2" />
+            </div>
+          </div>
+
+          <Alert>
+            <Monitor className="h-4 w-4" />
+            <AlertTitle className="text-lg font-semibold">Se requiere una computadora</AlertTitle>
+            <AlertDescription className="mt-2 space-y-2">
+              <p>
+                El reporte bimestral de servicio social requiere una pantalla más grande para poder editarse e imprimirse correctamente.
+              </p>
+              <p className="font-medium">
+                Por favor, accede desde una computadora o laptop para continuar.
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-3">
+            <Button
+              onClick={() => router.push('/alumno')}
+              className="w-full"
+              size="lg"
+            >
+              Volver al Dashboard
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Tamaño mínimo requerido: 1024px de ancho
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="container mx-auto max-w-6xl">
@@ -178,9 +234,9 @@ export default function Page() {
 
         {!showPreview ? (
           <div className="space-y-6">
-            <ReportForm 
-              data={reportData} 
-              onDataChange={setReportData} 
+            <ReportForm
+              data={reportData}
+              onDataChange={setReportData}
               actividades={actividades}
             />
             <div className="flex gap-4">

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Eye, Calendar, Clock, Users } from "lucide-react"
+import { Edit, Trash2, ClipboardList, Calendar, Clock, Users } from "lucide-react"
 import { EditTareaDialog } from "./edit-tarea-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { VerEntregasDialog } from "./ver-entregas-dialog"
@@ -121,9 +121,9 @@ export function TareasList() {
                 {cursoTareas.map((tarea) => (
                   <Card key={tarea.id} className="border-l-4 border-l-primary/50">
                     <CardContent className="pt-6">
-                      <div className="flex items-start justify-between">
+                      <div className="flex flex-col gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
                             <h3 className="font-semibold text-lg">{tarea.titulo}</h3>
                             <Badge variant={getPrioridadColor(tarea.prioridad)}>{tarea.prioridad}</Badge>
                             {!tarea.activo && <Badge variant="outline">Inactiva</Badge>}
@@ -160,14 +160,14 @@ export function TareasList() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 ml-4">
-                          <Button variant="outline" size="icon" onClick={() => setViewingEntregas(tarea)}>
-                            <Eye className="h-4 w-4" />
+                        <div className="flex gap-3 sm:gap-2 justify-end sm:justify-start">
+                          <Button variant="outline" size="icon" onClick={() => setViewingEntregas(tarea)} title="Ver entregas" className="min-h-[44px] min-w-[44px]">
+                            <ClipboardList className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => setEditingTarea(tarea)}>
+                          <Button variant="outline" size="icon" onClick={() => setEditingTarea(tarea)} title="Editar tarea" className="min-h-[44px] min-w-[44px]">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => setDeletingTarea(tarea)}>
+                          <Button variant="outline" size="icon" onClick={() => setDeletingTarea(tarea)} title="Eliminar tarea" className="min-h-[44px] min-w-[44px]">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

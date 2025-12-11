@@ -5,11 +5,15 @@ import type { SessionUser } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Users, BookOpen, ClipboardList, LogOut } from "lucide-react"
+import { Users, BookOpen, ClipboardList, LogOut, HelpCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { UsuariosTab } from "./usuarios-tab"
 import { CursosTab } from "./cursos-tab"
 import { TareasTab } from "./tareas-tab"
+import { useTour } from "@/lib/hooks/use-tour"
+import { TourStep } from "@/components/ui/tour-step"
+import { TourOverlay } from "@/components/ui/tour-overlay"
+import { adminTour } from "@/lib/tours/admin-tour"
 
 interface AdminDashboardProps {
   user: SessionUser
@@ -23,6 +27,8 @@ interface AdminDashboardProps {
 export function AdminDashboard({ user, stats }: AdminDashboardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("usuarios")
+  const tour = useTour(adminTour, setActiveTab)
 
   const handleLogout = async () => {
     setLoading(true)
@@ -33,7 +39,7 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
   return (
     <div className="min-h-screen bg-background animate-fade-in">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden border-b bg-card">
+      <div className="relative overflow-hidden border-b bg-card" data-tour="welcome-banner">
         <div className="absolute inset-0 bg-background/10 backdrop-blur-[1px]" />
         <div className="container mx-auto px-4 py-8 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -43,10 +49,16 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
                 Bienvenido, <span className="font-semibold">{user.nombre} {user.apellidos}</span>
               </p>
             </div>
-            <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
-              <LogOut className="mr-2 h-4 w-4" />
-              Cerrar Sesión
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={tour.resetTour} className="shadow-lg">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Manual
+              </Button>
+              <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
+                <LogOut className="mr-2 h-4 w-4" />
+                Cerrar Sesión
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -54,7 +66,7 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
       <main className="container mx-auto px-4 py-8 -mt-6 relative z-20">
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-3 mb-8 animate-slide-up">
-          <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-users">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Usuarios</CardTitle>
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
@@ -67,7 +79,7 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-courses">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Cursos</CardTitle>
               <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
@@ -80,7 +92,7 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-tasks">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Tareas</CardTitle>
               <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
@@ -94,11 +106,11 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
           </Card>
         </div>
 
-        <Tabs defaultValue="usuarios" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl">
-            <TabsTrigger value="usuarios" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Usuarios</TabsTrigger>
-            <TabsTrigger value="cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Cursos</TabsTrigger>
-            <TabsTrigger value="tareas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Tareas</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
+            <TabsTrigger value="usuarios" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-usuarios">Usuarios</TabsTrigger>
+            <TabsTrigger value="cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-cursos">Cursos</TabsTrigger>
+            <TabsTrigger value="tareas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-tareas">Tareas</TabsTrigger>
           </TabsList>
 
           <div className="animate-fade-in">
@@ -116,6 +128,23 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
           </div>
         </Tabs>
       </main>
+
+      {/* Tour Components */}
+      <TourOverlay targetSelector={tour.currentStepData?.target || ""} isActive={tour.isRunning} />
+      {tour.isRunning && tour.currentStepData && (
+        <TourStep
+          targetSelector={tour.currentStepData.target}
+          title={tour.currentStepData.title}
+          content={tour.currentStepData.content}
+          currentStep={tour.currentStep}
+          totalSteps={tour.totalSteps}
+          onNext={tour.nextStep}
+          onPrev={tour.prevStep}
+          onSkip={tour.skipTour}
+          isActive={tour.isRunning}
+          placement={tour.currentStepData.placement}
+        />
+      )}
     </div>
   )
 }
