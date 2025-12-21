@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { SessionUser } from "@/lib/auth"
 import type { Curso } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { BookOpen, ClipboardList, Users, LogOut, HelpCircle } from "lucide-react"
+import { BookOpen, ClipboardList, Users, LogOut, HelpCircle, TrendingUp, Award, AlertTriangle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { MisCursosTab } from "./mis-cursos-tab"
 import { MisTareasTab } from "./mis-tareas-tab"
@@ -30,7 +30,24 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("cursos")
+  const [progressStats, setProgressStats] = useState<any>(null)
   const tour = useTour(maestroTour, setActiveTab)
+
+  // Fetch progress statistics
+  useEffect(() => {
+    const fetchProgressStats = async () => {
+      try {
+        const response = await fetch("/api/maestro/alumnos/progreso")
+        if (response.ok) {
+          const data = await response.json()
+          setProgressStats(data)
+        }
+      } catch (error) {
+        console.error("Error fetching progress stats:", error)
+      }
+    }
+    fetchProgressStats()
+  }, [])
 
   const handleLogout = async () => {
     setLoading(true)
@@ -66,47 +83,95 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
       </div>
 
       <main className="container mx-auto px-4 py-8 -mt-6 relative z-20">
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3 mb-8 animate-slide-up">
-          <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-courses">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Mis Cursos</CardTitle>
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.cursos}</div>
-              <p className="text-xs text-muted-foreground mt-1">Cursos activos actualmente</p>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Show basic stats on cursos/tareas tabs */}
+        {activeTab !== "alumnos" && (
+          <div className="grid gap-4 md:grid-cols-3 mb-8 animate-slide-up">
+            <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-courses">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Mis Cursos</CardTitle>
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                  <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.cursos}</div>
+                <p className="text-xs text-muted-foreground mt-1">Cursos activos actualmente</p>
+              </CardContent>
+            </Card>
 
-          <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-tasks">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Tareas Asignadas</CardTitle>
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <ClipboardList className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.tareas}</div>
-              <p className="text-xs text-muted-foreground mt-1">Tareas creadas y asignadas</p>
-            </CardContent>
-          </Card>
+            <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-tasks">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Tareas Asignadas</CardTitle>
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                  <ClipboardList className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.tareas}</div>
+                <p className="text-xs text-muted-foreground mt-1">Tareas creadas y asignadas</p>
+              </CardContent>
+            </Card>
 
-          <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-students">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Alumnos Inscritos</CardTitle>
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.alumnos}</div>
-              <p className="text-xs text-muted-foreground mt-1">En todos mis cursos</p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-students">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Alumnos Inscritos</CardTitle>
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                  <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.alumnos}</div>
+                <p className="text-xs text-muted-foreground mt-1">En todos mis cursos</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Progress Stats Cards - Show only on alumnos tab */}
+        {activeTab === "alumnos" && progressStats && (
+          <div className="grid gap-4 md:grid-cols-3 mb-8 animate-slide-up">
+            <Card className="border-l-4 border-l-orange-500 shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Promedio de Horas</CardTitle>
+                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+                  <TrendingUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{progressStats.averageHours}</div>
+                <p className="text-xs text-muted-foreground mt-1">Horas promedio del grupo</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Tasa de Completitud</CardTitle>
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                  <Award className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{progressStats.completionRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {progressStats.studentsCompleted} de {progressStats.totalStudents} completados
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-red-500 shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Alumnos en Riesgo</CardTitle>
+                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{progressStats.studentsAtRisk}</div>
+                <p className="text-xs text-muted-foreground mt-1">Menos del 50% completado</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
