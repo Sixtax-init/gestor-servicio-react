@@ -5,7 +5,8 @@ import type { Curso } from "@/lib/db"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, BookOpen } from "lucide-react"
+import { Plus, BookOpen, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { CreateCursoDialog } from "./create-curso-dialog"
 import { CreateTareaDialog } from "./create-tarea-dialog"
 
@@ -26,6 +27,28 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
 
   const handleTareaCreated = () => {
     setShowTareaDialog(false)
+  }
+
+  const handleDeleteCurso = async (cursoId: number) => {
+    if (!confirm("⚠️ ADVERTENCIA: ¿Estás seguro de eliminar este curso PERMANENTEMENTE?\n\nEsta acción borrará:\n- Todas las tareas y entregas.\n- Todas las inscripciones de alumnos.\n- LAS HORAS ACUMULADAS por los alumnos en este curso.\n\nEsta acción NO se puede deshacer.")) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/maestro/cursos/${cursoId}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        throw new Error("Error al eliminar el curso")
+      }
+
+      setCursos(cursos.filter(c => c.id !== cursoId))
+      toast.success("Curso eliminado correctamente")
+    } catch (error) {
+      toast.error("Error al eliminar el curso")
+      console.error(error)
+    }
   }
 
   return (
@@ -64,13 +87,23 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
                         <CardTitle className="text-lg">{curso.nombre_grupo}</CardTitle>
                         <CardDescription className="mt-1">{curso.descripcion}</CardDescription>
                       </div>
-                      <Badge variant={curso.tipo === "servicio_social" ? "default" : "secondary"}>
-                        {curso.tipo === "servicio_social" ? "Servicio Social" : "Taller/Curso"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={curso.tipo === "servicio_social" ? "default" : "secondary"}>
+                          {curso.tipo === "servicio_social" ? "Servicio Social" : "Taller/Curso"}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDeleteCurso(curso.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Button variant="outline" size="sm" className="w-full bg-transparent" onClick={() => {setSelectedCursoId(curso.id); setShowTareaDialog(true)}}>
+                    <Button variant="outline" size="sm" className="w-full bg-transparent" onClick={() => { setSelectedCursoId(curso.id); setShowTareaDialog(true) }}>
                       <Plus className="mr-2 h-4 w-4" />
                       Agregar Tarea
                     </Button>

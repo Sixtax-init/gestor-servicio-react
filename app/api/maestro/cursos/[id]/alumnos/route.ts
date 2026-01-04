@@ -33,21 +33,54 @@ export async function GET(
       return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
     }
 
-    // 👨‍🎓 Obtener alumnos inscritos
+    const horasRequeridas = 480 // Required hours for service
+
+    // 👨‍🎓 Obtener alumnos inscritos con horas de la inscripción
     const alumnos = await sql`
-SELECT
-u.id,
-  u.nombre,
-  u.apellidos,
-  u.matricula,
-  u.email
+      SELECT
+        u.id,
+        u.nombre,
+        u.apellidos,
+        u.matricula,
+        u.email,
+        (
+          SELECT COALESCE(SUM(i2.horas_completadas), 0)
+          FROM inscripciones i2
+          WHERE i2.alumno_id = u.id AND i2.activo = true
+        ) as horas_acumuladas
       FROM inscripciones i
       INNER JOIN usuarios u ON u.id = i.alumno_id
       WHERE i.curso_id = ${cursoId}
+      AND i.activo = true
       ORDER BY u.apellidos ASC, u.nombre ASC
-  `
+    `
 
-    return NextResponse.json({ alumnos }, { status: 200 })
+    // Add progress calculation to each student
+    const alumnosConProgreso = alumnos.map((alumno: any) => {
+      const horasAcumuladas = alumno.horas_acumuladas || 0
+      const progresoPorcentaje = Math.min(
+        Math.round((horasAcumuladas / horasRequeridas) * 100),
+        100
+      )
+
+      // Determine status
+      let estado = "on_track"
+      if (progresoPorcentaje >= 100) {
+        estado = "completed"
+      } else if (progresoPorcentaje < 50) {
+        estado = "at_risk"
+      }
+
+      return {
+        ...alumno,
+        horas_acumuladas: horasAcumuladas,
+        horas_requeridas: horasRequeridas,
+        progreso_porcentaje: progresoPorcentaje,
+        estado,
+      }
+    })
+
+    return NextResponse.json({ alumnos: alumnosConProgreso }, { status: 200 })
   } catch (error) {
     console.error("[v0] Error al obtener alumnos:", error)
     return NextResponse.json({ error: "Error en el servidor" }, { status: 500 })

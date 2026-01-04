@@ -5,27 +5,30 @@ import type { SessionUser } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Clock, GraduationCap, LogOut } from "lucide-react"
+import { BookOpen, Clock, GraduationCap, LogOut, HelpCircle, ClipboardList } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { MisCursosAlumnoTab } from "./mis-cursos-alumno-tab"
-import { CursosDisponiblesTab } from "./cursos-disponibles-tab"
 import { MisHorasTab } from "./mis-horas-tab"
 import { MisTareasTab } from "./mis-tareas-tab"
+import { useTour } from "@/lib/hooks/use-tour"
+import { TourStep } from "@/components/ui/tour-step"
+import { TourOverlay } from "@/components/ui/tour-overlay"
+import { alumnoTour } from "@/lib/tours/alumno-tour"
 
 interface AlumnoDashboardProps {
   user: SessionUser
   stats: {
     cursosInscritos: number
     horasCompletadas: number
-    cursosDisponibles: number
   }
   inscripciones: any[]
-  cursosDisponibles: any[]
 }
 
-export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles }: AlumnoDashboardProps) {
+export function AlumnoDashboard({ user, stats, inscripciones }: AlumnoDashboardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("mis-cursos")
+  const tour = useTour(alumnoTour, setActiveTab)
 
   const handleLogout = async () => {
     setLoading(true)
@@ -36,7 +39,7 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden border-b bg-card">
+      <div className="relative overflow-hidden border-b bg-card" data-tour="welcome-banner">
         <div className="absolute inset-0 bg-background/10 backdrop-blur-[1px]" />
         <div className="container mx-auto px-4 py-8 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -49,10 +52,16 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
                 Matrícula: {user.matricula}
               </div>
             </div>
-            <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
-              <LogOut className="mr-2 h-4 w-4" />
-              Cerrar Sesión
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={tour.resetTour} className="shadow-lg">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Manual
+              </Button>
+              <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
+                <LogOut className="mr-2 h-4 w-4" />
+                Cerrar Sesión
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -60,7 +69,7 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
       <main className="container mx-auto px-4 py-8 -mt-6 relative z-20">
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-3 mb-8 animate-slide-up">
-          <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-courses">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Cursos Inscritos</CardTitle>
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
@@ -73,7 +82,7 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow">
+          <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-hours">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Horas Completadas</CardTitle>
               <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
@@ -86,26 +95,22 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Cursos Disponibles</CardTitle>
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <GraduationCap className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.cursosDisponibles}</div>
-              <p className="text-xs text-muted-foreground mt-1">Oportunidades para inscribirse</p>
-            </CardContent>
-          </Card>
         </div>
 
-        <Tabs defaultValue="mis-cursos" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 p-1 bg-muted/50 rounded-xl">
-            <TabsTrigger value="mis-cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Mis Cursos</TabsTrigger>
-            <TabsTrigger value="disponibles" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Cursos Disponibles</TabsTrigger>
-            <TabsTrigger value="tareas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Mis Tareas</TabsTrigger>
-            <TabsTrigger value="horas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Mis Horas</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
+            <TabsTrigger value="mis-cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2" data-tour="tab-mis-cursos">
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Mis Cursos</span>
+            </TabsTrigger>
+            <TabsTrigger value="tareas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2" data-tour="tab-tareas">
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Mis Tareas</span>
+            </TabsTrigger>
+            <TabsTrigger value="horas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2" data-tour="tab-horas">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Mis Horas</span>
+            </TabsTrigger>
           </TabsList>
 
           <div className="animate-fade-in">
@@ -113,9 +118,7 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
               <MisCursosAlumnoTab inscripciones={inscripciones} />
             </TabsContent>
 
-            <TabsContent value="disponibles" className="mt-0">
-              <CursosDisponiblesTab cursos={cursosDisponibles} />
-            </TabsContent>
+
 
             <TabsContent value="tareas" className="mt-0">
               <MisTareasTab />
@@ -127,6 +130,23 @@ export function AlumnoDashboard({ user, stats, inscripciones, cursosDisponibles 
           </div>
         </Tabs>
       </main>
+
+      {/* Tour Components */}
+      <TourOverlay targetSelector={tour.currentStepData?.target || ""} isActive={tour.isRunning} />
+      {tour.isRunning && tour.currentStepData && (
+        <TourStep
+          targetSelector={tour.currentStepData.target}
+          title={tour.currentStepData.title}
+          content={tour.currentStepData.content}
+          currentStep={tour.currentStep}
+          totalSteps={tour.totalSteps}
+          onNext={tour.nextStep}
+          onPrev={tour.prevStep}
+          onSkip={tour.skipTour}
+          isActive={tour.isRunning}
+          placement={tour.currentStepData.placement}
+        />
+      )}
     </div>
   )
 }
