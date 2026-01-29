@@ -9,7 +9,10 @@ export async function saveFile(file: File, id: number, type: "entregas" | "curso
     const buffer = Buffer.from(bytes)
 
     // 📁 Directorio según tipo
-    const uploadDir = join(process.cwd(), "public/uploads", type, id.toString())
+    // En producción (si existe UPLOAD_DIR), usar esa ruta. Si no, usar local public/uploads
+    const baseDir = process.env.UPLOAD_DIR || join(process.cwd(), "public/uploads")
+    const uploadDir = join(baseDir, type, id.toString())
+
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true })
     }
