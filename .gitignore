@@ -9,6 +9,7 @@
 
 #scripts
 /scripts
+!/scripts/setup-complete-db.sql
 /docs
 
 #public
