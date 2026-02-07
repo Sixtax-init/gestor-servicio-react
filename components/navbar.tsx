@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useTheme } from "next-themes"
 import { Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,9 +21,17 @@ export function Navbar() {
     <nav className="w-full border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50 px-4">
       <div className="max-w-5xl mx-auto h-16 flex items-center justify-between">
 
-        {/* Nombre del sistema */}
-        <Link href="/" className="text-lg font-bold">
-          Gestor Horas Linux
+        {/* Logo y Nombre del sistema */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-12 h-12 transition-transform group-hover:scale-105">
+            <Image
+              src="/logos/GUL_logo.png"
+              alt="Grupo de Usuarios de Linux ITNL"
+              fill
+              className="object-contain"
+            />
+          </div>
+          <span className="text-lg font-bold">Service Tracker</span>
         </Link>
 
         {/* Botón de tema */}
