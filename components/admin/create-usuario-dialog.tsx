@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,11 +14,13 @@ interface CreateUsuarioDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  isAdminGlobal?: boolean
 }
 
-export function CreateUsuarioDialog({ open, onOpenChange, onSuccess }: CreateUsuarioDialogProps) {
+export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlobal = false }: CreateUsuarioDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [departamentos, setDepartamentos] = useState<{ id: number; nombre: string }[]>([])
   const [formData, setFormData] = useState({
     matricula: "",
     nombre: "",
@@ -26,18 +28,43 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess }: CreateUsu
     email: "",
     password: "",
     tipo_usuario: "alumno",
+    departamento_id: "",
   })
+
+  // Cargar departamentos si es admin global
+  useEffect(() => {
+    if (isAdminGlobal && open) {
+      fetch("/api/main-admin/departamentos")
+        .then(res => res.json())
+        .then(data => {
+          if (data.departamentos) {
+            setDepartamentos(data.departamentos)
+          }
+        })
+        .catch(err => console.error("Error fetching departamentos:", err))
+    }
+  }, [isAdminGlobal, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
+    // Validar departamento si es admin global
+    if (isAdminGlobal && !formData.departamento_id) {
+      setError("Debes seleccionar un departamento")
+      setLoading(false)
+      return
+    }
+
     try {
       const response = await fetch("/api/admin/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          departamento_id: formData.departamento_id ? Number(formData.departamento_id) : undefined
+        }),
       })
 
       const data = await response.json()
@@ -56,7 +83,9 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess }: CreateUsu
         email: "",
         password: "",
         tipo_usuario: "alumno",
+        departamento_id: "",
       })
+      onOpenChange(false)
     } catch (err) {
       console.error("[v0] Error creating usuario:", err)
       setError("Error de conexión")
@@ -99,6 +128,7 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess }: CreateUsu
                   <SelectItem value="alumno">Alumno</SelectItem>
                   <SelectItem value="maestro">Maestro</SelectItem>
                   <SelectItem value="administrador">Administrador</SelectItem>
+                  {isAdminGlobal && <SelectItem value="main_admin">Main Admin</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
@@ -147,6 +177,27 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess }: CreateUsu
               required
             />
           </div>
+
+          {isAdminGlobal && (
+            <div className="space-y-2">
+              <Label htmlFor="departamento_id">Departamento</Label>
+              <Select
+                value={formData.departamento_id}
+                onValueChange={(value) => setFormData({ ...formData, departamento_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un departamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departamentos.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id.toString()}>
+                      {dept.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {error && (
             <Alert variant="destructive">

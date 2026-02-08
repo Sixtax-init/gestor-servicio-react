@@ -20,32 +20,54 @@ import { Plus } from "lucide-react"
 
 interface CreateCursoDialogProps {
   onSuccess: () => void
+  isAdminGlobal?: boolean
 }
 
-export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
+export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCursoDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [maestros, setMaestros] = useState<any[]>([])
+  const [departamentos, setDepartamentos] = useState<any[]>([])
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [formData, setFormData] = useState({
     nombre_grupo: "",
     tipo: "servicio_social",
     maestro_id: "",
+    departamento_id: "",
     descripcion: "",
   })
 
   useEffect(() => {
-    if (open) fetchMaestros()
-  }, [open])
+    if (open) {
+      fetchMaestros()
+      if (isAdminGlobal) {
+        fetchDepartamentos()
+      }
+    }
+  }, [open, isAdminGlobal])
 
   const fetchMaestros = async () => {
     try {
-      // Fetch active teachers only, with a high limit to avoid pagination issues in dropdown
-      const response = await fetch("/api/admin/usuarios?tipo=maestro&status=active&limit=100")
+      // If global admin, fetch all teachers. If local, API will filter automatically.
+      const url = isAdminGlobal
+        ? "/api/admin/usuarios?tipo=maestro&status=active&limit=500"
+        : "/api/admin/usuarios?tipo=maestro&status=active&limit=100"
+
+      const response = await fetch(url)
       const data = await response.json()
       setMaestros(data.usuarios || [])
     } catch (error) {
       console.error("[v0] Error fetching maestros:", error)
+    }
+  }
+
+  const fetchDepartamentos = async () => {
+    try {
+      const response = await fetch("/api/main-admin/departamentos")
+      const data = await response.json()
+      setDepartamentos(data.departamentos || [])
+    } catch (error) {
+      console.error("Error fetching departamentos:", error)
     }
   }
 
@@ -59,6 +81,12 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
   // 2️⃣ Crea el curso primero
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (isAdminGlobal && !formData.departamento_id) {
+      alert("Debes seleccionar un departamento")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -68,6 +96,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
         body: JSON.stringify({
           ...formData,
           maestro_id: formData.maestro_id ? Number.parseInt(formData.maestro_id) : null,
+          departamento_id: formData.departamento_id ? Number.parseInt(formData.departamento_id) : undefined
         }),
       })
 
@@ -76,6 +105,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
 
       if (!response.ok) {
         alert(data.error || "Error al crear curso")
+        setLoading(false)
         return
       }
 
@@ -83,6 +113,7 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
       if (!cursoId) {
         console.error("[frontend] No se recibió un ID de curso en la respuesta:", data)
         alert("Error: el backend no devolvió un ID de curso.")
+        setLoading(false)
         return
       }
 
@@ -110,7 +141,13 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
       }
 
       alert("Curso creado con éxito 🎉")
-      setFormData({ nombre_grupo: "", tipo: "servicio_social", maestro_id: "", descripcion: "" })
+      setFormData({
+        nombre_grupo: "",
+        tipo: "servicio_social",
+        maestro_id: "",
+        departamento_id: "",
+        descripcion: ""
+      })
       setSelectedFile(null)
       setOpen(false)
       onSuccess()
@@ -179,6 +216,27 @@ export function CreateCursoDialog({ onSuccess }: CreateCursoDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {isAdminGlobal && (
+              <div className="grid gap-2">
+                <Label htmlFor="departamento">Departamento</Label>
+                <Select
+                  value={formData.departamento_id}
+                  onValueChange={(value) => setFormData({ ...formData, departamento_id: value })}
+                >
+                  <SelectTrigger id="departamento">
+                    <SelectValue placeholder="Seleccionar departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departamentos.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="descripcion">Descripción</Label>

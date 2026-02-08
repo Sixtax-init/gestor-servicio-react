@@ -5,11 +5,11 @@ import type { SessionUser } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Users, BookOpen, ClipboardList, LogOut, HelpCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Users, BookOpen, LogOut, HelpCircle, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { UsuariosTab } from "./usuarios-tab"
 import { CursosTab } from "./cursos-tab"
-import { TareasTab } from "./tareas-tab"
 import { useTour } from "@/lib/hooks/use-tour"
 import { TourStep } from "@/components/ui/tour-step"
 import { TourOverlay } from "@/components/ui/tour-overlay"
@@ -20,7 +20,7 @@ interface AdminDashboardProps {
   stats: {
     usuarios: number
     cursos: number
-    tareas: number
+    departamento_nombre: string
   }
 }
 
@@ -40,10 +40,16 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
     <div className="min-h-screen bg-background animate-fade-in">
       {/* Welcome Banner */}
       <div className="relative overflow-hidden border-b bg-card" data-tour="welcome-banner">
-        <div className="absolute inset-0 bg-background/10 backdrop-blur-[1px]" />
+        <div className="absolute inset-0 bg-blue-500/5 backdrop-blur-[1px]" />
         <div className="container mx-auto px-4 py-8 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200">
+                  <Building2 className="h-3 w-3 mr-1" /> {stats.departamento_nombre}
+                </Badge>
+                <Badge variant="outline">Administrador Local</Badge>
+              </div>
               <h1 className="text-3xl font-bold tracking-tight mb-2">Panel de Administración</h1>
               <p className="text-lg opacity-90">
                 Bienvenido, <span className="font-semibold">{user.nombre} {user.apellidos}</span>
@@ -65,7 +71,7 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
 
       <main className="container mx-auto px-4 py-8 -mt-6 relative z-20">
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3 mb-8 animate-slide-up">
+        <div className="grid gap-4 md:grid-cols-2 mb-8 animate-slide-up">
           <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-users">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Usuarios</CardTitle>
@@ -91,26 +97,12 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
               <p className="text-xs text-muted-foreground mt-1">Cursos y servicios sociales</p>
             </CardContent>
           </Card>
-
-          <Card className="border-l-4 border-l-purple-500 shadow-md hover:shadow-lg transition-shadow" data-tour="stats-tasks">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Tareas</CardTitle>
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <ClipboardList className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.tareas}</div>
-              <p className="text-xs text-muted-foreground mt-1">Tareas asignadas en total</p>
-            </CardContent>
-          </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
+          <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
             <TabsTrigger value="usuarios" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-usuarios">Usuarios</TabsTrigger>
             <TabsTrigger value="cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-cursos">Cursos</TabsTrigger>
-            <TabsTrigger value="tareas" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-tareas">Tareas</TabsTrigger>
           </TabsList>
 
           <div className="animate-fade-in">
@@ -120,10 +112,6 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
 
             <TabsContent value="cursos" className="mt-0">
               <CursosTab />
-            </TabsContent>
-
-            <TabsContent value="tareas" className="mt-0">
-              <TareasTab />
             </TabsContent>
           </div>
         </Tabs>

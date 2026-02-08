@@ -55,10 +55,15 @@ export async function POST(request: NextRequest) {
     }
 
     const curso = await sql`
-SELECT * FROM cursos WHERE id = ${curso_id} AND activo = true
-  `
+      SELECT * FROM cursos WHERE id = ${curso_id} AND activo = true
+    `
     if (curso.length === 0) {
       return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 })
+    }
+
+    // Verificar si el alumno pertenece al mismo departamento que el curso
+    if (user.departamento_id !== curso[0].departamento_id) {
+      return NextResponse.json({ error: "No tienes permiso para inscribirte en este curso (departamento diferente)" }, { status: 403 })
     }
 
     const existente = await sql`

@@ -23,18 +23,21 @@ interface EditUsuarioDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  isAdminGlobal?: boolean
 }
 
-export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: EditUsuarioDialogProps) {
+export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAdminGlobal = false }: EditUsuarioDialogProps) {
   const [loading, setLoading] = useState(false)
+  const [departamentos, setDepartamentos] = useState<{ id: number; nombre: string }[]>([])
   const [formData, setFormData] = useState({
     matricula: "",
     nombre: "",
     apellidos: "",
     email: "",
-    tipo_usuario: "alumno",
+    tipo_usuario: "alumno" as any,
     activo: true,
     password: "",
+    departamento_id: "",
   })
 
   useEffect(() => {
@@ -47,9 +50,21 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: Ed
         tipo_usuario: usuario.tipo_usuario,
         activo: usuario.activo,
         password: "",
+        departamento_id: usuario.departamento_id?.toString() || "",
       })
     }
-  }, [usuario])
+
+    if (isAdminGlobal && open) {
+      fetch("/api/main-admin/departamentos")
+        .then(res => res.json())
+        .then(data => {
+          if (data.departamentos) {
+            setDepartamentos(data.departamentos)
+          }
+        })
+        .catch(err => console.error("Error fetching departamentos:", err))
+    }
+  }, [usuario, open, isAdminGlobal])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,7 +75,10 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: Ed
       const response = await fetch(`/api/admin/usuarios/${usuario.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          departamento_id: formData.departamento_id ? Number(formData.departamento_id) : null
+        }),
       })
 
       if (response.ok) {
@@ -86,7 +104,7 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: Ed
           <DialogDescription>Modifica la información del usuario</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
             <div className="grid gap-2">
               <Label htmlFor="edit-matricula">Matrícula</Label>
               <Input
@@ -96,24 +114,28 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: Ed
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-nombre">Nombre</Label>
-              <Input
-                id="edit-nombre"
-                value={formData.nombre}
-                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                required
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-nombre">Nombre</Label>
+                <Input
+                  id="edit-nombre"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-apellidos">Apellidos</Label>
+                <Input
+                  id="edit-apellidos"
+                  value={formData.apellidos}
+                  onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
+                  required
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-apellidos">Apellidos</Label>
-              <Input
-                id="edit-apellidos"
-                value={formData.apellidos}
-                onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
-                required
-              />
-            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="edit-email">Email</Label>
               <Input
@@ -124,6 +146,7 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: Ed
                 required
               />
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="edit-tipo">Tipo de Usuario</Label>
               <Select
@@ -137,9 +160,32 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: Ed
                   <SelectItem value="alumno">Alumno</SelectItem>
                   <SelectItem value="maestro">Maestro</SelectItem>
                   <SelectItem value="administrador">Administrador</SelectItem>
+                  {isAdminGlobal && <SelectItem value="main_admin">Main Admin</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
+
+            {isAdminGlobal && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-departamento">Departamento</Label>
+                <Select
+                  value={formData.departamento_id}
+                  onValueChange={(value) => setFormData({ ...formData, departamento_id: value })}
+                >
+                  <SelectTrigger id="edit-departamento">
+                    <SelectValue placeholder="Selecciona un departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departamentos.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="edit-password">Nueva Contraseña (opcional)</Label>
               <Input
@@ -150,13 +196,17 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess }: Ed
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center space-x-2 border p-3 rounded-lg">
               <Switch
                 id="edit-activo"
                 checked={formData.activo}
                 onCheckedChange={(checked) => setFormData({ ...formData, activo: checked })}
               />
-              <Label htmlFor="edit-activo">Usuario Activo</Label>
+              <div className="space-y-0.5">
+                <Label htmlFor="edit-activo">Usuario Activo</Label>
+                <p className="text-sm text-muted-foreground">El usuario puede acceder al sistema</p>
+              </div>
             </div>
           </div>
           <DialogFooter>

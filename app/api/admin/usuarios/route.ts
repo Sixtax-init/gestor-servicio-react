@@ -4,7 +4,7 @@ import { sql, pool } from "@/lib/db"
 import { createUser } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
-  const user = await requireRole(["administrador"])
+  const user = await requireRole(["main_admin", "administrador"])
 
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
@@ -12,52 +12,65 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const status = searchParams.get("status")
-  const tipo = searchParams.get("tipo") // Nuevo filtro
+  const tipo = searchParams.get("tipo")
   const page = Number(searchParams.get("page")) || 1
   const limit = Number(searchParams.get("limit")) || 10
   const search = searchParams.get("search") || ""
   const offset = (page - 1) * limit
 
   try {
-    // Construir query dinámicamente
-    let queryText = `
-      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, activo, created_at
-      FROM usuarios
-      WHERE 1=1
-    `
+    let whereClauses = "WHERE 1=1"
     const queryParams: any[] = []
     let paramCount = 1
 
     if (status === "active") {
-      queryText += ` AND activo = true`
+      whereClauses += ` AND u.activo = true`
     } else if (status === "inactive") {
-      queryText += ` AND activo = false`
+      whereClauses += ` AND u.activo = false`
     }
 
     if (tipo) {
-      queryText += ` AND tipo_usuario = $${paramCount}`
+      whereClauses += ` AND u.tipo_usuario = $${paramCount}`
       queryParams.push(tipo)
       paramCount++
     }
 
     if (search) {
-      queryText += ` AND (matricula ILIKE $${paramCount} OR nombre ILIKE $${paramCount} OR apellidos ILIKE $${paramCount} OR email ILIKE $${paramCount})`
+      whereClauses += ` AND (u.matricula ILIKE $${paramCount} OR u.nombre ILIKE $${paramCount} OR u.apellidos ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`
       queryParams.push(`%${search}%`)
       paramCount++
     }
 
-    // Query para total (antes de agregar limit/offset)
-    const countQueryText = `SELECT COUNT(*) as total FROM usuarios WHERE 1=1` + queryText.split("WHERE 1=1")[1]
+    if (user.tipo_usuario === "administrador") {
+      whereClauses += ` AND u.departamento_id = $${paramCount}`
+      queryParams.push(user.departamento_id || -1) // -1 ensures no records match if null
+      paramCount++
+    }
 
-    // Agregar ordenamiento y paginación
-    queryText += ` ORDER BY created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`
-    queryParams.push(limit, offset)
+    const queryText = `
+      SELECT u.id, u.matricula, u.nombre, u.apellidos, u.email, u.tipo_usuario, u.activo, u.created_at, u.departamento_id, d.nombre as departamento_nombre
+      FROM usuarios u
+      LEFT JOIN departamentos d ON u.departamento_id = d.id
+      ${whereClauses}
+      ORDER BY u.created_at DESC
+      LIMIT $${paramCount} OFFSET $${paramCount + 1}
+    `
 
-    // Ejecutar queries usando pool directamente para soportar string dinámico
+    const countQueryText = `
+      SELECT COUNT(*) as total 
+      FROM usuarios u 
+      LEFT JOIN departamentos d ON u.departamento_id = d.id
+      ${whereClauses}
+    `
+
+    // Parámetros para la query de datos (incluye limit y offset)
+    const dataParams = [...queryParams, limit, offset]
+    // Parámetros para el count (solo filtros)
+    const countParams = queryParams
 
     const [usuariosResult, countResult] = await Promise.all([
-      pool.query(queryText, queryParams),
-      pool.query(countQueryText, queryParams.slice(0, paramCount - 1)) // Usar solo params de filtro para count
+      pool.query(queryText, dataParams),
+      pool.query(countQueryText, countParams)
     ])
 
     const usuarios = usuariosResult.rows
@@ -72,7 +85,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await requireRole(["administrador"])
+  const user = await requireRole(["main_admin", "administrador"])
 
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
@@ -80,7 +93,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { matricula, nombre, apellidos, email, password, tipo_usuario } = body
+    const { matricula, nombre, apellidos, email, password, tipo_usuario, departamento_id } = body
 
     if (!matricula || !nombre || !apellidos || !email || !password || !tipo_usuario) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 })
@@ -93,6 +106,9 @@ export async function POST(request: NextRequest) {
       email,
       password,
       tipo_usuario,
+      // Si es admin local, forzar su propio departamento
+      // Si es main_admin, usar el departamento proporcionado
+      departamento_id: user.tipo_usuario === "administrador" ? user.departamento_id : departamento_id,
     })
 
     if (!newUser) {

@@ -4,13 +4,17 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Trash2, Edit, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2 } from "lucide-react"
 import { EditUsuarioDialog } from "./edit-usuario-dialog"
 import { DeleteConfirmDialog } from "./delete-confirm-dialog"
 import type { Usuario } from "@/lib/db"
 
-export function UsuariosList() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([])
+interface UsuariosListProps {
+  isAdminGlobal?: boolean
+}
+
+export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
+  const [usuarios, setUsuarios] = useState<(Usuario & { departamento_nombre?: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null)
   const [deletingUsuario, setDeletingUsuario] = useState<Usuario | null>(null)
@@ -125,6 +129,7 @@ export function UsuariosList() {
                   <TableHead>Nombre</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Tipo</TableHead>
+                  {isAdminGlobal && <TableHead>Departamento</TableHead>}
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -147,6 +152,14 @@ export function UsuariosList() {
                       <TableCell>
                         <Badge variant={getTipoColor(usuario.tipo_usuario)}>{usuario.tipo_usuario}</Badge>
                       </TableCell>
+                      {isAdminGlobal && (
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            {usuario.departamento_nombre || "Sin asignar"}
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <Badge variant={usuario.activo ? "default" : "outline"}>
                           {usuario.activo ? "Activo" : "Inactivo"}
@@ -197,6 +210,7 @@ export function UsuariosList() {
             open={!!editingUsuario}
             onOpenChange={(open) => !open && setEditingUsuario(null)}
             onSuccess={fetchUsuarios}
+            isAdminGlobal={isAdminGlobal}
           />
 
           <DeleteConfirmDialog

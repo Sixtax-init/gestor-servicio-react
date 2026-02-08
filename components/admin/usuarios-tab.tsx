@@ -7,7 +7,11 @@ import { Plus } from "lucide-react"
 import { UsuariosList } from "./usuarios-list"
 import { CreateUsuarioDialog } from "./create-usuario-dialog"
 
-export function UsuariosTab() {
+interface UsuariosTabProps {
+  isAdminGlobal?: boolean
+}
+
+export function UsuariosTab({ isAdminGlobal = false }: UsuariosTabProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -31,13 +35,14 @@ export function UsuariosTab() {
         </div>
       </CardHeader>
       <CardContent>
-        <UsuariosList key={refreshKey} />
+        <UsuariosList key={refreshKey} isAdminGlobal={isAdminGlobal} />
       </CardContent>
 
       <CreateUsuarioDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onSuccess={handleUsuarioCreated}
+        isAdminGlobal={isAdminGlobal}
       />
     </Card>
   )

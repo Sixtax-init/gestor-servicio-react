@@ -27,10 +27,20 @@ export async function sql(query: TemplateStringsArray, ...params: any[]) {
   }
 }
 
-export type TipoUsuario = "administrador" | "maestro" | "alumno"
+export type TipoUsuario = "main_admin" | "administrador" | "maestro" | "alumno"
 export type TipoCurso = "servicio_social" | "taller_curso"
 export type Prioridad = "baja" | "media" | "alta" | "urgente"
 export type EstadoEntrega = "pendiente" | "revisada" | "aprobada" | "rechazada"
+
+export interface Departamento {
+  id: number
+  nombre: string
+  codigo: string
+  descripcion: string | null
+  activo: boolean
+  created_at: Date
+  updated_at: Date
+}
 
 export interface Usuario {
   id: number
@@ -39,6 +49,7 @@ export interface Usuario {
   apellidos: string
   email: string
   tipo_usuario: TipoUsuario
+  departamento_id: number | null
   password_hash: string
   activo: boolean
   created_at: Date
@@ -49,6 +60,7 @@ export interface Curso {
   nombre_grupo: string
   tipo: TipoCurso
   maestro_id: number | null
+  departamento_id: number | null
   descripcion: string | null
   activo: boolean
   created_at: Date

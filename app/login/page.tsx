@@ -44,7 +44,9 @@ export default function LoginPage() {
 
       // Redirigir según el tipo de usuario
       const { user } = data
-      if (user.tipo_usuario === "administrador") {
+      if (user.tipo_usuario === "main_admin") {
+        router.push("/main-admin")
+      } else if (user.tipo_usuario === "administrador") {
         router.push("/admin")
       } else if (user.tipo_usuario === "maestro") {
         router.push("/maestro")

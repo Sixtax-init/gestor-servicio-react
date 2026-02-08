@@ -6,7 +6,7 @@ export const adminTour: Tour = {
         {
             target: '[data-tour="welcome-banner"]',
             title: "Panel de Administración",
-            content: "Bienvenido al panel de administración. Desde aquí puedes gestionar usuarios, cursos y tareas del sistema.",
+            content: "Bienvenido al panel de administración. Desde aquí puedes gestionar usuarios y cursos del sistema.",
             placement: "bottom",
         },
         {
@@ -19,12 +19,6 @@ export const adminTour: Tour = {
             target: '[data-tour="stats-courses"]',
             title: "Total de Cursos",
             content: "Este contador muestra todos los cursos y servicios sociales registrados en el sistema.",
-            placement: "bottom",
-        },
-        {
-            target: '[data-tour="stats-tasks"]',
-            title: "Total de Tareas",
-            content: "Aquí ves el número total de tareas asignadas en todos los cursos.",
             placement: "bottom",
         },
         {
@@ -48,14 +42,6 @@ export const adminTour: Tour = {
             content: "En esta sección puedes crear y gestionar todos los cursos y servicios sociales del sistema.",
             placement: "bottom",
             switchToTab: "cursos",
-        },
-        // Tareas Tab
-        {
-            target: '[data-tour="tab-tareas"]',
-            title: "Pestaña: Tareas",
-            content: "Aquí puedes ver todas las tareas del sistema y su estado general.",
-            placement: "bottom",
-            switchToTab: "tareas",
         },
         {
             target: '[data-tour="welcome-banner"]',

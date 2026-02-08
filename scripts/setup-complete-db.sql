@@ -1,14 +1,37 @@
 -- Script de creación del esquema de base de datos para el Gestor de Horas
 -- PostgreSQL 12+
+-- Actualizado con soporte para Multi-Tenancy (Departamentos)
 
+-- =========================================================
+-- Tabla de departamentos
+-- Permite separar lógicamente diferentes áreas/grupos
+-- =========================================================
+CREATE TABLE IF NOT EXISTS departamentos (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL UNIQUE,
+  codigo VARCHAR(20) NOT NULL UNIQUE,
+  descripcion TEXT,
+  activo BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para departamentos
+CREATE INDEX IF NOT EXISTS idx_departamentos_codigo ON departamentos(codigo);
+CREATE INDEX IF NOT EXISTS idx_departamentos_activo ON departamentos(activo);
+
+-- =========================================================
 -- Tabla de usuarios
+-- Actualizada para incluir departamento_id y rol super_admin
+-- =========================================================
 CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
   matricula VARCHAR(20) UNIQUE NOT NULL,
   nombre VARCHAR(100) NOT NULL,
   apellidos VARCHAR(100) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
-  tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('administrador', 'maestro', 'alumno')),
+  tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('main_admin', 'administrador', 'maestro', 'alumno')),
+  departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL,
   password_hash VARCHAR(255) NOT NULL,
   activo BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -16,17 +39,36 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 -- Índices para búsquedas rápidas
-CREATE INDEX idx_usuarios_matricula ON usuarios(matricula);
-CREATE INDEX idx_usuarios_email ON usuarios(email);
-CREATE INDEX idx_usuarios_tipo ON usuarios(tipo_usuario);
-CREATE INDEX idx_usuarios_activo ON usuarios(activo);
+CREATE INDEX IF NOT EXISTS idx_usuarios_matricula ON usuarios(matricula);
+CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
+CREATE INDEX IF NOT EXISTS idx_usuarios_tipo ON usuarios(tipo_usuario);
+CREATE INDEX IF NOT EXISTS idx_usuarios_activo ON usuarios(activo);
 
+-- Asegurar columna departamento_id en usuarios
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_usuarios_departamento ON usuarios(departamento_id);
+
+-- Actualizar constraint de tipo_usuario para incluir main_admin
+DO $$ 
+BEGIN 
+    ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_tipo_usuario_check;
+    ALTER TABLE usuarios ADD CONSTRAINT usuarios_tipo_usuario_check 
+    CHECK (tipo_usuario IN ('main_admin', 'administrador', 'maestro', 'alumno'));
+EXCEPTION
+    WHEN others THEN 
+        RAISE NOTICE 'No se pudo actualizar el constraint de tipo_usuario automáticamente.';
+END $$;
+
+-- =========================================================
 -- Tabla de cursos
+-- Actualizada para incluir departamento_id
+-- =========================================================
 CREATE TABLE IF NOT EXISTS cursos (
   id SERIAL PRIMARY KEY,
   nombre_grupo VARCHAR(100) NOT NULL,
   tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('servicio_social', 'taller_curso')),
   maestro_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+  departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL,
   descripcion TEXT,
   activo BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -34,11 +76,17 @@ CREATE TABLE IF NOT EXISTS cursos (
 );
 
 -- Índices para cursos
-CREATE INDEX idx_cursos_maestro ON cursos(maestro_id);
-CREATE INDEX idx_cursos_tipo ON cursos(tipo);
-CREATE INDEX idx_cursos_activo ON cursos(activo);
+CREATE INDEX IF NOT EXISTS idx_cursos_maestro ON cursos(maestro_id);
+CREATE INDEX IF NOT EXISTS idx_cursos_tipo ON cursos(tipo);
+CREATE INDEX IF NOT EXISTS idx_cursos_activo ON cursos(activo);
 
+-- Asegurar columna departamento_id en cursos
+ALTER TABLE cursos ADD COLUMN IF NOT EXISTS departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_cursos_departamento ON cursos(departamento_id);
+
+-- =========================================================
 -- Tabla de tareas
+-- =========================================================
 CREATE TABLE IF NOT EXISTS tareas (
   id SERIAL PRIMARY KEY,
   curso_id INTEGER REFERENCES cursos(id) ON DELETE CASCADE,
@@ -54,10 +102,10 @@ CREATE TABLE IF NOT EXISTS tareas (
 );
 
 -- Índices para tareas
-CREATE INDEX idx_tareas_curso ON tareas(curso_id);
-CREATE INDEX idx_tareas_prioridad ON tareas(prioridad);
-CREATE INDEX idx_tareas_fecha_vencimiento ON tareas(fecha_vencimiento);
-CREATE INDEX idx_tareas_activo ON tareas(activo);
+CREATE INDEX IF NOT EXISTS idx_tareas_curso ON tareas(curso_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_prioridad ON tareas(prioridad);
+CREATE INDEX IF NOT EXISTS idx_tareas_fecha_vencimiento ON tareas(fecha_vencimiento);
+CREATE INDEX IF NOT EXISTS idx_tareas_activo ON tareas(activo);
 
 -- Tabla de inscripciones (alumnos inscritos en cursos)
 CREATE TABLE IF NOT EXISTS inscripciones (
@@ -71,9 +119,9 @@ CREATE TABLE IF NOT EXISTS inscripciones (
 );
 
 -- Índices para inscripciones
-CREATE INDEX idx_inscripciones_alumno ON inscripciones(alumno_id);
-CREATE INDEX idx_inscripciones_curso ON inscripciones(curso_id);
-CREATE INDEX idx_inscripciones_activo ON inscripciones(activo);
+CREATE INDEX IF NOT EXISTS idx_inscripciones_alumno ON inscripciones(alumno_id);
+CREATE INDEX IF NOT EXISTS idx_inscripciones_curso ON inscripciones(curso_id);
+CREATE INDEX IF NOT EXISTS idx_inscripciones_activo ON inscripciones(activo);
 
 -- Tabla de entregas de tareas
 CREATE TABLE IF NOT EXISTS entregas (
@@ -89,9 +137,9 @@ CREATE TABLE IF NOT EXISTS entregas (
 );
 
 -- Índices para entregas
-CREATE INDEX idx_entregas_tarea ON entregas(tarea_id);
-CREATE INDEX idx_entregas_alumno ON entregas(alumno_id);
-CREATE INDEX idx_entregas_estado ON entregas(estado);
+CREATE INDEX IF NOT EXISTS idx_entregas_tarea ON entregas(tarea_id);
+CREATE INDEX IF NOT EXISTS idx_entregas_alumno ON entregas(alumno_id);
+CREATE INDEX IF NOT EXISTS idx_entregas_estado ON entregas(estado);
 
 -- Tabla de archivos adjuntos
 CREATE TABLE IF NOT EXISTS archivos (
@@ -105,7 +153,7 @@ CREATE TABLE IF NOT EXISTS archivos (
 );
 
 -- Índices para archivos
-CREATE INDEX idx_archivos_entrega ON archivos(entrega_id);
+CREATE INDEX IF NOT EXISTS idx_archivos_entrega ON archivos(entrega_id);
 
 -- Función para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -117,12 +165,15 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers para actualizar updated_at
+DROP TRIGGER IF EXISTS update_usuarios_updated_at ON usuarios;
 CREATE TRIGGER update_usuarios_updated_at BEFORE UPDATE ON usuarios
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_cursos_updated_at ON cursos;
 CREATE TRIGGER update_cursos_updated_at BEFORE UPDATE ON cursos
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tareas_updated_at ON tareas;
 CREATE TRIGGER update_tareas_updated_at BEFORE UPDATE ON tareas
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 -- Agregar campo de archivo a la tabla de cursos
@@ -169,4 +220,31 @@ CREATE TABLE IF NOT EXISTS entregas_avances (
     fecha_revision TIMESTAMP
 );
 
--- Agregar el usuario manualmente por la terminal
+-- =========================================================
+-- Semilla de datos inicial (Departamentos y Migración)
+-- =========================================================
+
+-- Insertar departamentos iniciales
+INSERT INTO departamentos (nombre, codigo, descripcion, activo)
+VALUES 
+('Servicio Social', 'SS', 'Departamento de Gestión de Servicio Social y Prácticas', true),
+('Linux', 'LX', 'Departamento de Tecnologías Linux y Software Libre', true)
+ON CONFLICT (codigo) DO NOTHING;
+
+-- Asignar usuarios existentes al primer departamento (Servicio Social) por defecto
+UPDATE usuarios 
+SET departamento_id = (SELECT id FROM departamentos WHERE codigo = 'SS')
+WHERE departamento_id IS NULL;
+
+-- Asignar cursos existentes al primer departamento (Servicio Social) por defecto
+UPDATE cursos
+SET departamento_id = (SELECT id FROM departamentos WHERE codigo = 'SS')
+WHERE departamento_id IS NULL;
+
+-- Elevar ADMIN001 a main_admin para permitir la gestión global
+UPDATE usuarios
+SET tipo_usuario = 'main_admin'
+WHERE matricula = 'ADMIN001';
+
+-- Comentario final
+-- El sistema está listo para ser usado con multi-tenancy.
