@@ -55,7 +55,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">Gestor de Horas</h1>
+            <h1 className="text-xl font-bold">Service Tracker</h1>
           </div>
           <Link href="/login">
             <Button className="transition-transform hover:scale-105">Iniciar Sesión</Button>

@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await sql`
-      INSERT INTO cursos(nombre_grupo, tipo, maestro_id, descripcion, activo)
-VALUES(${nombre_grupo}, ${tipo}, ${user.id}, ${descripcion || null}, true)
-RETURNING *
-  `
+      INSERT INTO cursos(nombre_grupo, tipo, maestro_id, departamento_id, descripcion, activo)
+      VALUES(${nombre_grupo}, ${tipo}, ${user.id}, ${user.departamento_id}, ${descripcion || null}, true)
+      RETURNING *
+    `
 
     return NextResponse.json({ curso: result[0] }, { status: 201 })
   } catch (error) {

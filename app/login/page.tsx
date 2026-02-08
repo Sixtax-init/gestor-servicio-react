@@ -44,7 +44,9 @@ export default function LoginPage() {
 
       // Redirigir según el tipo de usuario
       const { user } = data
-      if (user.tipo_usuario === "administrador") {
+      if (user.tipo_usuario === "main_admin") {
+        router.push("/main-admin")
+      } else if (user.tipo_usuario === "administrador") {
         router.push("/admin")
       } else if (user.tipo_usuario === "maestro") {
         router.push("/maestro")
@@ -63,7 +65,7 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md backdrop-blur-md bg-card/80 border-white/20 shadow-xl animate-slide-up">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Gestor de Horas</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Service Tracker</CardTitle>
           <CardDescription className="text-center">Ingresa tu matrícula y contraseña para acceder</CardDescription>
         </CardHeader>
         <CardContent>

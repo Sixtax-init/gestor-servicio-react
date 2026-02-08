@@ -11,6 +11,7 @@
     "db:edit-tarea": "node scripts/edit-add-tarea.js",
     "db:curso-upload": "node scripts/curso-upload.js",
     "db:setup-complete": "node scripts/setup-complete-db.js",
+    "db:rollback": "node scripts/rollback-db.js",
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start"

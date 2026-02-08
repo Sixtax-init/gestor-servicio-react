@@ -1,20 +1,31 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession, requireRole } from "@/lib/session.server"
+import { requireRole } from "@/lib/session.server"
 import bcrypt from "bcryptjs"
 
 // Actualizar usuario
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireRole(["administrador"])
+    const admin = await requireRole(["main_admin", "administrador"])
 
-    if (!user) {
+    if (!admin) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
     const { id } = await params
     const body = await request.json()
-    const { matricula, nombre, apellidos, email, tipo_usuario, activo, password } = body
+    const { matricula, nombre, apellidos, email, tipo_usuario, activo, password, departamento_id } = body
+
+    // 1. Verificar si el admin tiene acceso a este usuario
+    const [targetUser] = await sql`SELECT departamento_id FROM usuarios WHERE id = ${id}`
+
+    if (!targetUser) {
+      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+    }
+
+    if (admin.tipo_usuario === "administrador" && targetUser.departamento_id !== admin.departamento_id) {
+      return NextResponse.json({ error: "No tienes permiso para editar usuarios de otro departamento" }, { status: 403 })
+    }
 
     let hashedPass = null
     if (password && password.trim() != "") {
@@ -22,35 +33,38 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     let result
+    // Si es admin local, forzamos que el departamento_id del usuario no cambie o sea el suyo
+    const finalDepartamentoId = admin.tipo_usuario === "administrador" ? admin.departamento_id : departamento_id
 
     if (hashedPass) {
       result = await sql`
-    UPDATE usuarios
-      SET matricula = ${matricula},
-          nombre = ${nombre},
-          apellidos = ${apellidos},
-          email = ${email},
-          tipo_usuario = ${tipo_usuario},
-          activo = ${activo},
-          password_hash = ${hashedPass}
-    WHERE id = ${id}
-    RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo`
+        UPDATE usuarios
+        SET matricula = ${matricula},
+            nombre = ${nombre},
+            apellidos = ${apellidos},
+            email = ${email},
+            tipo_usuario = ${tipo_usuario},
+            activo = ${activo},
+            departamento_id = ${finalDepartamentoId},
+            password_hash = ${hashedPass},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+        RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo, departamento_id
+      `
     } else {
       result = await sql`
-    UPDATE usuarios
-      SET matricula = ${matricula},
-          nombre = ${nombre},
-          apellidos = ${apellidos},
-          email = ${email},
-          tipo_usuario = ${tipo_usuario},
-          activo = ${activo}
-    WHERE id = ${id}
-    RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo`
-    }
-
-
-    if (result.length === 0) {
-      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+        UPDATE usuarios
+        SET matricula = ${matricula},
+            nombre = ${nombre},
+            apellidos = ${apellidos},
+            email = ${email},
+            tipo_usuario = ${tipo_usuario},
+            activo = ${activo},
+            departamento_id = ${finalDepartamentoId},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+        RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo, departamento_id
+      `
     }
 
     return NextResponse.json({ usuario: result[0] })
@@ -63,7 +77,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 // Desactivar usuario (borrado lógico) o Eliminar permanentemente (si ya está inactivo)
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireRole(["administrador"])
+    const admin = await requireRole(["main_admin", "administrador"])
 
     if (!admin) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
@@ -72,11 +86,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { id } = await params
     const userId = Number(id)
 
-    // 1. Verificar estado actual del usuario
-    const [usuario] = await sql`SELECT activo, tipo_usuario FROM usuarios WHERE id = ${userId}`
+    // 1. Verificar estado actual del usuario y pertenencia al departamento
+    const [usuario] = await sql`SELECT activo, tipo_usuario, departamento_id FROM usuarios WHERE id = ${userId}`
 
     if (!usuario) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+    }
+
+    // Seguridad: El administrador solo puede borrar usuarios de su propio departamento
+    if (admin.tipo_usuario === "administrador" && usuario.departamento_id !== admin.departamento_id) {
+      return NextResponse.json({ error: "No tienes permiso para eliminar usuarios de otro departamento" }, { status: 403 })
     }
 
     if (usuario.activo) {
@@ -87,7 +106,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       // 🔴 Si ya está inactivo -> Hard Delete (Borrado permanente)
 
       // Eliminar datos relacionados (Cascada manual)
-
       // 1. Archivos de entregas
       await sql`
         DELETE FROM archivos 

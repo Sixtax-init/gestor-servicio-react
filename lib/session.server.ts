@@ -54,11 +54,17 @@ export async function destroySession(): Promise<void> {
 
 // Verificar si el usuario tiene un rol específico
 export async function requireRole(
-    allowedRoles: Array<"administrador" | "maestro" | "alumno">,
+    allowedRoles: Array<"main_admin" | "administrador" | "maestro" | "alumno">,
 ): Promise<SessionUser | null> {
     const user = await getSession()
 
-    if (!user || !allowedRoles.includes(user.tipo_usuario)) {
+    // Si no hay usuario, o el usuario no es main_admin ni tiene uno de los roles permitidos
+    if (!user) return null
+
+    // El main_admin tiene acceso a todo por defecto si está en la lista o si se requiere un rol administrativo
+    if (user.tipo_usuario === "main_admin") return user
+
+    if (!allowedRoles.includes(user.tipo_usuario)) {
         return null
     }
 

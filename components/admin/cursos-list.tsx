@@ -19,9 +19,14 @@ interface Curso {
   archivo_adjunto: string | null
   archivo_nombre: string | null
   maestro_id: number
+  departamento_nombre?: string
 }
 
-export function CursosList() {
+interface CursosListProps {
+  isAdminGlobal?: boolean
+}
+
+export function CursosList({ isAdminGlobal = false }: CursosListProps) {
   const [cursos, setCursos] = useState<Curso[]>([])
   const [loading, setLoading] = useState(true)
   const [editingCurso, setEditingCurso] = useState<Curso | null>(null)
@@ -78,6 +83,7 @@ export function CursosList() {
             <TableRow>
               <TableHead>Nombre del Grupo</TableHead>
               <TableHead>Tipo</TableHead>
+              {isAdminGlobal && <TableHead>Departamento</TableHead>}
               <TableHead>Maestro</TableHead>
               <TableHead>Alumnos</TableHead>
               <TableHead>Estado</TableHead>
@@ -88,7 +94,7 @@ export function CursosList() {
           <TableBody>
             {cursos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
+                <TableCell colSpan={isAdminGlobal ? 8 : 7} className="text-center">
                   No hay cursos registrados
                 </TableCell>
               </TableRow>
@@ -101,6 +107,13 @@ export function CursosList() {
                       {getTipoLabel(curso.tipo)}
                     </Badge>
                   </TableCell>
+                  {isAdminGlobal && (
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm font-medium">
+                        {curso.departamento_nombre || "Sin asignar"}
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell>{curso.maestro_nombre || "Sin asignar"}</TableCell>
                   <TableCell>{curso.total_alumnos}</TableCell>
                   <TableCell>
@@ -143,6 +156,7 @@ export function CursosList() {
         open={!!editingCurso}
         onOpenChange={(open) => !open && setEditingCurso(null)}
         onSuccess={fetchCursos}
+        isAdminGlobal={isAdminGlobal}
       />
 
       <DeleteConfirmDialog

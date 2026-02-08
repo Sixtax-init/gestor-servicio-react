@@ -35,23 +35,31 @@ interface EditCursoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  isAdminGlobal?: boolean
 }
 
-export function EditCursoDialog({ curso, open, onOpenChange, onSuccess }: EditCursoDialogProps) {
+export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminGlobal = false }: EditCursoDialogProps) {
   const [loading, setLoading] = useState(false)
   const [maestros, setMaestros] = useState<any[]>([])
+  const [departamentos, setDepartamentos] = useState<any[]>([])
   const [uploadedFile, setUploadedFile] = useState<{ url: string; name: string } | null>(null)
   const [formData, setFormData] = useState({
     nombre_grupo: "",
     tipo: "servicio_social",
     maestro_id: "",
+    departamento_id: "",
     descripcion: "",
     activo: true,
   })
 
   useEffect(() => {
-    fetchMaestros()
-  }, [])
+    if (open) {
+      fetchMaestros()
+      if (isAdminGlobal) {
+        fetchDepartamentos()
+      }
+    }
+  }, [open, isAdminGlobal])
 
   useEffect(() => {
     if (curso) {
@@ -59,6 +67,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess }: EditCu
         nombre_grupo: curso.nombre_grupo,
         tipo: curso.tipo,
         maestro_id: curso.maestro_id?.toString() || "",
+        departamento_id: (curso as any).departamento_id?.toString() || "",
         descripcion: curso.descripcion || "",
         activo: curso.activo,
       })
@@ -72,12 +81,25 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess }: EditCu
 
   const fetchMaestros = async () => {
     try {
-      // Fetch active teachers only
-      const response = await fetch("/api/admin/usuarios?tipo=maestro&status=active&limit=100")
+      const url = isAdminGlobal
+        ? "/api/admin/usuarios?tipo=maestro&status=active&limit=500"
+        : "/api/admin/usuarios?tipo=maestro&status=active&limit=100"
+
+      const response = await fetch(url)
       const data = await response.json()
       setMaestros(data.usuarios || [])
     } catch (error) {
       console.error("[v0] Error fetching maestros:", error)
+    }
+  }
+
+  const fetchDepartamentos = async () => {
+    try {
+      const response = await fetch("/api/main-admin/departamentos")
+      const data = await response.json()
+      setDepartamentos(data.departamentos || [])
+    } catch (error) {
+      console.error("Error fetching departamentos:", error)
     }
   }
 
@@ -118,6 +140,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess }: EditCu
         body: JSON.stringify({
           ...formData,
           maestro_id: formData.maestro_id ? Number.parseInt(formData.maestro_id) : null,
+          departamento_id: formData.departamento_id ? Number.parseInt(formData.departamento_id) : undefined,
           archivo_adjunto: uploadedFile?.url || null,
           archivo_nombre: uploadedFile?.name || null,
         }),
@@ -186,6 +209,26 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess }: EditCu
                 </SelectContent>
               </Select>
             </div>
+            {isAdminGlobal && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-departamento">Departamento</Label>
+                <Select
+                  value={formData.departamento_id}
+                  onValueChange={(value) => setFormData({ ...formData, departamento_id: value })}
+                >
+                  <SelectTrigger id="edit-departamento">
+                    <SelectValue placeholder="Seleccionar departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departamentos.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="edit-descripcion">Descripción</Label>
               <Textarea
