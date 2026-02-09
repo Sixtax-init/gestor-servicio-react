@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { apiFetch } from "@/lib/api-client"
 
 interface CreateCursoDialogProps {
   open: boolean
@@ -32,9 +33,8 @@ export function CreateCursoDialog({ open, onOpenChange, onSuccess }: CreateCurso
     setLoading(true)
 
     try {
-      const response = await fetch("/api/maestro/cursos", {
+      const response = await apiFetch("/api/maestro/cursos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
 

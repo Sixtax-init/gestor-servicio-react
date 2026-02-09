@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Plus } from "lucide-react"
+import { apiFetch } from "@/lib/api-client"
 
 interface CreateCursoDialogProps {
   onSuccess: () => void
@@ -53,7 +54,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
         ? "/api/admin/usuarios?tipo=maestro&status=active&limit=500"
         : "/api/admin/usuarios?tipo=maestro&status=active&limit=100"
 
-      const response = await fetch(url)
+      const response = await apiFetch(url)
       const data = await response.json()
       setMaestros(data.usuarios || [])
     } catch (error) {
@@ -63,7 +64,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
 
   const fetchDepartamentos = async () => {
     try {
-      const response = await fetch("/api/main-admin/departamentos")
+      const response = await apiFetch("/api/main-admin/departamentos")
       const data = await response.json()
       setDepartamentos(data.departamentos || [])
     } catch (error) {
@@ -90,9 +91,8 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
     setLoading(true)
 
     try {
-      const response = await fetch("/api/admin/cursos", {
+      const response = await apiFetch("/api/admin/cursos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           maestro_id: formData.maestro_id ? Number.parseInt(formData.maestro_id) : null,
@@ -125,7 +125,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
         uploadData.append("file", selectedFile)
         uploadData.append("cursoId", cursoId.toString())
 
-        const uploadResponse = await fetch("/api/cursos/upload", {
+        const uploadResponse = await apiFetch("/api/cursos/upload", {
           method: "POST",
           body: uploadData,
         })

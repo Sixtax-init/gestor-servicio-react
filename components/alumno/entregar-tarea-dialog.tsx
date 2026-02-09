@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
+import { apiFetch } from "@/lib/api-client"
 
 interface EntregarTareaDialogProps {
   open: boolean
@@ -51,7 +52,7 @@ export function EntregarTareaDialog({ open, onOpenChange, tarea, onSuccess }: En
       formData.append("type", "avances") // Usamos 'avances' para que no pida entregaId
       formData.append("referenceId", "0")
 
-      const resUpload = await fetch("/api/upload", {
+      const resUpload = await apiFetch("/api/upload", {
         method: "POST",
         body: formData,
       })
@@ -64,9 +65,8 @@ export function EntregarTareaDialog({ open, onOpenChange, tarea, onSuccess }: En
       const archivoSubido = await resUpload.json()
 
       // 2️⃣ Crear la entrega con la info del archivo
-      const resEntrega = await fetch("/api/alumno/entregas", {
+      const resEntrega = await apiFetch("/api/alumno/entregas", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tarea_id: tarea.id,
           comentario: comentario.trim(),

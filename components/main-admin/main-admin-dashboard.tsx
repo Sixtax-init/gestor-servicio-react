@@ -30,6 +30,7 @@ import { DepartamentosTab } from "./departamentos-tab"
 import { UsuariosTab } from "../admin/usuarios-tab"
 import { CursosTab } from "../admin/cursos-tab"
 import type { SessionUser } from "@/lib/auth"
+import { apiFetch } from "@/lib/api-client"
 
 interface MainAdminDashboardProps {
     user: SessionUser
@@ -52,7 +53,7 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
 
     const fetchStats = async () => {
         try {
-            const res = await fetch("/api/main-admin/stats")
+            const res = await apiFetch("/api/main-admin/stats")
             const data = await res.json()
             setStats(data)
         } catch (error) {
@@ -66,7 +67,7 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
 
     const handleLogout = async () => {
         setLoading(true)
-        await fetch("/api/auth/logout", { method: "POST" })
+        await apiFetch("/api/auth/logout", { method: "POST" })
         router.push("/login")
     }
 

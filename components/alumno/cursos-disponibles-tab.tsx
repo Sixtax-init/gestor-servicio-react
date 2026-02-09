@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookOpen, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { apiFetch } from "@/lib/api-client"
 
 interface CursosDisponiblesTabProps {
   cursos: any[]
@@ -20,9 +21,8 @@ export function CursosDisponiblesTab({ cursos: initialCursos }: CursosDisponible
     setLoading(cursoId)
 
     try {
-      const response = await fetch("/api/alumno/inscripciones", {
+      const response = await apiFetch("/api/alumno/inscripciones", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ curso_id: cursoId }),
       })
 

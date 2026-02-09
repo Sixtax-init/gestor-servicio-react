@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { FileUpload } from "@/components/ui/file-upload"
+import { apiFetch } from "@/lib/api-client"
 
 interface Tarea {
   id: number
@@ -76,7 +77,7 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
         uploadFormData.append("file", nuevoArchivo)
         uploadFormData.append("tipo", "instrucciones")
 
-        const uploadResponse = await fetch("/api/upload", {
+        const uploadResponse = await apiFetch("/api/upload", {
           method: "POST",
           body: uploadFormData,
         })
@@ -87,9 +88,8 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
         }
       }
 
-      const response = await fetch(`/api/maestro/tareas/${tarea.id}`, {
+      const response = await apiFetch(`/api/maestro/tareas/${tarea.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           asignacion_horas: formData.asignacion_horas ? Number.parseInt(formData.asignacion_horas) : null,

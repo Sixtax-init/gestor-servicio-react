@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileUpload } from "@/components/ui/file-upload"
+import { apiFetch } from "@/lib/api-client"
 
 interface CreateTareaDialogProps {
   open: boolean
@@ -59,7 +60,7 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: Cr
 
   const fetchCursos = async () => {
     try {
-      const response = await fetch("/api/maestro/cursos")
+      const response = await apiFetch("/api/maestro/cursos")
       if (!response.ok) throw new Error("Error al obtener cursos")
 
       const data = await response.json()
@@ -93,7 +94,7 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: Cr
       if (archivoInstrucciones)
         formDataToSend.append("archivo_instrucciones", archivoInstrucciones)
 
-      const response = await fetch("/api/maestro/tareas", {
+      const response = await apiFetch("/api/maestro/tareas", {
         method: "POST",
         body: formDataToSend,
       })

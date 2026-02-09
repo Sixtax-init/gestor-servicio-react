@@ -14,6 +14,7 @@ import { useTour } from "@/lib/hooks/use-tour"
 import { TourStep } from "@/components/ui/tour-step"
 import { TourOverlay } from "@/components/ui/tour-overlay"
 import { adminTour } from "@/lib/tours/admin-tour"
+import { apiFetch } from "@/lib/api-client"
 
 interface AdminDashboardProps {
   user: SessionUser
@@ -32,7 +33,7 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
 
   const handleLogout = async () => {
     setLoading(true)
-    await fetch("/api/auth/logout", { method: "POST" })
+    await apiFetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
   }
 
