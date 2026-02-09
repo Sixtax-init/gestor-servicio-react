@@ -264,7 +264,11 @@ export function DepartamentosTab() {
                 onOpenChange={setIsDeleteOpen}
                 onConfirm={handleDelete}
                 title="Eliminar Departamento"
-                description={`¿Estás seguro de que deseas eliminar el departamento "${selectedDept?.nombre}"? Esta acción no se puede deshacer y fallará si hay usuarios o cursos asociados.`}
+                description={
+                    selectedDept && (selectedDept.total_usuarios > 0 || selectedDept.total_cursos > 0)
+                        ? `ATENCIÓN: El departamento "${selectedDept.nombre}" tiene ${selectedDept.total_usuarios} usuarios y ${selectedDept.total_cursos} cursos asociados. Por seguridad, no puedes eliminar un departamento con registros activos. Debes reasignar o eliminar a estos usuarios y cursos antes de proceder.`
+                        : `¿Estás seguro de que deseas eliminar el departamento "${selectedDept?.nombre}"? Esta acción no se puede deshacer.`
+                }
             />
         </div>
     )
