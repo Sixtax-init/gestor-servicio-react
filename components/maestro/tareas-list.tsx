@@ -9,6 +9,7 @@ import { EditTareaDialog } from "./edit-tarea-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { VerEntregasDialog } from "./ver-entregas-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { apiFetch } from "@/lib/api-client"
 
 interface Tarea {
   id: number
@@ -39,7 +40,7 @@ export function TareasList() {
 
   const fetchTareas = async () => {
     try {
-      const response = await fetch("/api/maestro/tareas")
+      const response = await apiFetch("/api/maestro/tareas")
       if (response.ok) {
         const data = await response.json()
         setTareas(data)
@@ -55,7 +56,7 @@ export function TareasList() {
     if (!deletingTarea) return
 
     try {
-      const response = await fetch(`/api/maestro/tareas/${deletingTarea.id}`, {
+      const response = await apiFetch(`/api/maestro/tareas/${deletingTarea.id}`, {
         method: "DELETE",
       })
 

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, FileText, Upload } from "lucide-react"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
+import { apiFetch } from "@/lib/api-client"
 
 interface Tarea {
   id: number
@@ -33,7 +34,7 @@ export function MisTareasTab() {
   const fetchTareas = async () => {
     setLoading(true)
     try {
-      const response = await fetch("/api/alumno/tareas")
+      const response = await apiFetch("/api/alumno/tareas")
       if (response.ok) {
         const data: Tarea[] = await response.json()
         setTareas(data)

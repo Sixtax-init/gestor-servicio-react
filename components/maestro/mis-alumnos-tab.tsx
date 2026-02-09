@@ -12,6 +12,7 @@ import { StudentProgressDialog } from "./student-progress-dialog"
 import { BarChart3, UserPlus, Search, Loader2, UserMinus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { apiFetch } from "@/lib/api-client"
 
 export function MisAlumnosTab() {
   const [cursos, setCursos] = useState<any[]>([])
@@ -40,7 +41,7 @@ export function MisAlumnosTab() {
 
     setIsSearching(true)
     try {
-      const res = await fetch(`/api/maestro/alumnos/buscar?q=${encodeURIComponent(query)}`)
+      const res = await apiFetch(`/api/maestro/alumnos/buscar?q=${encodeURIComponent(query)}`)
       const data = await res.json()
       setSearchResults(data.alumnos || [])
     } catch (error) {
@@ -56,9 +57,8 @@ export function MisAlumnosTab() {
 
     setIsAdding(true)
     try {
-      const res = await fetch(`/api/maestro/cursos/${selectedCursoId}/agregar-alumno`, {
+      const res = await apiFetch(`/api/maestro/cursos/${selectedCursoId}/agregar-alumno`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ alumnoId }),
       })
 
@@ -88,9 +88,8 @@ export function MisAlumnosTab() {
 
     setIsRemoving(true)
     try {
-      const res = await fetch(`/api/maestro/cursos/${cursoId}/eliminar-alumno`, {
+      const res = await apiFetch(`/api/maestro/cursos/${cursoId}/eliminar-alumno`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ alumnoId }),
       })
 
@@ -126,7 +125,7 @@ export function MisAlumnosTab() {
   useEffect(() => {
     async function loadData() {
       try {
-        const resCursos = await fetch("/api/maestro/cursos")
+        const resCursos = await apiFetch("/api/maestro/cursos")
         const dataCursos = await resCursos.json()
 
         setCursos(dataCursos.cursos || [])
@@ -136,7 +135,7 @@ export function MisAlumnosTab() {
         const alumnosPorCursoTemp: Record<string, any[]> = {}
 
         for (const curso of dataCursos.cursos || []) {
-          const resA = await fetch(`/api/maestro/cursos/${curso.id}/alumnos`)
+          const resA = await apiFetch(`/api/maestro/cursos/${curso.id}/alumnos`)
           const dataA = await resA.json()
 
           alumnosPorCursoTemp[curso.id] = dataA.alumnos || []

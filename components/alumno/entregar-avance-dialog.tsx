@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
+import { apiFetch } from "@/lib/api-client"
 import { NextResponse } from "next/server"
 
 interface EntregarAvanceDialogProps {
@@ -33,7 +34,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
 
 
     const fetchAvances = async () => {
-        const res = await fetch(`/api/alumno/entregas/avances?tarea_id=${tareaId}`)
+        const res = await apiFetch(`/api/alumno/entregas/avances?tarea_id=${tareaId}`)
         if (res.ok) {
             const data = await res.json()
             setAvances(data)
@@ -69,15 +70,14 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
                 formData.append("file", archivo)
                 formData.append("type", "avances")
 
-                const upload = await fetch("/api/upload", { method: "POST", body: formData })
+                const upload = await apiFetch("/api/upload", { method: "POST", body: formData })
                 const result = await upload.json()
                 rutaArchivo = result.ruta
             }
 
             // 2️⃣ Registrar avance
-            const res = await fetch("/api/alumno/entregas/avances", {
+            const res = await apiFetch("/api/alumno/entregas/avances", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     tarea_id: tareaId,
                     comentario,
@@ -108,9 +108,8 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
 
     const marcarComoFinal = async (avanceId: number) => {
         if (!confirm("¿Deseas marcar este avance como entrega final?")) return
-        const res = await fetch("/api/alumno/entregas/avances", {
+        const res = await apiFetch("/api/alumno/entregas/avances", {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ avance_id: avanceId }),
         })
         if (res.ok) {

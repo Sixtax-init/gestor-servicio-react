@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { apiFetch } from "@/lib/api-client"
 
 interface CreateUsuarioDialogProps {
   open: boolean
@@ -34,7 +35,7 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
   // Cargar departamentos si es admin global
   useEffect(() => {
     if (isAdminGlobal && open) {
-      fetch("/api/main-admin/departamentos")
+      apiFetch("/api/main-admin/departamentos")
         .then(res => res.json())
         .then(data => {
           if (data.departamentos) {
@@ -58,9 +59,8 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
     }
 
     try {
-      const response = await fetch("/api/admin/usuarios", {
+      const response = await apiFetch("/api/admin/usuarios", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           departamento_id: formData.departamento_id ? Number(formData.departamento_id) : undefined

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Trash2, Edit, Download } from "lucide-react"
 import { EditCursoDialog } from "../admin/edit-curso-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
+import { apiFetch } from "@/lib/api-client"
 
 interface Curso {
   id: number
@@ -38,7 +39,7 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
 
   const fetchCursos = async () => {
     try {
-      const response = await fetch("/api/admin/cursos")
+      const response = await apiFetch("/api/admin/cursos")
       const data = await response.json()
       setCursos(data.cursos || [])
     } catch (error) {
@@ -50,7 +51,7 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
 
   const handleDelete = async (id: number) => {
     try {
-      const response = await fetch(`/api/admin/cursos/${id}`, {
+      const response = await apiFetch(`/api/admin/cursos/${id}`, {
         method: "DELETE",
       })
 

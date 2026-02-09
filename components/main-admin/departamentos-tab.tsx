@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast"
 import { CreateDepartamentoDialog } from "./create-departamento-dialog"
 import { EditDepartamentoDialog } from "./edit-departamento-dialog"
 import { DeleteConfirmDialog } from "@/components/admin/delete-confirm-dialog"
+import { apiFetch } from "@/lib/api-client"
 
 interface Departamento {
     id: number
@@ -68,7 +69,7 @@ export function DepartamentosTab() {
     const fetchDepartamentos = async () => {
         try {
             setLoading(true)
-            const res = await fetch("/api/main-admin/departamentos")
+            const res = await apiFetch("/api/main-admin/departamentos")
             const data = await res.json()
             if (data.departamentos) {
                 setDepartamentos(data.departamentos)
@@ -93,7 +94,7 @@ export function DepartamentosTab() {
         if (!selectedDept) return
 
         try {
-            const res = await fetch(`/api/main-admin/departamentos/${selectedDept.id}`, {
+            const res = await apiFetch(`/api/main-admin/departamentos/${selectedDept.id}`, {
                 method: "DELETE",
             })
 

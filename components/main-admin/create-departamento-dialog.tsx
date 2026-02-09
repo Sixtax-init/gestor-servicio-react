@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { apiFetch } from "@/lib/api-client"
 
 interface CreateDepartamentoDialogProps {
     open: boolean
@@ -30,9 +31,8 @@ export function CreateDepartamentoDialog({ open, onOpenChange, onSuccess }: Crea
         setLoading(true)
 
         try {
-            const response = await fetch("/api/main-admin/departamentos", {
+            const response = await apiFetch("/api/main-admin/departamentos", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             })
 

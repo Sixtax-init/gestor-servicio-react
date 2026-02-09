@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { FileUpload } from "@/components/ui/file-upload"
+import { apiFetch } from "@/lib/api-client"
 
 interface Curso {
   id: number
@@ -85,7 +86,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
         ? "/api/admin/usuarios?tipo=maestro&status=active&limit=500"
         : "/api/admin/usuarios?tipo=maestro&status=active&limit=100"
 
-      const response = await fetch(url)
+      const response = await apiFetch(url)
       const data = await response.json()
       setMaestros(data.usuarios || [])
     } catch (error) {
@@ -95,7 +96,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
 
   const fetchDepartamentos = async () => {
     try {
-      const response = await fetch("/api/main-admin/departamentos")
+      const response = await apiFetch("/api/main-admin/departamentos")
       const data = await response.json()
       setDepartamentos(data.departamentos || [])
     } catch (error) {
@@ -111,7 +112,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
     formData.append("file", file)
 
     try {
-      const response = await fetch("/api/upload", {
+      const response = await apiFetch("/api/upload", {
         method: "POST",
         body: formData,
       })
@@ -134,9 +135,8 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/cursos/${curso.id}`, {
+      const response = await apiFetch(`/api/admin/cursos/${curso.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           maestro_id: formData.maestro_id ? Number.parseInt(formData.maestro_id) : null,

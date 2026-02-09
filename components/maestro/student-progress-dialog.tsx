@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ProgressBar } from "@/components/ui/progress-bar"
 import { User, Mail, Calendar, TrendingUp, Clock } from "lucide-react"
+import { apiFetch } from "@/lib/api-client"
 
 interface StudentProgressDialogProps {
     open: boolean
@@ -33,7 +34,7 @@ export function StudentProgressDialog({
     const fetchStudentProgress = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`/api/maestro/alumnos/${studentId}/progreso`)
+            const response = await apiFetch(`/api/maestro/alumnos/${studentId}/progreso`)
             if (response.ok) {
                 const result = await response.json()
                 setData(result)

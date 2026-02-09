@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { apiFetch } from "@/lib/api-client"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -55,7 +56,7 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
     }
 
     if (isAdminGlobal && open) {
-      fetch("/api/main-admin/departamentos")
+      apiFetch("/api/main-admin/departamentos")
         .then(res => res.json())
         .then(data => {
           if (data.departamentos) {
@@ -72,9 +73,8 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/usuarios/${usuario.id}`, {
+      const response = await apiFetch(`/api/admin/usuarios/${usuario.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           departamento_id: formData.departamento_id ? Number(formData.departamento_id) : null

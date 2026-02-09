@@ -15,6 +15,7 @@ import { useTour } from "@/lib/hooks/use-tour"
 import { TourStep } from "@/components/ui/tour-step"
 import { TourOverlay } from "@/components/ui/tour-overlay"
 import { maestroTour } from "@/lib/tours/maestro-tour"
+import { apiFetch } from "@/lib/api-client"
 
 interface MaestroDashboardProps {
   user: SessionUser
@@ -37,7 +38,7 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
   useEffect(() => {
     const fetchProgressStats = async () => {
       try {
-        const response = await fetch("/api/maestro/alumnos/progreso")
+        const response = await apiFetch("/api/maestro/alumnos/progreso")
         if (response.ok) {
           const data = await response.json()
           setProgressStats(data)
@@ -51,7 +52,7 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
 
   const handleLogout = async () => {
     setLoading(true)
-    await fetch("/api/auth/logout", { method: "POST" })
+    await apiFetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
   }
 
