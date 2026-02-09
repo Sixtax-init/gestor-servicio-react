@@ -266,7 +266,7 @@ export function DepartamentosTab() {
                 title="Eliminar Departamento"
                 description={
                     selectedDept && (selectedDept.total_usuarios > 0 || selectedDept.total_cursos > 0)
-                        ? `ATENCIÓN: El departamento "${selectedDept.nombre}" tiene ${selectedDept.total_usuarios} usuarios y ${selectedDept.total_cursos} cursos asociados. Por seguridad, no puedes eliminar un departamento con registros activos. Debes reasignar estos usuarios y cursos antes de proceder.`
+                        ? `ATENCIÓN: El departamento "${selectedDept.nombre}" tiene ${selectedDept.total_usuarios} usuarios y ${selectedDept.total_cursos} cursos asociados. Por seguridad, no puedes eliminar un departamento con registros activos. Debes reasignar o eliminar a estos usuarios y cursos antes de proceder.`
                         : `¿Estás seguro de que deseas eliminar el departamento "${selectedDept?.nombre}"? Esta acción no se puede deshacer.`
                 }
             />
