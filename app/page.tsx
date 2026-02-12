@@ -138,7 +138,7 @@ export default function HomePage() {
               <Button size="lg" className="mt-4 transition-transform duration-200 hover:scale-105 hover:shadow-md">Ir al Login</Button>
             </Link>
             <p className="text-sm text-muted-foreground mt-6">
-              Consulta la documentación en <code className="bg-muted px-2 py-1 rounded">docs/INICIO_RAPIDO.md</code> para configurar la base de datos
+              ¿Necesitas ayuda? Contacta a <a href="mailto:soporte.servicetracker@nuevoleon.tecnm.mx" className="text-primary hover:underline font-medium">Soporte Técnico</a>
             </p>
           </CardContent>
         </Card>

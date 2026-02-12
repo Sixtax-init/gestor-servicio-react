@@ -12,7 +12,7 @@ export function Footer() {
                     <div className="flex items-center gap-3">
                         <div className="relative w-10 h-10">
                             <Image
-                                src="/logos/GUL_logo.png"
+                                src="ssocial/logos/GUL_logo.png"
                                 alt="Grupo de Usuarios de Linux ITNL"
                                 fill
                                 className="object-contain"
@@ -32,6 +32,15 @@ export function Footer() {
                 {/* Copyright */}
                 <div className="text-center mt-4 text-xs text-muted-foreground">
                     <p>© {new Date().getFullYear()} Grupo de Usuarios de Linux - Instituto Tecnológico de Nuevo León</p>
+                    <p className="mt-2">
+                        Soporte:{" "}
+                        <a
+                            href="mailto:soporte.servicetracker@nuevoleon.tecnm.mx"
+                            className="text-primary hover:underline transition-colors"
+                        >
+                            soporte.servicetracker@nuevoleon.tecnm.mx
+                        </a>
+                    </p>
                 </div>
             </div>
         </footer>

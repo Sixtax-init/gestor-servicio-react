@@ -25,7 +25,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-12 h-12 transition-transform group-hover:scale-105">
             <Image
-              src="/logos/GUL_logo.png"
+              src="ssocial/logos/GUL_logo.png"
               alt="Grupo de Usuarios de Linux ITNL"
               fill
               className="object-contain"
