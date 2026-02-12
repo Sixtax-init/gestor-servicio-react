@@ -112,7 +112,12 @@ export default function NotFound() {
                         {/* Footer Message */}
                         <div className="text-center pt-4 border-t">
                             <p className="text-xs text-muted-foreground">
-                                Si crees que esto es un error, contacta a <a href="mailto:soporte.servicetracker@nuevoleon.tecnm.mx" className="text-primary hover:underline">Soporte Técnico</a>
+                                Si crees que esto es un error, contacta a <a href="#" onClick={(e) => {
+                                    e.preventDefault();
+                                    const subject = encodeURIComponent(`Error en 404 el ${new Date().toLocaleDateString()}`);
+                                    const body = encodeURIComponent("Hola,\n\nMe he encontrado con el siguiente error al intentar:\n");
+                                    window.location.href = `mailto:soporte.servicetracker@nuevoleon.tecnm.mx?subject=${subject}&body=${body}`;
+                                }} className="text-primary hover:underline">Soporte Técnico</a>
                             </p>
                         </div>
                     </CardContent>

@@ -35,7 +35,13 @@ export function Footer() {
                     <p className="mt-2">
                         Soporte:{" "}
                         <a
-                            href="mailto:soporte.servicetracker@nuevoleon.tecnm.mx"
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                const subject = encodeURIComponent(`Error en ${window.location.pathname} el ${new Date().toLocaleDateString('es-MX')}`);
+                                const body = encodeURIComponent("Hola,\n\nMe he encontrado con el siguiente error al intentar:\n");
+                                window.location.href = `mailto:soporte.servicetracker@nuevoleon.tecnm.mx?subject=${subject}&body=${body}`;
+                            }}
                             className="text-primary hover:underline transition-colors"
                         >
                             soporte.servicetracker@nuevoleon.tecnm.mx

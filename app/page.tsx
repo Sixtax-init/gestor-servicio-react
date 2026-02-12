@@ -138,7 +138,12 @@ export default function HomePage() {
               <Button size="lg" className="mt-4 transition-transform duration-200 hover:scale-105 hover:shadow-md">Ir al Login</Button>
             </Link>
             <p className="text-sm text-muted-foreground mt-6">
-              ¿Necesitas ayuda? Contacta a <a href="mailto:soporte.servicetracker@nuevoleon.tecnm.mx" className="text-primary hover:underline font-medium">Soporte Técnico</a>
+              ¿Necesitas ayuda? Contacta a <a href="#" onClick={(e) => {
+                e.preventDefault();
+                const subject = encodeURIComponent(`Error en Inicio el ${new Date().toLocaleDateString()}`);
+                const body = encodeURIComponent("Hola,\n\nMe he encontrado con el siguiente error al intentar:\n");
+                window.location.href = `mailto:soporte.servicetracker@nuevoleon.tecnm.mx?subject=${subject}&body=${body}`;
+              }} className="text-primary hover:underline font-medium">Soporte Técnico</a>
             </p>
           </CardContent>
         </Card>
