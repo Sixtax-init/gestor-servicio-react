@@ -12,10 +12,10 @@ export function ReportPreview({ data, actividades = [] }: ReportPreviewProps) {
       {/* Header */}
       <div className="border-2 border-black p-4">
         <div className="flex justify-between items-start mb-2">
-           {/* Logo */}
+          {/* Logo */}
           <div className="flex-shrink-0">
             <Image
-              src="/logos/ITNL.png"
+              src="ssocial/logos/ITNL.png"
               alt="Logo ITNL"
               width={80}
               height={80}

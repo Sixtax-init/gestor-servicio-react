@@ -23,7 +23,7 @@ export default function NotFound() {
                         <div className="flex justify-center animate-slide-up">
                             <div className="relative w-48 h-48 md:w-64 md:h-64">
                                 <Image
-                                    src="/logos/Tux_404.png"
+                                    src="ssocial/logos/Tux_404.png"
                                     alt="Tux perdido"
                                     fill
                                     className="object-contain"
@@ -112,7 +112,12 @@ export default function NotFound() {
                         {/* Footer Message */}
                         <div className="text-center pt-4 border-t">
                             <p className="text-xs text-muted-foreground">
-                                Si crees que esto es un error, contacta al administrador del sistema
+                                Si crees que esto es un error, contacta a <a href="#" onClick={(e) => {
+                                    e.preventDefault();
+                                    const subject = encodeURIComponent(`Error en 404 el ${new Date().toLocaleDateString()}`);
+                                    const body = encodeURIComponent("Hola,\n\nMe he encontrado con el siguiente error al intentar:\n");
+                                    window.location.href = `mailto:soporte.servicetracker@nuevoleon.tecnm.mx?subject=${subject}&body=${body}`;
+                                }} className="text-primary hover:underline">Soporte Técnico</a>
                             </p>
                         </div>
                     </CardContent>
