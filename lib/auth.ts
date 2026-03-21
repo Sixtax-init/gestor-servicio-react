@@ -108,9 +108,18 @@ export async function getUserById(id: number): Promise<SessionUser | null> {
   }
 }
 
-// Cambiar contraseña
-export async function changePassword(userId: number, newPassword: string): Promise<boolean> {
+// Cambiar contraseña (requiere verificar la contraseña actual)
+export async function changePassword(userId: number, currentPassword: string, newPassword: string): Promise<boolean> {
   try {
+    const result = await sql`
+      SELECT password_hash FROM usuarios WHERE id = ${userId} AND activo = true LIMIT 1
+    `
+
+    if (result.length === 0) return false
+
+    const isValid = await bcrypt.compare(currentPassword, result[0].password_hash as string)
+    if (!isValid) return false
+
     const password_hash = await bcrypt.hash(newPassword, 10)
 
     await sql`

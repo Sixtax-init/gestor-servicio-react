@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { RevisarEntregaDialog } from "./RevisarEntregaDialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { apiFetch } from "@/lib/api-client"
 
 
 
@@ -63,7 +64,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
 
   const fetchEntregas = async () => {
     try {
-      const response = await fetch(`/api/maestro/tareas/${tarea.id}/entregas`)
+      const response = await apiFetch(`/api/maestro/tareas/${tarea.id}/entregas`)
       if (response.ok) {
         const data = await response.json()
         setEntregas(data)
@@ -76,7 +77,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
   }
   const fetchAvances = async () => {
     try {
-      const response = await fetch(`/api/maestro/tareas/${tarea.id}/avances`)
+      const response = await apiFetch(`/api/maestro/tareas/${tarea.id}/avances`)
       if (response.ok) {
         const data = await response.json()
         setAvances(data)
@@ -104,7 +105,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
 
   const revisarEntrega = async (entregaId: number, estado: string, comentario: string, calificacion: number) => {
     try {
-      const response = await fetch(`/api/maestro/tareas/${tarea.id}/entregas/${entregaId}/revisar`, {
+      const response = await apiFetch(`/api/maestro/tareas/${tarea.id}/entregas/${entregaId}/revisar`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

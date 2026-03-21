@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Printer, Loader2, Monitor, Smartphone } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { apiFetch } from "@/lib/api-client"
 
 export interface ReportData {
   reportNumber: string
@@ -90,7 +91,7 @@ export default function Page() {
 
         // Obtener datos del alumno
         const [resAlumno, resActividades] = await Promise.all([
-          fetch('/api/auth/me').then(async res => {
+          apiFetch('/api/auth/me').then(async res => {
             if (!res.ok) {
               const error = await res.text()
               console.error('Error en respuesta de /api/auth/me:', error)
@@ -98,7 +99,7 @@ export default function Page() {
             }
             return res.json()
           }),
-          fetch('/api/alumno/actividades').then(async res => {
+          apiFetch('/api/alumno/actividades').then(async res => {
             if (!res.ok) {
               const error = await res.text()
               console.error('Error en respuesta de /api/alumno/actividades:', error)

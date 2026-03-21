@@ -8,6 +8,7 @@ import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2 } from "luci
 import { EditUsuarioDialog } from "./edit-usuario-dialog"
 import { DeleteConfirmDialog } from "./delete-confirm-dialog"
 import type { Usuario } from "@/lib/db"
+import { apiFetch } from "@/lib/api-client"
 
 interface UsuariosListProps {
   isAdminGlobal?: boolean
@@ -49,7 +50,7 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
         search: debouncedSearch
       })
 
-      const response = await fetch(`/api/admin/usuarios?${params}`)
+      const response = await apiFetch(`/api/admin/usuarios?${params}`)
       const data = await response.json()
 
       setUsuarios(data.usuarios || [])
@@ -63,7 +64,7 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
 
   const handleDelete = async (id: number) => {
     try {
-      const response = await fetch(`/api/admin/usuarios/${id}`, {
+      const response = await apiFetch(`/api/admin/usuarios/${id}`, {
         method: "DELETE",
       })
 

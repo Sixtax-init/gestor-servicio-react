@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
 import { EntregarAvanceDialog } from "./entregar-avance-dialog"
 import type { Entrega } from "@/lib/db"
+import { apiFetch } from "@/lib/api-client"
 
 interface VerTareasDialogProps {
   open: boolean
@@ -48,7 +49,7 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
   const fetchTareas = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/alumno/tareas?curso_id=${cursoId}`)
+      const response = await apiFetch(`/api/alumno/tareas?curso_id=${cursoId}`)
       if (response.ok) {
         const data: TareaConEntrega[] = await response.json()
         setTareas(data)

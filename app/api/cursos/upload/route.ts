@@ -1,15 +1,30 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session.server"
+import { requireRole } from "@/lib/session.server"
 import { saveFile } from "@/lib/file-upload"
 import path from "path"
 
 export const runtime = "nodejs"
 
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+]
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
 export async function POST(request: NextRequest) {
   console.log("[upload-curso] Request received")
 
-  const user = await getSession()
+  const user = await requireRole(["maestro", "administrador", "main_admin"])
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
@@ -23,6 +38,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Faltan parámetros (file o cursoId)" }, { status: 400 })
     }
 
+    // Validar tamaño
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "El archivo excede el tamaño máximo de 10 MB" }, { status: 400 })
+    }
+
+    // Validar tipo de archivo
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: "Tipo de archivo no permitido. Solo se aceptan PDF, imágenes, Word, Excel y PowerPoint" }, { status: 400 })
+    }
+
     // Verificar que el curso exista
     const curso = await sql`SELECT * FROM cursos WHERE id = ${Number(cursoId)}`
     if (curso.length === 0) {
@@ -31,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     console.log("[upload-curso] Saving file to /uploads/cursos")
 
-    const savedPath = await saveFile(file, Number(cursoId), "cursos") // 👈 Nuevo parámetro 'cursos'
+    const savedPath = await saveFile(file, Number(cursoId), "cursos")
     const publicPath = `/uploads/cursos/${cursoId}/${path.basename(savedPath)}`
 
     const result = await sql`
@@ -50,9 +75,10 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
 export async function GET() {
   try {
-    const user = await getSession()
+    const user = await requireRole(["maestro", "administrador", "main_admin"])
 
     if (!user) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
@@ -67,7 +93,7 @@ export async function GET() {
 
     return NextResponse.json({ cursos })
   } catch (error) {
-    console.error("[v0] Error fetching cursos del maestro:", error)
+    console.error("[upload-curso] Error fetching cursos del maestro:", error)
     return NextResponse.json({ error: "Error al obtener cursos" }, { status: 500 })
   }
 }

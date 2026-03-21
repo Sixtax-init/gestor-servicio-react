@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Clock, RefreshCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { apiFetch } from "@/lib/api-client"
 
 interface MisHorasTabProps {
   inscripciones?: any[]
@@ -19,7 +20,7 @@ export function MisHorasTab({ inscripciones: initialInscripciones = [] }: MisHor
   const fetchInscripciones = async () => {
     try {
       setLoading(true)
-      const response = await fetch("./api/alumno/inscripciones")
+      const response = await apiFetch("/api/alumno/inscripciones")
       if (!response.ok) throw new Error("Error al cargar inscripciones")
       const data = await response.json()
       setInscripciones(data)

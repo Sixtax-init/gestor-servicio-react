@@ -7,6 +7,7 @@ import { ReportPreview } from "@/components/alumno/report-preview"
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { apiFetch } from "@/lib/api-client"
 import { ReportData } from "@/types/report"
 
 export default function ReportePage() {
@@ -40,7 +41,7 @@ export default function ReportePage() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const sessionResponse = await fetch('/api/auth/session')
+        const sessionResponse = await apiFetch('/api/auth/session')
         if (!sessionResponse.ok) {
           router.push('/login')
           return
@@ -53,12 +54,12 @@ export default function ReportePage() {
         }
 
         // Obtener tareas del usuario
-        const tareasResponse = await fetch('/api/alumno/tareas')
+        const tareasResponse = await apiFetch('/api/alumno/tareas')
         if (!tareasResponse.ok) throw new Error('Error al cargar tareas')
         const tareas = await tareasResponse.json()
 
         // Obtener datos del usuario
-        const userResponse = await fetch(`/api/alumno/${session.id}`)
+        const userResponse = await apiFetch(`/api/alumno/${session.id}`)
         if (!userResponse.ok) throw new Error('Error al cargar datos del usuario')
         const userData = await userResponse.json()
 
