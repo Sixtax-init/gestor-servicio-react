@@ -51,7 +51,7 @@ export async function verifyCredentials(matricula: string, password: string): Pr
       departamento_id: usuario.departamento_id,
     }
   } catch (error) {
-    console.error("[v0] Error verifying credentials:", error)
+    console.error("[auth] Error verifying credentials:", error)
     return null
   }
 }
@@ -82,7 +82,7 @@ export async function createUser(data: {
 
     return result[0] as SessionUser
   } catch (error) {
-    console.error("[v0] Error creating user:", error)
+    console.error("[auth] Error creating user:", error)
     return null
   }
 }
@@ -103,7 +103,7 @@ export async function getUserById(id: number): Promise<SessionUser | null> {
 
     return result[0] as SessionUser
   } catch (error) {
-    console.error("[v0] Error getting user by id:", error)
+    console.error("[auth] Error getting user by id:", error)
     return null
   }
 }
@@ -130,7 +130,7 @@ export async function changePassword(userId: number, currentPassword: string, ne
 
     return true
   } catch (error) {
-    console.error("[v0] Error changing password:", error)
+    console.error("[auth] Error changing password:", error)
     return false
   }
 }

@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ usuarios, total, pages })
   } catch (error) {
-    console.error("[v0] Error fetching usuarios:", error)
+    console.error("[admin/usuarios] Error fetching:", error)
     return NextResponse.json({ error: "Error al obtener usuarios" }, { status: 500 })
   }
 }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ usuario: newUser }, { status: 201 })
   } catch (error) {
-    console.error("[v0] Error creating usuario:", error)
+    console.error("[admin/usuarios] Error creating:", error)
     return NextResponse.json({ error: "Error al crear usuario" }, { status: 500 })
   }
 }

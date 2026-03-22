@@ -1,16 +1,14 @@
 // app/api/maestro/tareas/[id]/entregas/route.ts
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session.server"
+import { requireRole } from "@/lib/session.server"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // ✅ Evita advertencia de Next: `params` puede ser una promesa
     const { id } = await params
-
-    const session = await getSession()
-    if (!session || session.tipo_usuario !== "maestro") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    const session = await requireRole(["maestro"])
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const tareaId = Number.parseInt(id)
@@ -53,7 +51,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json(entregas)
   } catch (error) {
-    console.error("❌ Error al obtener entregas:", error)
+    console.error("[maestro/tareas/entregas] Error:", error)
     return NextResponse.json({ error: "Error al obtener entregas" }, { status: 500 })
   }
 }

@@ -16,13 +16,24 @@ import { TourOverlay } from "@/components/ui/tour-overlay"
 import { alumnoTour } from "@/lib/tours/alumno-tour"
 import { apiFetch } from "@/lib/api-client"
 
+interface Inscripcion {
+  id: number
+  curso_id: number
+  horas_completadas: number
+  fecha_inscripcion: string
+  activo: boolean
+  nombre_grupo: string
+  tipo: string
+  maestro_id: number
+}
+
 interface AlumnoDashboardProps {
   user: SessionUser
   stats: {
     cursosInscritos: number
     horasCompletadas: number
   }
-  inscripciones: any[]
+  inscripciones: Inscripcion[]
 }
 
 export function AlumnoDashboard({ user, stats, inscripciones }: AlumnoDashboardProps) {

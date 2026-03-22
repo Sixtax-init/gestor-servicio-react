@@ -89,7 +89,7 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
         alert(data.error || "Error al actualizar usuario")
       }
     } catch (error) {
-      console.error("[v0] Error updating usuario:", error)
+      console.error("[admin/edit-usuario] Error:", error)
       alert("Error al actualizar usuario")
     } finally {
       setLoading(false)

@@ -170,7 +170,6 @@ export default function Page() {
     window.print()
   }
 
-  console.log("[v0] Show preview:", showPreview)
 
   if (isLoading) {
     return (

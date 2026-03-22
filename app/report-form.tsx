@@ -8,7 +8,6 @@ import { Printer } from "lucide-react"
 import { ReportData } from "@/types/report"
 
 export default function Page() {
-  console.log("[v0] Page component rendering")
 
   const [reportData, setReportData] = useState<ReportData>({
     reportNumber: "",
@@ -39,7 +38,6 @@ export default function Page() {
     window.print()
   }
 
-  console.log("[v0] Show preview:", showPreview)
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

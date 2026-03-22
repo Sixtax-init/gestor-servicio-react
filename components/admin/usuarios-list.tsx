@@ -56,7 +56,7 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
       setUsuarios(data.usuarios || [])
       setTotalPages(data.pages || 1)
     } catch (error) {
-      console.error("[v0] Error fetching usuarios:", error)
+      console.error("[admin/usuarios-list] Error fetching usuarios:", error)
     } finally {
       setLoading(false)
     }
@@ -76,7 +76,7 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
         alert(data.error || "Error al eliminar usuario")
       }
     } catch (error) {
-      console.error("[v0] Error deleting usuario:", error)
+      console.error("[admin/usuarios-list] Error deleting usuario:", error)
       alert("Error al eliminar usuario")
     }
   }

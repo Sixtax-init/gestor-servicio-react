@@ -8,8 +8,18 @@ import { BookOpen, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/api-client"
 
+interface CursoDisponible {
+  id: number
+  nombre_grupo: string
+  tipo: string
+  descripcion: string | null
+  maestro_nombre: string
+  maestro_apellidos: string
+  alumnos_inscritos: number
+}
+
 interface CursosDisponiblesTabProps {
-  cursos: any[]
+  cursos: CursoDisponible[]
 }
 
 export function CursosDisponiblesTab({ cursos: initialCursos }: CursosDisponiblesTabProps) {
@@ -32,7 +42,7 @@ export function CursosDisponiblesTab({ cursos: initialCursos }: CursosDisponible
         router.refresh()
       }
     } catch (error) {
-      console.error("[v0] Error inscribiéndose:", error)
+      console.error("[alumno/cursos-disponibles] Error:", error)
     } finally {
       setLoading(null)
     }

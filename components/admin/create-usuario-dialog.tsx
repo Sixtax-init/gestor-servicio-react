@@ -87,7 +87,7 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
       })
       onOpenChange(false)
     } catch (err) {
-      console.error("[v0] Error creating usuario:", err)
+      console.error("[admin/create-usuario] Error:", err)
       setError("Error de conexión")
     } finally {
       setLoading(false)

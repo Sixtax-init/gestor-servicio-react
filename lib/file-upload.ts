@@ -28,7 +28,7 @@ export async function saveFile(file: File, id: number, type: "entregas" | "curso
     // 🔗 Retornar ruta relativa pública
     return `/uploads/${type}/${id}/${fileName}`
   } catch (error) {
-    console.error("[v0] Error saving file:", error)
+    console.error("[file-upload] Error saving file:", error)
     throw new Error("Error al guardar archivo")
   }
 }

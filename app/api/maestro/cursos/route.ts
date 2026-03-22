@@ -21,7 +21,7 @@ export async function GET() {
 
     return NextResponse.json({ cursos })
   } catch (error) {
-    console.error("[v0] Error fetching cursos del maestro:", error)
+    console.error("[maestro/cursos] Error fetching:", error)
     return NextResponse.json({ error: "Error al obtener cursos" }, { status: 500 })
   }
 }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ curso: result[0] }, { status: 201 })
   } catch (error) {
-    console.error("[v0] Error creating curso:", error)
+    console.error("[maestro/cursos] Error creating:", error)
     return NextResponse.json({ error: "Error al crear curso" }, { status: 500 })
   }
 }

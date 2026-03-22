@@ -7,12 +7,23 @@ import { Clock, RefreshCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { apiFetch } from "@/lib/api-client"
 
+interface Inscripcion {
+  id: number
+  curso_id: number
+  horas_completadas: number
+  fecha_inscripcion: string
+  activo: boolean
+  nombre_grupo: string
+  tipo: string
+  maestro_id: number
+}
+
 interface MisHorasTabProps {
-  inscripciones?: any[]
+  inscripciones?: Inscripcion[]
 }
 
 export function MisHorasTab({ inscripciones: initialInscripciones = [] }: MisHorasTabProps) {
-  const [inscripciones, setInscripciones] = useState<any[]>(initialInscripciones)
+  const [inscripciones, setInscripciones] = useState<Inscripcion[]>(initialInscripciones)
   const [loading, setLoading] = useState(false)
   const metaHoras = Number(process.env.NEXT_PUBLIC_REQUIRED_SERVICE_HOURS) || 480
 

@@ -62,7 +62,7 @@ export async function GET() {
 
     return NextResponse.json({ cursos: result })
   } catch (error) {
-    console.error("[v0] Error fetching cursos:", error)
+    console.error("[admin/cursos] Error fetching:", error)
     return NextResponse.json({ error: "Error al obtener cursos" }, { status: 500 })
   }
 }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ curso: result[0] })
   } catch (error) {
-    console.error("[v0] Error creating curso:", error)
+    console.error("[admin/cursos] Error creating:", error)
     return NextResponse.json({ error: "Error al crear curso" }, { status: 500 })
   }
 }

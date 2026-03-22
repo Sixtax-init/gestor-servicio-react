@@ -14,10 +14,41 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api-client"
 
+interface Curso {
+  id: number
+  nombre_grupo: string
+  tipo: string
+}
+
+interface Alumno {
+  id: number
+  nombre: string
+  apellidos: string
+  matricula: string
+  email: string
+  horas_acumuladas: number
+  horas_requeridas: number
+  progreso_porcentaje: number
+  estado: string
+}
+
+interface AlumnoConCursos extends Alumno {
+  cursoId: number
+  nombre_curso: string
+  cursos: { id: number; nombre: string }[]
+}
+
+interface AlumnoBusqueda {
+  id: number
+  nombre: string
+  apellidos: string
+  matricula: string
+}
+
 export function MisAlumnosTab() {
-  const [cursos, setCursos] = useState<any[]>([])
-  const [alumnosPorCurso, setAlumnosPorCurso] = useState<Record<string, any[]>>({})
-  const [alumnosGlobal, setAlumnosGlobal] = useState<any[]>([])
+  const [cursos, setCursos] = useState<Curso[]>([])
+  const [alumnosPorCurso, setAlumnosPorCurso] = useState<Record<string, Alumno[]>>({})
+  const [alumnosGlobal, setAlumnosGlobal] = useState<(Alumno & { cursoId: number; nombre_curso: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [selectedStudent, setSelectedStudent] = useState<{ id: number; nombre: string } | null>(null)
@@ -26,7 +57,7 @@ export function MisAlumnosTab() {
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<AlumnoBusqueda[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
@@ -74,8 +105,8 @@ export function MisAlumnosTab() {
 
       // Recargar datos
       window.location.reload()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error al agregar alumno")
     } finally {
       setIsAdding(false)
     }
@@ -99,16 +130,12 @@ export function MisAlumnosTab() {
       }
 
       toast.success("Alumno eliminado correctamente")
-      // Actualizar estado local para reflejar el cambio inmediato en la búsqueda
       setAlumnosPorCurso(prev => ({
         ...prev,
         [cursoId]: prev[cursoId]?.filter(a => a.id !== alumnoId) || []
       }))
-
-      // Opcional: recargar para asegurar consistencia
-      // window.location.reload()
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error al eliminar alumno")
     } finally {
       setIsRemoving(false)
     }
@@ -131,8 +158,8 @@ export function MisAlumnosTab() {
         setCursos(dataCursos.cursos || [])
 
         // ---- Cargar alumnos de todos los cursos ----
-        const globalList: any[] = []
-        const alumnosPorCursoTemp: Record<string, any[]> = {}
+        const globalList: (Alumno & { cursoId: number; nombre_curso: string })[] = []
+        const alumnosPorCursoTemp: Record<string, Alumno[]> = {}
 
         for (const curso of dataCursos.cursos || []) {
           const resA = await apiFetch(`/api/maestro/cursos/${curso.id}/alumnos`)
@@ -140,7 +167,7 @@ export function MisAlumnosTab() {
 
           alumnosPorCursoTemp[curso.id] = dataA.alumnos || []
 
-          dataA.alumnos?.forEach((al: any) =>
+          dataA.alumnos?.forEach((al: Alumno) =>
             globalList.push({ ...al, cursoId: curso.id, nombre_curso: curso.nombre_grupo })
           )
         }
@@ -160,7 +187,7 @@ export function MisAlumnosTab() {
   // 🟦 2. Filtrado global de alumnos
   // Agrupar por alumno.id
   const alumnosUnicos = Object.values(
-    alumnosGlobal.reduce((acc, al) => {
+    alumnosGlobal.reduce<Record<number, AlumnoConCursos>>((acc, al) => {
       if (!acc[al.id]) {
         acc[al.id] = {
           id: al.id,
@@ -172,26 +199,21 @@ export function MisAlumnosTab() {
           horas_requeridas: al.horas_requeridas || 500,
           progreso_porcentaje: al.progreso_porcentaje || 0,
           estado: al.estado || "on_track",
+          cursoId: al.cursoId,
+          nombre_curso: al.nombre_curso,
           cursos: []
-        };
+        }
       }
-
-      acc[al.id].cursos.push({
-        id: al.cursoId,
-        nombre: al.nombre_curso,   // ← Este sí existe
-      });
-
-
-      return acc;
+      acc[al.id].cursos.push({ id: al.cursoId, nombre: al.nombre_curso })
+      return acc
     }, {})
-  );
+  )
 
-  // Filtrar por nombre, matrícula o email
-  const alumnosFiltrados = alumnosUnicos.filter((al: any) =>
+  const alumnosFiltrados = alumnosUnicos.filter((al) =>
     `${al.nombre} ${al.apellidos}`.toLowerCase().includes(search.toLowerCase()) ||
     al.email.toLowerCase().includes(search.toLowerCase()) ||
     al.matricula.toLowerCase().includes(search.toLowerCase())
-  );
+  )
 
   const getStatusBadge = (estado: string) => {
     switch (estado) {
@@ -233,7 +255,7 @@ export function MisAlumnosTab() {
               <p className="text-muted-foreground text-sm">No se encontraron alumnos.</p>
             )}
 
-            {alumnosFiltrados.map((al: any) => (
+            {alumnosFiltrados.map((al) => (
               <div
                 key={al.id}
                 className="p-4 border rounded-xl mb-3 bg-card shadow-sm"
@@ -274,7 +296,7 @@ export function MisAlumnosTab() {
                 <div className="mt-3 text-sm text-primary">
                   <p className="font-semibold">Cursos:</p>
                   <ul className="list-disc ml-5">
-                    {al.cursos.map((curso: any) => (
+                    {al.cursos.map((curso) => (
                       <li key={curso.id}>{curso.nombre}</li>
                     ))}
                   </ul>
@@ -330,7 +352,7 @@ export function MisAlumnosTab() {
                     )}
 
                     <div className="space-y-2 mt-2">
-                      {alumnosPorCurso[curso.id]?.map((al: any) => (
+                      {alumnosPorCurso[curso.id]?.map((al) => (
                         <div
                           key={`${al.id}-${curso.id}`}
                           className="flex items-center gap-3 p-2 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -427,7 +449,7 @@ export function MisAlumnosTab() {
                 </div>
               ) : searchResults.length > 0 ? (
                 searchResults.map((alumno) => {
-                  const isEnrolled = selectedCursoId && alumnosPorCurso[selectedCursoId]?.some((a: any) => a.id === alumno.id)
+                  const isEnrolled = selectedCursoId && alumnosPorCurso[selectedCursoId]?.some((a) => a.id === alumno.id)
 
                   return (
                     <div key={alumno.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">

@@ -16,6 +16,39 @@ interface StudentProgressDialogProps {
     studentName?: string
 }
 
+interface Actividad {
+    actividad: string
+    descripcion: string | null
+    fecha_entrega: string
+    horas_asignadas: number
+    estado: string
+    curso: string
+}
+
+interface StudentProgressData {
+    alumno: {
+        id: number
+        nombre: string
+        apellidos: string
+        email: string
+        matricula: string
+        horas_acumuladas: number
+    }
+    progreso: {
+        horas_requeridas: number
+        porcentaje: number
+        estado: string
+        ultima_actividad: string | null
+    }
+    cursos: {
+        id: number
+        nombre: string
+        tipo: string
+        horas_requeridas: number
+    }[]
+    actividades_recientes: Actividad[]
+}
+
 export function StudentProgressDialog({
     open,
     onOpenChange,
@@ -23,7 +56,7 @@ export function StudentProgressDialog({
     studentName,
 }: StudentProgressDialogProps) {
     const [loading, setLoading] = useState(false)
-    const [data, setData] = useState<any>(null)
+    const [data, setData] = useState<StudentProgressData | null>(null)
 
     useEffect(() => {
         if (open && studentId) {
@@ -166,7 +199,7 @@ export function StudentProgressDialog({
                                 <CardContent className="pt-6">
                                     <h4 className="font-semibold mb-4">Actividades Recientes</h4>
                                     <div className="space-y-3">
-                                        {data.actividades_recientes.slice(0, 5).map((actividad: any, index: number) => (
+                                        {data.actividades_recientes.slice(0, 5).map((actividad, index) => (
                                             <div
                                                 key={index}
                                                 className="flex items-start justify-between gap-4 pb-3 border-b last:border-0"
@@ -196,7 +229,7 @@ export function StudentProgressDialog({
                                 <CardContent className="pt-6">
                                     <h4 className="font-semibold mb-4">Cursos Inscritos</h4>
                                     <div className="space-y-2">
-                                        {data.cursos.map((curso: any) => (
+                                        {data.cursos.map((curso) => (
                                             <div
                                                 key={curso.id}
                                                 className="flex items-center justify-between p-3 bg-muted rounded-lg"

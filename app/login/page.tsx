@@ -54,7 +54,7 @@ export default function LoginPage() {
         router.push("/alumno")
       }
     } catch (err) {
-      console.error("[v0] Login error:", err)
+      console.error("[login] Error:", err)
       setError("Error de conexión. Intenta de nuevo.")
       setLoading(false)
     }

@@ -94,7 +94,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
             setArchivo(null)
             await fetchAvances()
             alert("✅ Avance registrado correctamente")
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error al subir avance:", error)
             return NextResponse.json({
                 error: "Error al subir avance",

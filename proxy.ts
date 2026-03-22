@@ -42,7 +42,7 @@ export async function proxy(request: NextRequest) {
 
     return NextResponse.next()
   } catch (error) {
-    console.error("[v0] Middleware auth error:", error)
+    console.error("[middleware] Auth error:", error)
     return NextResponse.redirect(new URL("/login", request.url))
   }
 }

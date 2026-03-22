@@ -58,7 +58,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
       const data = await response.json()
       setMaestros(data.usuarios || [])
     } catch (error) {
-      console.error("[v0] Error fetching maestros:", error)
+      console.error("[admin/create-curso] Error fetching maestros:", error)
     }
   }
 
@@ -152,7 +152,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
       setOpen(false)
       onSuccess()
     } catch (error) {
-      console.error("[v0] Error creating curso:", error)
+      console.error("[admin/create-curso] Error creating curso:", error)
       alert("Error al crear curso")
     } finally {
       setLoading(false)

@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session.server"
+import { requireRole } from "@/lib/session.server"
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; entregaId: string }> },
 ) {
   try {
-    const session = await getSession()
-    if (!session || session.tipo_usuario !== "maestro") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    const session = await requireRole(["maestro"])
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { id, entregaId: entregaIdParam } = await params

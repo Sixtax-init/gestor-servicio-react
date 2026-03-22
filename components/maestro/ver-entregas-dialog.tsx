@@ -299,7 +299,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
           <Accordion type="single" collapsible className="w-full">
             {/* Agrupar avances por alumno */}
             {Object.entries(
-              avances.reduce((acc: any, avance: any) => {
+              avances.reduce<Record<string, { alumno: { nombre: string; apellidos: string; matricula: string; email: string }; avances: Avance[] }>>((acc, avance) => {
                 const key = `${avance.nombre} ${avance.apellidos}`
                 if (!acc[key]) {
                   acc[key] = {
@@ -310,7 +310,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
                 acc[key].avances.push(avance)
                 return acc
               }, {})
-            ).map(([nombreCompleto, data]: [string, any]) => (
+            ).map(([nombreCompleto, data]) => (
               <AccordionItem key={nombreCompleto} value={nombreCompleto}>
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center justify-between w-full pr-4">
@@ -328,7 +328,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
 
                     {/* Lista de avances del alumno */}
                     <div className="space-y-2">
-                      {data.avances.map((avance: any, index: number) => (
+                      {data.avances.map((avance, index) => (
                         <Card key={avance.id} className={avance.es_final ? "border-primary" : ""}>
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between mb-2">

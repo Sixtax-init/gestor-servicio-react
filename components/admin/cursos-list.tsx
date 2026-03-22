@@ -43,7 +43,7 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
       const data = await response.json()
       setCursos(data.cursos || [])
     } catch (error) {
-      console.error("[v0] Error fetching cursos:", error)
+      console.error("[admin/cursos-list] Error fetching cursos:", error)
     } finally {
       setLoading(false)
     }
@@ -63,7 +63,7 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
         alert(data.error || "Error al eliminar curso")
       }
     } catch (error) {
-      console.error("[v0] Error deleting curso:", error)
+      console.error("[admin/cursos-list] Error deleting curso:", error)
       alert("Error al eliminar curso")
     }
   }

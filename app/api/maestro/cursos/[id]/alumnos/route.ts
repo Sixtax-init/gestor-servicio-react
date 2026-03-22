@@ -83,7 +83,7 @@ export async function GET(
 
     return NextResponse.json({ alumnos: alumnosConProgreso }, { status: 200 })
   } catch (error) {
-    console.error("[v0] Error al obtener alumnos:", error)
+    console.error("[maestro/cursos/alumnos] Error:", error)
     return NextResponse.json({ error: "Error en el servidor" }, { status: 500 })
   }
 }

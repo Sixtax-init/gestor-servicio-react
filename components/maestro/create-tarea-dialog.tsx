@@ -68,7 +68,7 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: Cr
       const cursosList = Array.isArray(data) ? data : data.cursos || []
       setCursos(cursosList)
     } catch (error) {
-      console.error("[v0] Error al cargar cursos:", error)
+      console.error("[maestro/create-tarea] Error al cargar cursos:", error)
       setCursos([])
     }
   }

@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session.server"
+import { requireRole } from "@/lib/session.server"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession()
-    if (!session || session.tipo_usuario !== "alumno") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    const session = await requireRole(["alumno"])
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
