@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
+import { REQUIRED_SERVICE_HOURS } from "@/lib/config"
 
 /**
  * GET /api/maestro/alumnos/progreso
@@ -43,7 +44,7 @@ export async function GET() {
         const averageHours = Math.round(totalHours / students.length)
 
         // Count completed students (>= required hours)
-        const horasRequeridas = 480 // Required hours for service
+        const horasRequeridas = REQUIRED_SERVICE_HOURS
         const studentsCompleted = students.filter((s: any) => {
             return (s.horas_acumuladas || 0) >= horasRequeridas
         }).length

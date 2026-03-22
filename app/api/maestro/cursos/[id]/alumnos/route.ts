@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSession, requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
+import { REQUIRED_SERVICE_HOURS } from "@/lib/config"
 
 export async function GET(
   req: Request,
@@ -33,7 +34,7 @@ export async function GET(
       return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
     }
 
-    const horasRequeridas = 480 // Required hours for service
+    const horasRequeridas = REQUIRED_SERVICE_HOURS
 
     // 👨‍🎓 Obtener alumnos inscritos con horas de la inscripción
     const alumnos = await sql`

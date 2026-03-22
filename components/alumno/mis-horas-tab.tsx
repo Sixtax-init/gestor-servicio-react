@@ -14,7 +14,7 @@ interface MisHorasTabProps {
 export function MisHorasTab({ inscripciones: initialInscripciones = [] }: MisHorasTabProps) {
   const [inscripciones, setInscripciones] = useState<any[]>(initialInscripciones)
   const [loading, setLoading] = useState(false)
-  const metaHoras = 480 // Meta de horas de servicio social
+  const metaHoras = Number(process.env.NEXT_PUBLIC_REQUIRED_SERVICE_HOURS) || 480
 
   // ✅ Cargar inscripciones reales desde el backend
   const fetchInscripciones = async () => {

@@ -47,32 +47,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar si ya existe una entrega
-    const [entregaExistente] = await sql`
-      SELECT id, estado FROM entregas WHERE tarea_id = ${tarea_id} AND alumno_id = ${session.id}
+    // Upsert atómico — evita race condition entre verificación e inserción
+    const [entrega] = await sql`
+      INSERT INTO entregas (tarea_id, alumno_id, comentario, horas_registradas)
+      VALUES (${tarea_id}, ${session.id}, ${comentario}, ${verificacion.asignacion_horas || 0})
+      ON CONFLICT (tarea_id, alumno_id) DO UPDATE
+        SET comentario       = EXCLUDED.comentario,
+            fecha_entrega    = CURRENT_TIMESTAMP,
+            estado           = 'pendiente',
+            calificacion     = NULL,
+            fecha_revision   = NULL
+      RETURNING *
     `
-
-    let entrega
-    if (entregaExistente) {
-      // Actualizar entrega existente y resetear estado a pendiente
-      ;[entrega] = await sql`
-        UPDATE entregas
-        SET comentario = ${comentario},
-            fecha_entrega = CURRENT_TIMESTAMP,
-            estado = 'pendiente',
-            calificacion = NULL,
-            fecha_revision = NULL
-        WHERE id = ${entregaExistente.id}
-        RETURNING *
-      `
-    } else {
-      // Crear nueva entrega
-      ;[entrega] = await sql`
-        INSERT INTO entregas (tarea_id, alumno_id, comentario, horas_registradas)
-        VALUES (${tarea_id}, ${session.id}, ${comentario}, ${verificacion.asignacion_horas || 0})
-        RETURNING *
-      `
-    }
 
     // Si hay archivo, guardarlo en la tabla de archivos
     if (archivo_entrega) {
