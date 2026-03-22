@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
 import { apiFetch } from "@/lib/api-client"
-import { NextResponse } from "next/server"
 
 interface EntregarAvanceDialogProps {
     open: boolean
@@ -31,6 +30,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
     const [archivo, setArchivo] = useState<File | null>(null)
     const [subiendo, setSubiendo] = useState(false)
     const [avances, setAvances] = useState<Avance[]>([])
+    const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
 
     const fetchAvances = async () => {
@@ -60,6 +60,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setErrorMsg(null)
         setSubiendo(true)
 
         try {
@@ -86,21 +87,14 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
             })
 
             const data = await res.json().catch(() => ({}))
-            console.log("Respuesta backend:", data)
 
             if (!res.ok) throw new Error(data.error || "Error al registrar avance")
 
             setComentario("")
             setArchivo(null)
             await fetchAvances()
-            alert("✅ Avance registrado correctamente")
         } catch (error) {
-            console.error("Error al subir avance:", error)
-            return NextResponse.json({
-                error: "Error al subir avance",
-                detalle: error.message
-            }, { status: 500 })
-
+            setErrorMsg(error instanceof Error ? error.message : "Error al subir avance")
         } finally {
             setSubiendo(false)
         }
@@ -140,6 +134,10 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
                         <Label>Archivo</Label>
                         <FileUpload onFilesSelected={handleFileSelect} maxFiles={1} />
                     </div>
+
+                    {errorMsg && (
+                        <p className="text-sm text-destructive">{errorMsg}</p>
+                    )}
 
                     <DialogFooter>
                         {avances.some((a) => a.es_final && a.estado_entrega_principal !== 'rechazada') ? (

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, FileText, Upload, Loader2, ClipboardList } from "lucide-react"
+import { Calendar, Clock, FileText, Upload, Loader2, ClipboardList, ChevronLeft, ChevronRight } from "lucide-react"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
 import { apiFetch } from "@/lib/api-client"
 
@@ -27,6 +27,8 @@ export function MisTareasTab() {
   const [tareas, setTareas] = useState<Tarea[]>([])
   const [loading, setLoading] = useState(true)
   const [entregandoTarea, setEntregandoTarea] = useState<Tarea | null>(null)
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 8
 
   useEffect(() => {
     fetchTareas()
@@ -102,7 +104,7 @@ export function MisTareasTab() {
             </div>
           ) : (
             <div className="space-y-4">
-              {tareas.map((tarea) => (
+              {tareas.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((tarea) => (
                 <Card key={tarea.id}>
                   <CardContent className="pt-6">
                     <div className="flex flex-col gap-4">
@@ -171,6 +173,19 @@ export function MisTareasTab() {
                   </CardContent>
                 </Card>
               ))}
+              {tareas.length > PAGE_SIZE && (
+                <div className="flex items-center justify-end space-x-2 pt-2">
+                  <span className="text-sm text-muted-foreground">
+                    Página {page} de {Math.ceil(tareas.length / PAGE_SIZE)}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                    <ChevronLeft className="h-4 w-4" />Anterior
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(Math.ceil(tareas.length / PAGE_SIZE), p + 1))} disabled={page === Math.ceil(tareas.length / PAGE_SIZE)}>
+                    Siguiente<ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

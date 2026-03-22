@@ -23,7 +23,7 @@ export default function NotFound() {
                         <div className="flex justify-center animate-slide-up">
                             <div className="relative w-48 h-48 md:w-64 md:h-64">
                                 <Image
-                                    src="ssocial/logos/Tux_404.png"
+                                    src="/logos/Tux_404.png"
                                     alt="Tux perdido"
                                     fill
                                     className="object-contain"

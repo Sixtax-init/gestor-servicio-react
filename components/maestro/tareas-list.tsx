@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, ClipboardList, Calendar, Clock, Users, Loader2 } from "lucide-react"
+import { Edit, Trash2, ClipboardList, Calendar, Clock, Users, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { EditTareaDialog } from "./edit-tarea-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { VerEntregasDialog } from "./ver-entregas-dialog"
@@ -33,6 +33,8 @@ export function TareasList() {
   const [editingTarea, setEditingTarea] = useState<Tarea | null>(null)
   const [deletingTarea, setDeletingTarea] = useState<Tarea | null>(null)
   const [viewingEntregas, setViewingEntregas] = useState<Tarea | null>(null)
+  const [page, setPage] = useState(1)
+  const COURSES_PER_PAGE = 5
 
   useEffect(() => {
     fetchTareas()
@@ -104,17 +106,19 @@ export function TareasList() {
   }
 
   const groupedTareas = tareas.reduce((acc, tarea) => {
-    if (!acc[tarea.curso_nombre]) {
-      acc[tarea.curso_nombre] = []
-    }
+    if (!acc[tarea.curso_nombre]) acc[tarea.curso_nombre] = []
     acc[tarea.curso_nombre].push(tarea)
     return acc
   }, {} as Record<string, Tarea[]>)
 
+  const allGroups = Object.entries(groupedTareas)
+  const totalPages = Math.ceil(allGroups.length / COURSES_PER_PAGE)
+  const pagedGroups = allGroups.slice((page - 1) * COURSES_PER_PAGE, page * COURSES_PER_PAGE)
+
   return (
     <>
       <Accordion type="multiple" className="w-full space-y-4">
-        {Object.entries(groupedTareas).map(([cursoNombre, cursoTareas], index) => (
+        {pagedGroups.map(([cursoNombre, cursoTareas], index) => (
           <AccordionItem key={index} value={`item-${index}`} className="border rounded-lg px-4 bg-card">
             <AccordionTrigger className="hover:no-underline py-4">
               <div className="flex items-center gap-4 text-left">
@@ -188,6 +192,18 @@ export function TareasList() {
           </AccordionItem>
         ))}
       </Accordion>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-end space-x-2 mt-4">
+          <div className="text-sm text-muted-foreground">Página {page} de {totalPages}</div>
+          <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+            <ChevronLeft className="h-4 w-4" />Anterior
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            Siguiente<ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {editingTarea && (
         <EditTareaDialog

@@ -6,8 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: "/ssocial",
-  assetPrefix: "/ssocial",
+  reactStrictMode: false,
 }
 
 export default nextConfig

@@ -3,7 +3,7 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Clock, RefreshCcw } from "lucide-react"
+import { Clock, RefreshCcw, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { apiFetch } from "@/lib/api-client"
 

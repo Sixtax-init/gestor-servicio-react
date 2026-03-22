@@ -27,7 +27,6 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
     nombre: "",
     apellidos: "",
     email: "",
-    password: "",
     tipo_usuario: "alumno",
     departamento_id: "",
   })
@@ -51,9 +50,17 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
     setError("")
     setLoading(true)
 
-    // Validar departamento si es admin global
-    if (isAdminGlobal && !formData.departamento_id) {
-      setError("Debes seleccionar un departamento")
+    // Validar formato de matrícula para alumnos y maestros
+    const MATRICULA_REGEX = /^V?\d{8}$/
+    if (["alumno", "maestro"].includes(formData.tipo_usuario) && !MATRICULA_REGEX.test(formData.matricula)) {
+      setError("La matrícula debe ser 8 dígitos (ej. 21480681) o V + 8 dígitos para virtual (ej. V21480681)")
+      setLoading(false)
+      return
+    }
+
+    // Departamento requerido solo al crear un administrador de departamento
+    if (isAdminGlobal && formData.tipo_usuario === "administrador" && !formData.departamento_id) {
+      setError("Debes seleccionar un departamento para el administrador")
       setLoading(false)
       return
     }
@@ -81,7 +88,6 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
         nombre: "",
         apellidos: "",
         email: "",
-        password: "",
         tipo_usuario: "alumno",
         departamento_id: "",
       })
@@ -99,7 +105,7 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Crear Nuevo Usuario</DialogTitle>
-          <DialogDescription>Ingresa los datos del nuevo usuario del sistema</DialogDescription>
+          <DialogDescription>La contraseña temporal se generará automáticamente y se enviará al correo del usuario.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,8 +115,8 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
               <Input
                 id="matricula"
                 value={formData.matricula}
-                onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
-                placeholder="21480680"
+                onChange={(e) => setFormData({ ...formData, matricula: e.target.value.toUpperCase() })}
+                placeholder={["alumno", "maestro"].includes(formData.tipo_usuario) ? "21480681 o V21480681" : "ADMIN001"}
                 required
               />
             </div>
@@ -119,7 +125,7 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
               <Label htmlFor="tipo_usuario">Tipo de Usuario</Label>
               <Select
                 value={formData.tipo_usuario}
-                onValueChange={(value) => setFormData({ ...formData, tipo_usuario: value })}
+                onValueChange={(value) => setFormData({ ...formData, tipo_usuario: value, departamento_id: "" })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -167,18 +173,7 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-            />
-          </div>
-
-          {isAdminGlobal && (
+          {isAdminGlobal && formData.tipo_usuario === "administrador" && (
             <div className="space-y-2">
               <Label htmlFor="departamento_id">Departamento</Label>
               <Select

@@ -151,6 +151,14 @@
   animation: slide-up 0.5s ease-out forwards;
 }
 
+/* Suppress browser print headers/footers (date, URL, page title) */
+@media print {
+  @page {
+    margin: 1cm;
+  }
+}
+
+
 /* Carousel Infinite Scroll Animation */
 @keyframes scroll-carousel {
   0% {

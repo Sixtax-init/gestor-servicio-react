@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Trash2, Edit, Download, Loader2, BookOpen } from "lucide-react"
+import { Trash2, Edit, Download, Loader2, BookOpen, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { EditCursoDialog } from "../admin/edit-curso-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { apiFetch } from "@/lib/api-client"
@@ -32,16 +33,28 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
   const [loading, setLoading] = useState(true)
   const [editingCurso, setEditingCurso] = useState<Curso | null>(null)
   const [deletingCurso, setDeletingCurso] = useState<Curso | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 500)
+    return () => clearTimeout(timer)
+  }, [search])
 
   useEffect(() => {
     fetchCursos()
-  }, [])
+  }, [page, debouncedSearch])
 
   const fetchCursos = async () => {
+    setLoading(true)
     try {
-      const response = await apiFetch("/api/admin/cursos")
+      const params = new URLSearchParams({ page: page.toString(), limit: "10", search: debouncedSearch })
+      const response = await apiFetch(`/api/admin/cursos?${params}`)
       const data = await response.json()
       setCursos(data.cursos || [])
+      setTotalPages(data.pages || 1)
     } catch (error) {
       console.error("[admin/cursos-list] Error fetching cursos:", error)
     } finally {
@@ -83,6 +96,16 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
 
   return (
     <>
+      <div className="relative w-full sm:w-72 mb-4">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nombre o maestro..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -159,6 +182,16 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="flex items-center justify-end space-x-2 mt-4">
+        <div className="text-sm text-muted-foreground">Página {page} de {totalPages}</div>
+        <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+          <ChevronLeft className="h-4 w-4" />Anterior
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+          Siguiente<ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
 
       <EditCursoDialog

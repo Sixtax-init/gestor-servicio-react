@@ -15,7 +15,7 @@ export function ReportPreview({ data, actividades = [] }: ReportPreviewProps) {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Image
-              src="ssocial/logos/ITNL.png"
+              src="/logos/ITNL.png"
               alt="Logo ITNL"
               width={80}
               height={80}

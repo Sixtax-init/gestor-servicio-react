@@ -7,53 +7,80 @@ if (!process.env.SESSION_SECRET) {
 }
 
 const SECRET_KEY = new TextEncoder().encode(process.env.SESSION_SECRET)
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
+
+const PUBLIC_PATHS = ["/login", "/api/auth/login"]
+const CHANGE_PASSWORD_PATH = "/cambiar-password"
+const CHANGE_PASSWORD_API = "/api/auth/cambiar-password"
+
+function redirectTo(path: string, request: NextRequest) {
+  return NextResponse.redirect(new URL(BASE_PATH + path, request.url))
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Rutas públicas que no requieren autenticación
-  const publicPaths = ["/login", "/api/auth/login"]
-  if (publicPaths.some((path) => pathname.startsWith(path))) {
+  // Rutas públicas — no requieren sesión
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
 
-  // Verificar sesión
   const token = request.cookies.get("session")?.value
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    return redirectTo("/login", request)
   }
 
   try {
     const { payload } = await jwtVerify(token, SECRET_KEY)
-    const user = payload.user as { tipo_usuario: string }
+    const user = payload.user as {
+      tipo_usuario: string
+      debe_cambiar_password: boolean
+    }
 
-    // Verificar acceso según rol
-    if (pathname.startsWith("/admin") && user.tipo_usuario !== "administrador") {
-      return NextResponse.redirect(new URL("/login", request.url))
+    // Si el usuario debe cambiar su contraseña, solo puede acceder a esa página/API
+    if (user.debe_cambiar_password) {
+      const allowedWhilePending = [CHANGE_PASSWORD_PATH, CHANGE_PASSWORD_API, "/api/auth/logout"]
+      if (!allowedWhilePending.some((p) => pathname.startsWith(p))) {
+        return redirectTo(CHANGE_PASSWORD_PATH, request)
+      }
+      return NextResponse.next()
+    }
+
+    // Protección por rol
+    if (pathname.startsWith("/main-admin") && user.tipo_usuario !== "main_admin") {
+      return redirectTo("/login", request)
+    }
+
+    if (pathname.startsWith("/admin") && user.tipo_usuario !== "administrador" && user.tipo_usuario !== "main_admin") {
+      return redirectTo("/login", request)
     }
 
     if (pathname.startsWith("/maestro") && user.tipo_usuario !== "maestro") {
-      return NextResponse.redirect(new URL("/login", request.url))
+      return redirectTo("/login", request)
     }
 
     if (pathname.startsWith("/alumno") && user.tipo_usuario !== "alumno") {
-      return NextResponse.redirect(new URL("/login", request.url))
+      return redirectTo("/login", request)
     }
 
     return NextResponse.next()
-  } catch (error) {
-    console.error("[middleware] Auth error:", error)
-    return NextResponse.redirect(new URL("/login", request.url))
+  } catch {
+    return redirectTo("/login", request)
   }
 }
 
 export const config = {
   matcher: [
+    "/main-admin/:path*",
     "/admin/:path*",
     "/maestro/:path*",
     "/alumno/:path*",
+    "/cambiar-password",
+    "/api/main-admin/:path*",
     "/api/admin/:path*",
     "/api/maestro/:path*",
     "/api/alumno/:path*",
+    "/api/auth/cambiar-password",
   ],
 }

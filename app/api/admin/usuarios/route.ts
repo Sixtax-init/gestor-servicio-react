@@ -2,6 +2,13 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSession, requireRole } from "@/lib/session.server"
 import { sql, pool } from "@/lib/db"
 import { createUser } from "@/lib/auth"
+import { sendWelcomeEmail } from "@/lib/email"
+import { randomBytes } from "crypto"
+
+function generateTempPassword(): string {
+  // 12 caracteres: letras + números, fácil de escribir
+  return randomBytes(9).toString("base64url").slice(0, 12)
+}
 
 export async function GET(request: NextRequest) {
   const user = await requireRole(["main_admin", "administrador"])
@@ -48,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     const queryText = `
-      SELECT u.id, u.matricula, u.nombre, u.apellidos, u.email, u.tipo_usuario, u.activo, u.created_at, u.departamento_id, d.nombre as departamento_nombre
+      SELECT u.id, u.matricula, u.nombre, u.apellidos, u.email, u.tipo_usuario, u.activo, u.debe_cambiar_password, u.created_at, u.departamento_id, d.nombre as departamento_nombre
       FROM usuarios u
       LEFT JOIN departamentos d ON u.departamento_id = d.id
       ${whereClauses}
@@ -93,11 +100,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { matricula, nombre, apellidos, email, password, tipo_usuario, departamento_id } = body
+    const { matricula, nombre, apellidos, email, tipo_usuario, departamento_id } = body
 
-    if (!matricula || !nombre || !apellidos || !email || !password || !tipo_usuario) {
+    if (!matricula || !nombre || !apellidos || !email || !tipo_usuario) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 })
     }
+
+    const MATRICULA_REGEX = /^V?\d{8}$/
+    if (["alumno", "maestro"].includes(tipo_usuario) && !MATRICULA_REGEX.test(matricula)) {
+      return NextResponse.json({ error: "Formato de matrícula inválido. Debe ser 8 dígitos o V + 8 dígitos para virtual." }, { status: 400 })
+    }
+
+    const password = generateTempPassword()
 
     const newUser = await createUser({
       matricula,
@@ -114,6 +128,18 @@ export async function POST(request: NextRequest) {
     if (!newUser) {
       return NextResponse.json({ error: "Error al crear usuario. La matrícula o email ya existe." }, { status: 400 })
     }
+
+    // Enviar correo de bienvenida con credenciales (no bloqueante)
+    sendWelcomeEmail({
+      nombre,
+      apellidos,
+      email,
+      matricula,
+      password,
+      tipo_usuario,
+    }).catch((err) => {
+      console.error("[admin/usuarios] Error enviando correo de bienvenida:", err)
+    })
 
     return NextResponse.json({ usuario: newUser }, { status: 201 })
   } catch (error) {

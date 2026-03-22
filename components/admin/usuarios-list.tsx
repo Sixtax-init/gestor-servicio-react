@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2, Loader2 } from "lucide-react"
+import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2, Loader2, AlertTriangle } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { EditUsuarioDialog } from "./edit-usuario-dialog"
 import { DeleteConfirmDialog } from "./delete-confirm-dialog"
 import type { Usuario } from "@/lib/db"
@@ -165,9 +166,23 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
                         </TableCell>
                       )}
                       <TableCell>
-                        <Badge variant={usuario.activo ? "default" : "outline"}>
-                          {usuario.activo ? "Activo" : "Inactivo"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={usuario.activo ? "default" : "outline"}>
+                            {usuario.activo ? "Activo" : "Inactivo"}
+                          </Badge>
+                          {usuario.activo && (usuario as any).debe_cambiar_password && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertTriangle className="h-4 w-4 text-amber-500 cursor-default" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>El usuario aún no ha cambiado su contraseña temporal</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => setEditingUsuario(usuario)}>
