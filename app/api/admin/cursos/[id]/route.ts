@@ -7,7 +7,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const user = await requireRole(["main_admin", "administrador"])
     if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { id } = await params
@@ -65,7 +65,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const user = await requireRole(["main_admin", "administrador"])
     if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { id } = await params

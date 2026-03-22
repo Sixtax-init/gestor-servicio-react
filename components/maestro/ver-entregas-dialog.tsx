@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Calendar, User, FileText, Download } from "lucide-react"
+import { Calendar, User, FileText, Download, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { RevisarEntregaDialog } from "./RevisarEntregaDialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -133,9 +133,16 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
         </DialogHeader>
 
         {loading ? (
-          <div className="text-center py-8">Cargando entregas...</div>
+          <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Cargando entregas...</span>
+          </div>
         ) : entregas.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No hay entregas para esta tarea</div>
+          <div className="flex flex-col items-center py-12 text-muted-foreground gap-2">
+            <FileText className="h-10 w-10 opacity-40" />
+            <p className="font-medium">Sin entregas aún</p>
+            <p className="text-sm">Los alumnos no han entregado esta tarea todavía</p>
+          </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">

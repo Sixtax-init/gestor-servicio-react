@@ -12,7 +12,7 @@ export async function GET() {
         const user = await requireRole(["maestro"])
 
         if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+            return NextResponse.json({ error: "No autorizado" }, { status: 403 })
         }
 
         // Get all students from teacher's courses with hours from inscripciones

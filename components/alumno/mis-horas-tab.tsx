@@ -93,7 +93,10 @@ export function MisHorasTab({ inscripciones: initialInscripciones = [] }: MisHor
             <h3 className="font-semibold">Desglose por Curso</h3>
 
             {loading ? (
-              <p className="text-center text-muted-foreground py-8">Cargando...</p>
+              <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Cargando...</span>
+              </div>
             ) : serviciosSociales.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 No estás inscrito en ningún servicio social

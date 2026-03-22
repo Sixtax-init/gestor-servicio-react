@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Trash2, Edit, Download } from "lucide-react"
+import { Trash2, Edit, Download, Loader2, BookOpen } from "lucide-react"
 import { EditCursoDialog } from "../admin/edit-curso-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { apiFetch } from "@/lib/api-client"
@@ -73,7 +73,12 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Cargando cursos...</div>
+    return (
+      <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span>Cargando cursos...</span>
+      </div>
+    )
   }
 
   return (
@@ -96,7 +101,11 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
             {cursos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={isAdminGlobal ? 8 : 7} className="text-center">
-                  No hay cursos registrados
+                  <div className="flex flex-col items-center py-6 text-muted-foreground gap-1">
+                    <BookOpen className="h-8 w-8 opacity-40" />
+                    <p className="font-medium">No hay cursos registrados</p>
+                    <p className="text-xs">Crea el primer curso desde el botón de arriba</p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2 } from "lucide-react"
+import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2, Loader2 } from "lucide-react"
 import { EditUsuarioDialog } from "./edit-usuario-dialog"
 import { DeleteConfirmDialog } from "./delete-confirm-dialog"
 import type { Usuario } from "@/lib/db"
@@ -119,7 +119,10 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Cargando usuarios...</div>
+        <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Cargando usuarios...</span>
+        </div>
       ) : (
         <>
           <div className="rounded-md border">

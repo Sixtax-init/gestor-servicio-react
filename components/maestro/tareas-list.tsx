@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, ClipboardList, Calendar, Clock, Users } from "lucide-react"
+import { Edit, Trash2, ClipboardList, Calendar, Clock, Users, Loader2 } from "lucide-react"
 import { EditTareaDialog } from "./edit-tarea-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { VerEntregasDialog } from "./ver-entregas-dialog"
@@ -85,13 +85,20 @@ export function TareasList() {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Cargando tareas...</div>
+    return (
+      <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span>Cargando tareas...</span>
+      </div>
+    )
   }
 
   if (tareas.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        No hay tareas creadas. Crea tu primera tarea para comenzar.
+      <div className="flex flex-col items-center py-12 text-muted-foreground gap-2">
+        <ClipboardList className="h-10 w-10 opacity-40" />
+        <p className="font-medium">No hay tareas creadas</p>
+        <p className="text-sm">Crea tu primera tarea para comenzar</p>
       </div>
     )
   }

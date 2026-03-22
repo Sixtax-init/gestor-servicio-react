@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   const user = await requireRole(["maestro", "administrador", "main_admin"])
   if (!user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
   try {
@@ -81,7 +81,7 @@ export async function GET() {
     const user = await requireRole(["maestro", "administrador", "main_admin"])
 
     if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const cursos = await sql`

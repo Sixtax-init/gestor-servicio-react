@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, FileText, Upload } from "lucide-react"
+import { Calendar, Clock, FileText, Upload, Loader2, ClipboardList } from "lucide-react"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
 import { apiFetch } from "@/lib/api-client"
 
@@ -78,7 +78,12 @@ export function MisTareasTab() {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Cargando tareas...</div>
+    return (
+      <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span>Cargando tareas...</span>
+      </div>
+    )
   }
 
   return (
@@ -90,7 +95,11 @@ export function MisTareasTab() {
         </CardHeader>
         <CardContent>
           {tareas.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No tienes tareas asignadas</div>
+            <div className="flex flex-col items-center py-12 text-muted-foreground gap-2">
+              <ClipboardList className="h-10 w-10 opacity-40" />
+              <p className="font-medium">No tienes tareas asignadas</p>
+              <p className="text-sm">Las tareas aparecerán aquí cuando tus maestros las asignen</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {tareas.map((tarea) => (

@@ -10,7 +10,7 @@ export async function DELETE(
         const user = await requireRole(["maestro"])
 
         if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+            return NextResponse.json({ error: "No autorizado" }, { status: 403 })
         }
 
         const cursoId = Number((await context.params).id)

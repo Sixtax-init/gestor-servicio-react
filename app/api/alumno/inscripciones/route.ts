@@ -10,7 +10,7 @@ export async function GET() {
     const session = await requireRole(["alumno"])
 
     if (!session) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     console.log("🔍 Consultando inscripciones para alumno:", session.id)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   const user = await requireRole(["alumno"])
 
   if (!user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
   try {

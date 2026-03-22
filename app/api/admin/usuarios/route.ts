@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const user = await requireRole(["main_admin", "administrador"])
 
   if (!user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
   const { searchParams } = new URL(request.url)
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
   const user = await requireRole(["main_admin", "administrador"])
 
   if (!user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
   try {
