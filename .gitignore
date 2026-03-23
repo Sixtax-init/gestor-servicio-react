@@ -8,8 +8,9 @@
 /out/
 
 #scripts
-/scripts
+/scripts/*
 !/scripts/setup-complete-db.sql
+!/scripts/003-add-reset-token.sql
 /docs
 
 #public
@@ -26,6 +27,9 @@ yarn-error.log*
 
 # env files
 .env*
+
+# lock file de npm (el proyecto usa pnpm)
+package-lock.json
 
 # vercel
 .vercel

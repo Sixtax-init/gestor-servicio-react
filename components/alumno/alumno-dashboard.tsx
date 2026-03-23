@@ -5,7 +5,7 @@ import type { SessionUser } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Clock, GraduationCap, LogOut, HelpCircle, ClipboardList } from "lucide-react"
+import { BookOpen, Clock, GraduationCap, LogOut, HelpCircle, ClipboardList, KeyRound } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { MisCursosAlumnoTab } from "./mis-cursos-alumno-tab"
 import { MisHorasTab } from "./mis-horas-tab"
@@ -15,6 +15,7 @@ import { TourStep } from "@/components/ui/tour-step"
 import { TourOverlay } from "@/components/ui/tour-overlay"
 import { alumnoTour } from "@/lib/tours/alumno-tour"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface Inscripcion {
   id: number
@@ -39,6 +40,7 @@ interface AlumnoDashboardProps {
 export function AlumnoDashboard({ user, stats, inscripciones }: AlumnoDashboardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("mis-cursos")
   const tour = useTour(alumnoTour, setActiveTab)
 
@@ -46,6 +48,28 @@ export function AlumnoDashboard({ user, stats, inscripciones }: AlumnoDashboardP
     setLoading(true)
     await apiFetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
+  }
+
+  const handleSolicitarCambioPassword = async () => {
+    setResetLoading(true)
+    try {
+      const res = await apiFetch("/api/auth/solicitar-reset-password", { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success("Correo enviado", {
+          description: "Te enviamos el enlace para cambiar tu contraseña. Revisa tu bandeja de entrada y también la carpeta de spam.",
+          duration: 8000,
+        })
+      } else {
+        toast.error("Error al enviar el correo", {
+          description: data.error || "Intenta de nuevo más tarde.",
+        })
+      }
+    } catch {
+      toast.error("Error de conexión", { description: "Intenta de nuevo." })
+    } finally {
+      setResetLoading(false)
+    }
   }
 
   return (
@@ -68,6 +92,10 @@ export function AlumnoDashboard({ user, stats, inscripciones }: AlumnoDashboardP
               <Button variant="outline" size="sm" onClick={tour.resetTour} className="shadow-lg">
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Manual
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSolicitarCambioPassword} disabled={resetLoading} className="shadow-lg">
+                <KeyRound className="mr-2 h-4 w-4" />
+                {resetLoading ? "Enviando..." : "Cambiar contraseña"}
               </Button>
               <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
                 <LogOut className="mr-2 h-4 w-4" />

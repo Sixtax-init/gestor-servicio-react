@@ -50,9 +50,9 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
     setError("")
     setLoading(true)
 
-    // Validar formato de matrícula para alumnos y maestros
+    // Validar formato de matrícula solo para alumnos
     const MATRICULA_REGEX = /^V?\d{8}$/
-    if (["alumno", "maestro"].includes(formData.tipo_usuario) && !MATRICULA_REGEX.test(formData.matricula)) {
+    if (formData.tipo_usuario === "alumno" && !MATRICULA_REGEX.test(formData.matricula)) {
       setError("La matrícula debe ser 8 dígitos (ej. 21480681) o V + 8 dígitos para virtual (ej. V21480681)")
       setLoading(false)
       return
@@ -116,7 +116,7 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
                 id="matricula"
                 value={formData.matricula}
                 onChange={(e) => setFormData({ ...formData, matricula: e.target.value.toUpperCase() })}
-                placeholder={["alumno", "maestro"].includes(formData.tipo_usuario) ? "21480681 o V21480681" : "ADMIN001"}
+                placeholder={formData.tipo_usuario === "alumno" ? "21480681 o V21480681" : "Identificador"}
                 required
               />
             </div>

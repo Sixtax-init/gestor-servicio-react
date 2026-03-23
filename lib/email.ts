@@ -126,6 +126,84 @@ function buildWelcomeHtml(data: WelcomeEmailData): string {
 </html>`
 }
 
+interface PasswordResetEmailData {
+  nombre: string
+  apellidos: string
+  email: string
+  resetUrl: string
+}
+
+function buildPasswordResetHtml(data: PasswordResetEmailData): string {
+  const year = new Date().getFullYear()
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cambio de Contraseña</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .wrapper { max-width: 600px; margin: 24px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .header { background: #18181b; padding: 28px 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .header p { color: #a1a1aa; margin: 6px 0 0; font-size: 13px; }
+    .body { padding: 32px; }
+    .greeting { font-size: 18px; font-weight: 600; color: #18181b; margin: 0 0 8px; }
+    .intro { font-size: 14px; color: #52525b; line-height: 1.6; margin: 0 0 24px; }
+    .warning { background: #fefce8; border: 1px solid #fde047; border-radius: 8px; padding: 14px 18px; font-size: 13px; color: #713f12; line-height: 1.5; margin-bottom: 24px; }
+    .warning strong { display: block; margin-bottom: 4px; }
+    .cta { text-align: center; margin: 24px 0 8px; }
+    .btn { display: inline-block; background: #18181b; color: #ffffff !important; text-decoration: none; font-weight: 600; font-size: 15px; padding: 14px 36px; border-radius: 8px; }
+    .footer { padding: 18px 32px; border-top: 1px solid #f4f4f5; text-align: center; }
+    .footer p { font-size: 11px; color: #a1a1aa; margin: 0; line-height: 1.5; }
+    @media only screen and (max-width: 480px) {
+      .wrapper { margin: 0; border-radius: 0; }
+      .header { padding: 24px 20px; }
+      .body { padding: 24px 20px; }
+      .footer { padding: 16px 20px; }
+      .btn { display: block; text-align: center; padding: 14px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Sistema de Servicio Social</h1>
+      <p>Gestión de Horas y Actividades</p>
+    </div>
+    <div class="body">
+      <p class="greeting">Hola, ${data.nombre} ${data.apellidos}</p>
+      <p class="intro">
+        Recibimos una solicitud para cambiar la contraseña de tu cuenta. Haz clic en el botón de abajo para establecer una nueva contraseña. Este enlace es válido por <strong>1 hora</strong>.
+      </p>
+      <div class="cta">
+        <a class="btn" href="${data.resetUrl}">Cambiar contraseña →</a>
+      </div>
+      <div class="warning">
+        <strong>⚠️ Si no solicitaste este cambio</strong>
+        Ignora este correo. Tu contraseña actual seguirá siendo la misma y el enlace expirará automáticamente.
+      </div>
+    </div>
+    <div class="footer">
+      <p>© ${year} Sistema de Servicio Social<br>Este correo fue generado automáticamente, no respondas a él.</p>
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<void> {
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
+
+  await transporter.sendMail({
+    from: `"Sistema de Servicio Social" <${from}>`,
+    to: data.email,
+    subject: `Cambio de contraseña — Sistema de Servicio Social`,
+    html: buildPasswordResetHtml(data),
+  })
+}
+
 export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
 

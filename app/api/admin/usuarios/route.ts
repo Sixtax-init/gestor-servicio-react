@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     const MATRICULA_REGEX = /^V?\d{8}$/
-    if (["alumno", "maestro"].includes(tipo_usuario) && !MATRICULA_REGEX.test(matricula)) {
+    if (tipo_usuario === "alumno" && !MATRICULA_REGEX.test(matricula)) {
       return NextResponse.json({ error: "Formato de matrícula inválido. Debe ser 8 dígitos o V + 8 dígitos para virtual." }, { status: 400 })
     }
 
