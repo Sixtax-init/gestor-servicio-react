@@ -32,6 +32,7 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("cursos")
   const [progressStats, setProgressStats] = useState<any>(null)
+  const [progressError, setProgressError] = useState(false)
   const tour = useTour(maestroTour, setActiveTab)
 
   // Fetch progress statistics
@@ -42,9 +43,13 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
         if (response.ok) {
           const data = await response.json()
           setProgressStats(data)
+          setProgressError(false)
+        } else {
+          setProgressError(true)
         }
       } catch (error) {
         console.error("Error fetching progress stats:", error)
+        setProgressError(true)
       }
     }
     fetchProgressStats()
@@ -125,6 +130,14 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
                 <p className="text-xs text-muted-foreground mt-1">En todos mis cursos</p>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Error al cargar estadísticas de progreso */}
+        {activeTab === "alumnos" && progressError && (
+          <div className="mb-6 flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            No se pudieron cargar las estadísticas de progreso. Intenta recargar la página.
           </div>
         )}
 

@@ -7,7 +7,7 @@ export async function GET() {
     try {
         const user = await requireRole(["main_admin"])
         if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+            return NextResponse.json({ error: "No autorizado" }, { status: 403 })
         }
 
         const [statsResult, deptStatsResult] = await Promise.all([

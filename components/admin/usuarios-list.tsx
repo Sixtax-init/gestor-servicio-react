@@ -4,10 +4,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2 } from "lucide-react"
+import { Trash2, Edit, Search, ChevronLeft, ChevronRight, Building2, Loader2, AlertTriangle } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { EditUsuarioDialog } from "./edit-usuario-dialog"
 import { DeleteConfirmDialog } from "./delete-confirm-dialog"
 import type { Usuario } from "@/lib/db"
+import { apiFetch } from "@/lib/api-client"
 
 interface UsuariosListProps {
   isAdminGlobal?: boolean
@@ -49,13 +51,13 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
         search: debouncedSearch
       })
 
-      const response = await fetch(`/api/admin/usuarios?${params}`)
+      const response = await apiFetch(`/api/admin/usuarios?${params}`)
       const data = await response.json()
 
       setUsuarios(data.usuarios || [])
       setTotalPages(data.pages || 1)
     } catch (error) {
-      console.error("[v0] Error fetching usuarios:", error)
+      console.error("[admin/usuarios-list] Error fetching usuarios:", error)
     } finally {
       setLoading(false)
     }
@@ -63,7 +65,7 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
 
   const handleDelete = async (id: number) => {
     try {
-      const response = await fetch(`/api/admin/usuarios/${id}`, {
+      const response = await apiFetch(`/api/admin/usuarios/${id}`, {
         method: "DELETE",
       })
 
@@ -75,7 +77,7 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
         alert(data.error || "Error al eliminar usuario")
       }
     } catch (error) {
-      console.error("[v0] Error deleting usuario:", error)
+      console.error("[admin/usuarios-list] Error deleting usuario:", error)
       alert("Error al eliminar usuario")
     }
   }
@@ -118,7 +120,10 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Cargando usuarios...</div>
+        <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Cargando usuarios...</span>
+        </div>
       ) : (
         <>
           <div className="rounded-md border">
@@ -161,9 +166,23 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
                         </TableCell>
                       )}
                       <TableCell>
-                        <Badge variant={usuario.activo ? "default" : "outline"}>
-                          {usuario.activo ? "Activo" : "Inactivo"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={usuario.activo ? "default" : "outline"}>
+                            {usuario.activo ? "Activo" : "Inactivo"}
+                          </Badge>
+                          {usuario.activo && (usuario as any).debe_cambiar_password && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertTriangle className="h-4 w-4 text-amber-500 cursor-default" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>El usuario aún no ha cambiado su contraseña temporal</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => setEditingUsuario(usuario)}>

@@ -7,7 +7,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const user = await requireRole(["main_admin", "administrador"])
     if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { id } = await params
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ curso: result[0] })
   } catch (error) {
-    console.error("[v0] Error updating curso:", error)
+    console.error("[admin/cursos/id] Error updating:", error)
     return NextResponse.json({ error: "Error al actualizar curso" }, { status: 500 })
   }
 }
@@ -65,7 +65,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const user = await requireRole(["main_admin", "administrador"])
     if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { id } = await params
@@ -86,7 +86,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Error deleting curso:", error)
+    console.error("[admin/cursos/id] Error deleting:", error)
     return NextResponse.json({ error: "Error al eliminar curso" }, { status: 500 })
   }
 }

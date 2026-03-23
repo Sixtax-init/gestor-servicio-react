@@ -53,7 +53,7 @@ export function CreateCursoDialog({ open, onOpenChange, onSuccess }: CreateCurso
         descripcion: "",
       })
     } catch (err) {
-      console.error("[v0] Error creating curso:", err)
+      console.error("[maestro/create-curso] Error:", err)
       setError("Error de conexión")
     } finally {
       setLoading(false)

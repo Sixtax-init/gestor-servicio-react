@@ -90,7 +90,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
       const data = await response.json()
       setMaestros(data.usuarios || [])
     } catch (error) {
-      console.error("[v0] Error fetching maestros:", error)
+      console.error("[admin/edit-curso] Error fetching maestros:", error)
     }
   }
 
@@ -124,7 +124,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
         alert("Error al subir archivo")
       }
     } catch (error) {
-      console.error("[v0] Error uploading file:", error)
+      console.error("[admin/edit-curso] Error uploading file:", error)
       alert("Error al subir archivo")
     }
   }
@@ -154,7 +154,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
         alert(data.error || "Error al actualizar curso")
       }
     } catch (error) {
-      console.error("[v0] Error updating curso:", error)
+      console.error("[admin/edit-curso] Error updating curso:", error)
       alert("Error al actualizar curso")
     } finally {
       setLoading(false)

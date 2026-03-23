@@ -8,8 +8,19 @@ import { Progress } from "@/components/ui/progress"
 import { BookOpen, Clock } from "lucide-react"
 import { VerTareasDialog } from "./ver-tareas-dialog"
 
+interface Inscripcion {
+  id: number
+  curso_id: number
+  horas_completadas: number
+  fecha_inscripcion: string
+  activo: boolean
+  nombre_grupo: string
+  tipo: string
+  maestro_id: number
+}
+
 interface MisCursosAlumnoTabProps {
-  inscripciones: any[]
+  inscripciones: Inscripcion[]
 }
 
 export function MisCursosAlumnoTab({ inscripciones }: MisCursosAlumnoTabProps) {

@@ -11,7 +11,7 @@ export async function GET() {
 
     return NextResponse.json({ user })
   } catch (error) {
-    console.error("[v0] Get session error:", error)
+    console.error("[auth/me] Error:", error)
     return NextResponse.json({ error: "Error al obtener sesión" }, { status: 500 })
   }
 }

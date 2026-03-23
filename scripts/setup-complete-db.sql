@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS tareas (
   titulo VARCHAR(200) NOT NULL,
   descripcion TEXT,
   prioridad VARCHAR(20) NOT NULL CHECK (prioridad IN ('baja', 'media', 'alta', 'urgente')),
-  fecha_vencimiento TIMESTAMP NOT NULL,
+  fecha_vencimiento TIMESTAMP,
   asignacion_horas INTEGER, -- Solo para servicio social
   limite_alumnos INTEGER, -- Solo para servicio social
   activo BOOLEAN DEFAULT true,
@@ -210,11 +210,13 @@ CREATE INDEX IF NOT EXISTS idx_archivos_curso_curso_id ON archivos_curso(curso_i
 CREATE TABLE IF NOT EXISTS entregas_avances (
     id SERIAL PRIMARY KEY,
     entrega_id INTEGER NOT NULL REFERENCES entregas(id) ON DELETE CASCADE,
+    tarea_id INTEGER REFERENCES tareas(id) ON DELETE CASCADE,
     alumno_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     archivo_url TEXT, -- ruta del archivo subido (si aplica)
     comentario TEXT,  -- comentario del alumno o maestro
     horas_asignadas DECIMAL(5,2) DEFAULT 0, -- horas de esta entrega parcial (solo informativo)
     estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado')),
+    es_final BOOLEAN DEFAULT false, -- true = el alumno lo marcó como entrega final
     fecha_entrega TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     revisado_por INTEGER REFERENCES usuarios(id), -- maestro que revisó
     fecha_revision TIMESTAMP

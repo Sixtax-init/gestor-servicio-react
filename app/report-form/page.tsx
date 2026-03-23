@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation"
 import { ReportForm } from "@/components/alumno/report-form"
 import { ReportPreview } from "@/components/alumno/report-preview"
 import { Button } from "@/components/ui/button"
-import { Printer, Loader2, Monitor, Smartphone } from "lucide-react"
+import { Printer, Loader2, Monitor, Smartphone, ArrowLeft } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { apiFetch } from "@/lib/api-client"
 
 export interface ReportData {
   reportNumber: string
@@ -72,7 +73,7 @@ export default function Page() {
   // Detectar si es móvil
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024) // Bloquear en pantallas menores a 1024px
+      setIsMobile(window.innerWidth < 1024)
     }
 
     checkMobile()
@@ -86,34 +87,20 @@ export default function Page() {
       try {
         setIsLoading(true)
 
-        console.log('Iniciando carga de datos del alumno...')
-
         // Obtener datos del alumno
         const [resAlumno, resActividades] = await Promise.all([
-          fetch('/api/auth/me').then(async res => {
-            if (!res.ok) {
-              const error = await res.text()
-              console.error('Error en respuesta de /api/auth/me:', error)
-              throw new Error(`Error en la API: ${res.status} ${res.statusText}`)
-            }
+          apiFetch('/api/auth/me').then(async res => {
+            if (!res.ok) throw new Error(`Error en la API: ${res.status} ${res.statusText}`)
             return res.json()
           }),
-          fetch('/api/alumno/actividades').then(async res => {
-            if (!res.ok) {
-              const error = await res.text()
-              console.error('Error en respuesta de /api/alumno/actividades:', error)
-              return [] // Retornar array vacío en caso de error
-            }
+          apiFetch('/api/alumno/actividades').then(async res => {
+            if (!res.ok) return []
             return res.json()
           })
         ])
 
-        console.log('Datos recibidos del alumno:', resAlumno)
-        console.log('Actividades recibidas:', resActividades)
-
-        // Extraer los datos del usuario de la respuesta
-        const alumno = resAlumno.user; // Asegurarse de acceder a la propiedad 'user'
-        const actividadesData = resActividades;
+        const alumno = resAlumno.user
+        const actividadesData = resActividades
 
         // Separar apellidos (manejar el caso en que apellidos sea null o undefined)
         const apellidos = alumno.apellidos || ''
@@ -148,15 +135,12 @@ export default function Page() {
           fechaFinAno: new Date().getFullYear().toString(),
         }))
       } catch (error: unknown) {
-        console.error('Error al cargar datos:', error)
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
         toast({
           title: "Error",
           description: `No se pudieron cargar los datos del alumno: ${errorMessage}`,
           variant: "destructive",
         })
-        // No redirigir automáticamente para permitir la depuración
-        // router.push('/alumno')
       } finally {
         setIsLoading(false)
       }
@@ -169,7 +153,6 @@ export default function Page() {
     window.print()
   }
 
-  console.log("[v0] Show preview:", showPreview)
 
   if (isLoading) {
     return (
@@ -225,9 +208,42 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div
+      className="min-h-screen p-4"
+      style={{
+        backgroundColor: '#e5e7eb',
+        color: '#0f172a',
+        colorScheme: 'light',
+        '--background': '#ffffff',
+        '--foreground': '#0f172a',
+        '--card': '#f3f4f6',
+        '--card-foreground': '#0f172a',
+        '--popover': '#f3f4f6',
+        '--popover-foreground': '#0f172a',
+        '--primary': '#0f172a',
+        '--primary-foreground': '#f8fafc',
+        '--secondary': '#f1f5f9',
+        '--secondary-foreground': '#0f172a',
+        '--muted': '#f8fafc',
+        '--muted-foreground': '#64748b',
+        '--accent': '#f1f5f9',
+        '--accent-foreground': '#0f172a',
+        '--border': '#b8bec8',
+        '--input': '#e9ebee',
+        '--ring': '#94a3b8',
+      } as React.CSSProperties}
+    >
       <div className="container mx-auto max-w-6xl">
         <div className="mb-8 print:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push("/alumno")}
+            className="mb-4 gap-2 text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver al Dashboard
+          </Button>
           <h1 className="text-3xl font-bold mb-2">Reporte Bimestral de Servicio Social</h1>
           <p className="text-gray-600">Tecnológico Nacional de México - Instituto Tecnológico de Nuevo León</p>
         </div>

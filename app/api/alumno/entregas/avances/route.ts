@@ -1,14 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session.server"
-import { toast } from "sonner";
+import { requireRole } from "@/lib/session.server"
 
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session || session.tipo_usuario !== "alumno") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    const session = await requireRole(["alumno"])
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const tareaId = Number(request.nextUrl.searchParams.get("tarea_id"));
@@ -38,12 +37,11 @@ export async function GET(request: NextRequest) {
   }
 }
 // 🟢 Subir un avance (entrega parcial)
-// 🟢 Subir un avance (entrega parcial)
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession()
-    if (!session || session.tipo_usuario !== "alumno") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    const session = await requireRole(["alumno"])
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const body = await request.json()
@@ -113,9 +111,9 @@ export async function POST(request: NextRequest) {
 // 🟡 Marcar un avance como entrega final
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getSession()
-    if (!session || session.tipo_usuario !== "alumno") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    const session = await requireRole(["alumno"])
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const body = await request.json()

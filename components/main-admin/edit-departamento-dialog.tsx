@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Switch } from "@/components/ui/switch"
+import { apiFetch } from "@/lib/api-client"
 
 interface Departamento {
     id: number
@@ -54,7 +55,7 @@ export function EditDepartamentoDialog({ departamento, open, onOpenChange, onSuc
         setLoading(true)
 
         try {
-            const response = await fetch(`/api/main-admin/departamentos/${departamento.id}`, {
+            const response = await apiFetch(`/api/main-admin/departamentos/${departamento.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),

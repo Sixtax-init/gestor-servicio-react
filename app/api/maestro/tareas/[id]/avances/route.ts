@@ -1,15 +1,15 @@
 // app/api/maestro/tareas/[id]/avances/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
-import { getSession } from "@/lib/session.server"
+import { requireRole } from "@/lib/session.server"
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
-    const session = await getSession()
+    const session = await requireRole(["maestro"])
 
-    if (!session || session.tipo_usuario !== "maestro") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    if (!session) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const tareaId = Number(id)

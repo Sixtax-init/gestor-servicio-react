@@ -3,6 +3,21 @@ import { getSession } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 import { saveFile } from "@/lib/file-upload"
 
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+]
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
 export async function POST(request: NextRequest) {
   console.log("[upload] Request received")
 
@@ -33,6 +48,16 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: "Archivo requerido" }, { status: 400 })
+    }
+
+    // Validar tamaño
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "El archivo excede el tamaño máximo de 10 MB" }, { status: 400 })
+    }
+
+    // Validar tipo de archivo
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: "Tipo de archivo no permitido. Solo se aceptan PDF, imágenes, Word, Excel y PowerPoint" }, { status: 400 })
     }
 
     // ✅ Validación solo para ENTREGAS (no para AVANCES)

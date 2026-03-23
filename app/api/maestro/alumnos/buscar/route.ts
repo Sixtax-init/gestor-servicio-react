@@ -6,7 +6,7 @@ export async function GET(req: Request) {
     try {
         const user = await requireRole(["maestro"])
         if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+            return NextResponse.json({ error: "No autorizado" }, { status: 403 })
         }
 
         const { searchParams } = new URL(req.url)

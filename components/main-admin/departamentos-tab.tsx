@@ -11,7 +11,8 @@ import {
     Users,
     BookOpen,
     CheckCircle2,
-    XCircle
+    XCircle,
+    Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -156,7 +157,10 @@ export function DepartamentosTab() {
                 </CardHeader>
                 <CardContent>
                     {loading ? (
-                        <div className="flex justify-center py-8">Cargando departamentos...</div>
+                        <div className="flex justify-center items-center py-8 text-muted-foreground gap-2">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>Cargando departamentos...</span>
+                        </div>
                     ) : (
                         <Table>
                             <TableHeader>

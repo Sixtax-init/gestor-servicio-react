@@ -2,12 +2,19 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSession, requireRole } from "@/lib/session.server"
 import { sql, pool } from "@/lib/db"
 import { createUser } from "@/lib/auth"
+import { sendWelcomeEmail } from "@/lib/email"
+import { randomBytes } from "crypto"
+
+function generateTempPassword(): string {
+  // 12 caracteres: letras + números, fácil de escribir
+  return randomBytes(9).toString("base64url").slice(0, 12)
+}
 
 export async function GET(request: NextRequest) {
   const user = await requireRole(["main_admin", "administrador"])
 
   if (!user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
   const { searchParams } = new URL(request.url)
@@ -48,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     const queryText = `
-      SELECT u.id, u.matricula, u.nombre, u.apellidos, u.email, u.tipo_usuario, u.activo, u.created_at, u.departamento_id, d.nombre as departamento_nombre
+      SELECT u.id, u.matricula, u.nombre, u.apellidos, u.email, u.tipo_usuario, u.activo, u.debe_cambiar_password, u.created_at, u.departamento_id, d.nombre as departamento_nombre
       FROM usuarios u
       LEFT JOIN departamentos d ON u.departamento_id = d.id
       ${whereClauses}
@@ -79,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ usuarios, total, pages })
   } catch (error) {
-    console.error("[v0] Error fetching usuarios:", error)
+    console.error("[admin/usuarios] Error fetching:", error)
     return NextResponse.json({ error: "Error al obtener usuarios" }, { status: 500 })
   }
 }
@@ -88,16 +95,23 @@ export async function POST(request: NextRequest) {
   const user = await requireRole(["main_admin", "administrador"])
 
   if (!user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
   try {
     const body = await request.json()
-    const { matricula, nombre, apellidos, email, password, tipo_usuario, departamento_id } = body
+    const { matricula, nombre, apellidos, email, tipo_usuario, departamento_id } = body
 
-    if (!matricula || !nombre || !apellidos || !email || !password || !tipo_usuario) {
+    if (!matricula || !nombre || !apellidos || !email || !tipo_usuario) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 })
     }
+
+    const MATRICULA_REGEX = /^V?\d{8}$/
+    if (["alumno", "maestro"].includes(tipo_usuario) && !MATRICULA_REGEX.test(matricula)) {
+      return NextResponse.json({ error: "Formato de matrícula inválido. Debe ser 8 dígitos o V + 8 dígitos para virtual." }, { status: 400 })
+    }
+
+    const password = generateTempPassword()
 
     const newUser = await createUser({
       matricula,
@@ -115,9 +129,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Error al crear usuario. La matrícula o email ya existe." }, { status: 400 })
     }
 
+    // Enviar correo de bienvenida con credenciales (no bloqueante)
+    sendWelcomeEmail({
+      nombre,
+      apellidos,
+      email,
+      matricula,
+      password,
+      tipo_usuario,
+    }).catch((err) => {
+      console.error("[admin/usuarios] Error enviando correo de bienvenida:", err)
+    })
+
     return NextResponse.json({ usuario: newUser }, { status: 201 })
   } catch (error) {
-    console.error("[v0] Error creating usuario:", error)
+    console.error("[admin/usuarios] Error creating:", error)
     return NextResponse.json({ error: "Error al crear usuario" }, { status: 500 })
   }
 }

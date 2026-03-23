@@ -10,13 +10,14 @@ export interface SessionUser {
   email: string
   tipo_usuario: "main_admin" | "administrador" | "maestro" | "alumno"
   departamento_id: number | null
+  debe_cambiar_password: boolean
 }
 
 // Verificar credenciales de usuario
 export async function verifyCredentials(matricula: string, password: string): Promise<SessionUser | null> {
   try {
     const result = await sql`
-      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, password_hash, activo
+      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, password_hash, activo, debe_cambiar_password
       FROM usuarios
       WHERE matricula = ${matricula}
       LIMIT 1
@@ -49,9 +50,10 @@ export async function verifyCredentials(matricula: string, password: string): Pr
       email: usuario.email,
       tipo_usuario: usuario.tipo_usuario,
       departamento_id: usuario.departamento_id,
+      debe_cambiar_password: usuario.debe_cambiar_password ?? false,
     }
   } catch (error) {
-    console.error("[v0] Error verifying credentials:", error)
+    console.error("[auth] Error verifying credentials:", error)
     return null
   }
 }
@@ -71,9 +73,9 @@ export async function createUser(data: {
     const password_hash = await bcrypt.hash(data.password, 10)
 
     const result = await sql`
-      INSERT INTO usuarios (matricula, nombre, apellidos, email, tipo_usuario, departamento_id, password_hash, activo)
-      VALUES (${data.matricula}, ${data.nombre}, ${data.apellidos}, ${data.email}, ${data.tipo_usuario}, ${data.departamento_id || null}, ${password_hash}, true)
-      RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id
+      INSERT INTO usuarios (matricula, nombre, apellidos, email, tipo_usuario, departamento_id, password_hash, activo, debe_cambiar_password)
+      VALUES (${data.matricula}, ${data.nombre}, ${data.apellidos}, ${data.email}, ${data.tipo_usuario}, ${data.departamento_id || null}, ${password_hash}, true, true)
+      RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, debe_cambiar_password
     `
 
     if (result.length === 0) {
@@ -82,7 +84,7 @@ export async function createUser(data: {
 
     return result[0] as SessionUser
   } catch (error) {
-    console.error("[v0] Error creating user:", error)
+    console.error("[auth] Error creating user:", error)
     return null
   }
 }
@@ -103,14 +105,23 @@ export async function getUserById(id: number): Promise<SessionUser | null> {
 
     return result[0] as SessionUser
   } catch (error) {
-    console.error("[v0] Error getting user by id:", error)
+    console.error("[auth] Error getting user by id:", error)
     return null
   }
 }
 
-// Cambiar contraseña
-export async function changePassword(userId: number, newPassword: string): Promise<boolean> {
+// Cambiar contraseña (requiere verificar la contraseña actual)
+export async function changePassword(userId: number, currentPassword: string, newPassword: string): Promise<boolean> {
   try {
+    const result = await sql`
+      SELECT password_hash FROM usuarios WHERE id = ${userId} AND activo = true LIMIT 1
+    `
+
+    if (result.length === 0) return false
+
+    const isValid = await bcrypt.compare(currentPassword, result[0].password_hash as string)
+    if (!isValid) return false
+
     const password_hash = await bcrypt.hash(newPassword, 10)
 
     await sql`
@@ -121,7 +132,7 @@ export async function changePassword(userId: number, newPassword: string): Promi
 
     return true
   } catch (error) {
-    console.error("[v0] Error changing password:", error)
+    console.error("[auth] Error changing password:", error)
     return false
   }
 }

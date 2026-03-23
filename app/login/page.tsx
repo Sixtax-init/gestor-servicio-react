@@ -54,7 +54,7 @@ export default function LoginPage() {
         router.push("/alumno")
       }
     } catch (err) {
-      console.error("[v0] Login error:", err)
+      console.error("[login] Error:", err)
       setError("Error de conexión. Intenta de nuevo.")
       setLoading(false)
     }
@@ -71,11 +71,11 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="matricula">Matrícula</Label>
+              <Label htmlFor="matricula">Matrícula / Número de Control</Label>
               <Input
                 id="matricula"
                 type="text"
-                placeholder="21480680"
+                placeholder="Ej. 21480680"
                 value={matricula}
                 onChange={(e) => setMatricula(e.target.value)}
                 required

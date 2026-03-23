@@ -5,12 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2, FilePlus2, MessageSquare, AlertCircle } from "lucide-react"
+import { Loader2, FilePlus2, MessageSquare, AlertCircle, ClipboardList } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
 import { EntregarAvanceDialog } from "./entregar-avance-dialog"
 import type { Entrega } from "@/lib/db"
+import { apiFetch } from "@/lib/api-client"
 
 interface VerTareasDialogProps {
   open: boolean
@@ -48,7 +49,7 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
   const fetchTareas = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/alumno/tareas?curso_id=${cursoId}`)
+      const response = await apiFetch(`/api/alumno/tareas?curso_id=${cursoId}`)
       if (response.ok) {
         const data: TareaConEntrega[] = await response.json()
         setTareas(data)
@@ -74,7 +75,11 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                 <Loader2 className="animate-spin w-6 h-6 text-muted-foreground" />
               </div>
             ) : tareas.length === 0 ? (
-              <p className="text-center text-muted-foreground py-10">No hay tareas asignadas a este curso.</p>
+              <div className="flex flex-col items-center py-12 text-muted-foreground gap-2">
+                <ClipboardList className="h-10 w-10 opacity-40" />
+                <p className="font-medium">No hay tareas asignadas</p>
+                <p className="text-sm">El maestro aún no ha creado tareas para este curso</p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {tareas.map((tarea) => (

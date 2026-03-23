@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, BookOpen, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { apiFetch } from "@/lib/api-client"
 import { CreateCursoDialog } from "./create-curso-dialog"
 import { CreateTareaDialog } from "./create-tarea-dialog"
 
@@ -35,7 +36,7 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
     }
 
     try {
-      const res = await fetch(`/api/maestro/cursos/${cursoId}`, {
+      const res = await apiFetch(`/api/maestro/cursos/${cursoId}`, {
         method: "DELETE",
       })
 

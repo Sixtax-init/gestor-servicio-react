@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ user })
   } catch (error) {
-    console.error("[v0] Login error:", error)
+    console.error("[auth/login] Error:", error)
     return NextResponse.json({ error: "Error al iniciar sesión" }, { status: 500 })
   }
 }

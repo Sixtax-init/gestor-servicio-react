@@ -1,0 +1,24 @@
+version: '3.8'
+
+# Base de datos para entorno BETA / desarrollo local
+# Puerto 5433 para no chocar con el de producción (5432)
+services:
+  postgres-beta:
+    image: postgres:15-alpine
+    container_name: gestor-horas-db-beta
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gestor_horas_beta
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_beta_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_beta_data:

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
+import { REQUIRED_SERVICE_HOURS } from "@/lib/config"
 
 /**
  * GET /api/maestro/alumnos/[id]/progreso
@@ -14,7 +15,7 @@ export async function GET(
         const user = await requireRole(["maestro"])
 
         if (!user) {
-            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+            return NextResponse.json({ error: "No autorizado" }, { status: 403 })
         }
 
         const studentId = Number((await context.params).id)
@@ -93,8 +94,8 @@ export async function GET(
       LIMIT 10
     `
 
-        // Calculate overall progress (default 480 hours required)
-        const horasRequeridas = 480
+        // Calculate overall progress
+        const horasRequeridas = REQUIRED_SERVICE_HOURS
         const progresoPorcentaje = Math.min(
             Math.round(((studentData.horas_acumuladas || 0) / horasRequeridas) * 100),
             100
@@ -132,7 +133,7 @@ export async function GET(
                 id: c.id,
                 nombre: c.nombre,
                 tipo: c.tipo,
-                horas_requeridas: 480,
+                horas_requeridas: REQUIRED_SERVICE_HOURS,
             })),
             actividades_recientes: activities.map((a: any) => ({
                 actividad: a.actividad,

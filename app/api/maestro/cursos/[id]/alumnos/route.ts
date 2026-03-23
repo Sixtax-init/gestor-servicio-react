@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSession, requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
+import { REQUIRED_SERVICE_HOURS } from "@/lib/config"
 
 export async function GET(
   req: Request,
@@ -10,7 +11,7 @@ export async function GET(
     const user = await requireRole(["maestro"])
 
     if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const cursoId = Number((await context.params).id)
@@ -33,7 +34,7 @@ export async function GET(
       return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
     }
 
-    const horasRequeridas = 480 // Required hours for service
+    const horasRequeridas = REQUIRED_SERVICE_HOURS
 
     // 👨‍🎓 Obtener alumnos inscritos con horas de la inscripción
     const alumnos = await sql`
@@ -82,7 +83,7 @@ export async function GET(
 
     return NextResponse.json({ alumnos: alumnosConProgreso }, { status: 200 })
   } catch (error) {
-    console.error("[v0] Error al obtener alumnos:", error)
+    console.error("[maestro/cursos/alumnos] Error:", error)
     return NextResponse.json({ error: "Error en el servidor" }, { status: 500 })
   }
 }

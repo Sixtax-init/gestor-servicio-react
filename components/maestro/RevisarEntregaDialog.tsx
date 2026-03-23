@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { apiFetch } from "@/lib/api-client"
 
 interface RevisarEntregaDialogProps {
   open: boolean
@@ -27,7 +28,7 @@ export function RevisarEntregaDialog({ open, onOpenChange, tareaId, entregaId, o
     try {
       setLoading(true)
 
-      const response = await fetch(`/api/maestro/tareas/${tareaId}/entregas/${entregaId}/revisar`, {
+      const response = await apiFetch(`/api/maestro/tareas/${tareaId}/entregas/${entregaId}/revisar`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

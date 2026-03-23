@@ -10,10 +10,8 @@ export async function GET() {
     const session = await requireRole(["alumno"])
 
     if (!session) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
-
-    console.log("🔍 Consultando inscripciones para alumno:", session.id)
 
     const inscripciones = await sql`
 SELECT
@@ -32,7 +30,7 @@ i.id,
 
     return NextResponse.json(inscripciones)
   } catch (error) {
-    console.error("❌ Error al obtener inscripciones:", error)
+    console.error("[alumno/inscripciones] Error GET:", error)
     return NextResponse.json({ error: "Error al obtener inscripciones" }, { status: 500 })
   }
 }
@@ -43,7 +41,7 @@ export async function POST(request: NextRequest) {
   const user = await requireRole(["alumno"])
 
   if (!user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
   try {
@@ -81,7 +79,7 @@ RETURNING *
 
     return NextResponse.json({ inscripcion: result[0] }, { status: 201 })
   } catch (error) {
-    console.error("[v0] Error creando inscripción:", error)
+    console.error("[alumno/inscripciones] Error creating:", error)
     return NextResponse.json({ error: "Error al inscribirse" }, { status: 500 })
   }
 }
