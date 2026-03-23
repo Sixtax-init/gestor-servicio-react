@@ -58,22 +58,20 @@ export function MisHorasTab({ inscripciones: initialInscripciones = [] }: MisHor
           <CardTitle>Seguimiento de Horas</CardTitle>
           <CardDescription>Horas de servicio social completadas</CardDescription>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={fetchInscripciones}
-          disabled={loading}
-          title="Actualizar"
-        >
-          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-        </Button>
-
-        <div className="flex gap-4 justify-center pt-4">
+        <div className="flex items-center gap-2">
           <Link href="/report-form">
             <Button size="lg">Reporte</Button>
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={fetchInscripciones}
+            disabled={loading}
+            title="Actualizar"
+          >
+            <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </Button>
         </div>
-
       </CardHeader>
 
       <CardContent>

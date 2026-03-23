@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
   tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('main_admin', 'administrador', 'maestro', 'alumno')),
   departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL,
   password_hash VARCHAR(255) NOT NULL,
+  debe_cambiar_password BOOLEAN DEFAULT true,
+  reset_token VARCHAR(255),
+  reset_token_expires_at TIMESTAMP,
   activo BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -47,6 +50,13 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_activo ON usuarios(activo);
 -- Asegurar columna departamento_id en usuarios
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_usuarios_departamento ON usuarios(departamento_id);
+
+-- Columnas para cambio de contraseña forzado al primer login
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS debe_cambiar_password BOOLEAN DEFAULT true;
+
+-- Columnas para reset de contraseña por correo (uso único, expira en 1 hora)
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP;
 
 -- Actualizar constraint de tipo_usuario para incluir main_admin
 DO $$ 

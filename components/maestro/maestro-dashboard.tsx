@@ -6,7 +6,7 @@ import type { Curso } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { BookOpen, ClipboardList, Users, LogOut, HelpCircle, TrendingUp, Award, AlertTriangle } from "lucide-react"
+import { BookOpen, ClipboardList, Users, LogOut, HelpCircle, TrendingUp, Award, AlertTriangle, KeyRound } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { MisCursosTab } from "./mis-cursos-tab"
 import { MisTareasTab } from "./mis-tareas-tab"
@@ -16,6 +16,7 @@ import { TourStep } from "@/components/ui/tour-step"
 import { TourOverlay } from "@/components/ui/tour-overlay"
 import { maestroTour } from "@/lib/tours/maestro-tour"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface MaestroDashboardProps {
   user: SessionUser
@@ -30,6 +31,7 @@ interface MaestroDashboardProps {
 export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("cursos")
   const [progressStats, setProgressStats] = useState<any>(null)
   const [progressError, setProgressError] = useState(false)
@@ -61,6 +63,28 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
     router.push("/login")
   }
 
+  const handleSolicitarCambioPassword = async () => {
+    setResetLoading(true)
+    try {
+      const res = await apiFetch("/api/auth/solicitar-reset-password", { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success("Correo enviado", {
+          description: "Te enviamos el enlace para cambiar tu contraseña. Revisa tu bandeja de entrada y también la carpeta de spam.",
+          duration: 8000,
+        })
+      } else {
+        toast.error("Error al enviar el correo", {
+          description: data.error || "Intenta de nuevo más tarde.",
+        })
+      }
+    } catch {
+      toast.error("Error de conexión", { description: "Intenta de nuevo." })
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background animate-fade-in">
       {/* Welcome Banner */}
@@ -78,6 +102,10 @@ export function MaestroDashboard({ user, stats, cursos }: MaestroDashboardProps)
               <Button variant="outline" size="sm" onClick={tour.resetTour} className="shadow-lg">
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Manual
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSolicitarCambioPassword} disabled={resetLoading} className="shadow-lg">
+                <KeyRound className="mr-2 h-4 w-4" />
+                {resetLoading ? "Enviando..." : "Cambiar contraseña"}
               </Button>
               <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
                 <LogOut className="mr-2 h-4 w-4" />
