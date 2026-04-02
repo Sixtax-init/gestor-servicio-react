@@ -10,6 +10,7 @@ import { RevisarEntregaDialog } from "./RevisarEntregaDialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 
 
 
@@ -257,7 +258,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
                                       setSelectedEntrega(entrega.id)
                                       setReviewOpen(true)
                                     } else {
-                                      alert("⚠️ El alumno aún no ha marcado un avance final. No se puede revisar.")
+                                      toast.warning("El alumno aún no ha marcado un avance final. No se puede revisar.")
                                     }
                                   }}
                                   disabled={!entrega.tiene_avance_final || entrega.estado === "aprobada"}

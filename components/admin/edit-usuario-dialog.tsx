@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -86,11 +87,11 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
         onOpenChange(false)
       } else {
         const data = await response.json()
-        alert(data.error || "Error al actualizar usuario")
+        toast.error(data.error || "Error al actualizar usuario")
       }
     } catch (error) {
       console.error("[admin/edit-usuario] Error:", error)
-      alert("Error al actualizar usuario")
+      toast.error("Error al actualizar usuario")
     } finally {
       setLoading(false)
     }

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface EntregarTareaDialogProps {
   open: boolean
@@ -39,7 +40,7 @@ export function EntregarTareaDialog({ open, onOpenChange, tarea, onSuccess }: En
     if (!tarea?.id) return
 
     if (!archivo) {
-      alert("⚠️ Debes adjuntar un archivo para realizar la entrega.")
+      toast.warning("Debes adjuntar un archivo para realizar la entrega.")
       return
     }
 
@@ -84,14 +85,14 @@ export function EntregarTareaDialog({ open, onOpenChange, tarea, onSuccess }: En
         throw new Error(errorData.error || "Error al registrar entrega")
       }
 
-      alert("✅ Entrega enviada correctamente")
+      toast.success("Entrega enviada correctamente")
       setArchivo(null)
       setComentario("")
       onSuccess()
       onOpenChange(false)
     } catch (error) {
       console.error("[entregar-tarea-dialog] Error:", error)
-      alert(error instanceof Error ? error.message : "❌ Error al enviar la entrega")
+      toast.error(error instanceof Error ? error.message : "Error al enviar la entrega")
     } finally {
       setSubiendo(false)
     }

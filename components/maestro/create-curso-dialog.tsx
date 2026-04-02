@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface CreateCursoDialogProps {
   open: boolean
@@ -19,8 +20,8 @@ interface CreateCursoDialogProps {
 }
 
 export function CreateCursoDialog({ open, onOpenChange, onSuccess }: CreateCursoDialogProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
   const [formData, setFormData] = useState({
     nombre_grupo: "",
     tipo: "taller_curso",
@@ -29,7 +30,6 @@ export function CreateCursoDialog({ open, onOpenChange, onSuccess }: CreateCurso
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
     setLoading(true)
 
     try {
@@ -41,12 +41,14 @@ export function CreateCursoDialog({ open, onOpenChange, onSuccess }: CreateCurso
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Error al crear curso")
+        toast.error(data.error || "Error al crear curso")
         setLoading(false)
         return
       }
 
       onSuccess(data.curso)
+      toast.success("Curso creado con éxito 🎉")
+      router.refresh()
       setFormData({
         nombre_grupo: "",
         tipo: "taller_curso",
@@ -54,7 +56,7 @@ export function CreateCursoDialog({ open, onOpenChange, onSuccess }: CreateCurso
       })
     } catch (err) {
       console.error("[maestro/create-curso] Error:", err)
-      setError("Error de conexión")
+      toast.error("Error de conexión al servidor")
     } finally {
       setLoading(false)
     }
@@ -104,11 +106,7 @@ export function CreateCursoDialog({ open, onOpenChange, onSuccess }: CreateCurso
             />
           </div>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          {/* 🔹 Errores reemplazados por toasts */}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

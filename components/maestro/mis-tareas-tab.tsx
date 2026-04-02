@@ -4,10 +4,12 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { TareasList } from "./tareas-list"
 import { CreateTareaDialog } from "./create-tarea-dialog"
 
 export function MisTareasTab() {
+  const router = useRouter()
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -38,6 +40,7 @@ export function MisTareasTab() {
         onSuccess={() => {
           setShowCreateDialog(false)
           setRefreshKey((prev) => prev + 1)
+          router.refresh()
         }}
       />
     </>

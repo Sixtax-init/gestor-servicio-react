@@ -41,14 +41,6 @@ export const alumnoTour: Tour = {
             placement: "bottom",
             switchToTab: "mis-cursos",
         },
-        // Cursos Disponibles Tab
-        {
-            target: '[data-tour="tab-disponibles"]',
-            title: "Pestaña: Cursos Disponibles",
-            content: "Aquí encontrarás todos los cursos y servicios sociales disponibles para inscribirte.",
-            placement: "bottom",
-            switchToTab: "disponibles",
-        },
         // Mis Tareas Tab
         {
             target: '[data-tour="tab-tareas"]',

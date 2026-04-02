@@ -39,8 +39,13 @@ export function TourStep({
             return
         }
 
+        const element = document.querySelector(targetSelector)
+        if (element) {
+            // Hacemos scroll sólo una vez cuando cambia el elemento objetivo (nuevo paso)
+            element.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+
         const updatePosition = () => {
-            const element = document.querySelector(targetSelector)
             if (element) {
                 const rect = element.getBoundingClientRect()
                 const tooltipWidth = 320
@@ -69,19 +74,18 @@ export function TourStep({
                         break
                 }
 
-                // Ensure tooltip stays within viewport
+                // Asegurar que el tooltip permanezca dentro del viewport (responsivo)
                 const padding = 16
                 if (left < padding) left = padding
                 if (left + tooltipWidth > window.innerWidth - padding) {
                     left = window.innerWidth - tooltipWidth - padding
                 }
                 if (top < padding) top = padding
+                if (top + tooltipHeight > window.innerHeight - padding) {
+                    top = window.innerHeight - tooltipHeight - padding
+                }
 
                 setPosition({ top, left })
-
-                // Scroll element into view if needed
-                element.scrollIntoView({ behavior: "smooth", block: "center" })
-
                 setIsVisible(true)
             }
         }
@@ -103,7 +107,7 @@ export function TourStep({
 
     return (
         <Card
-            className="fixed z-50 w-80 shadow-2xl animate-slide-up"
+            className="fixed z-[100] w-80 shadow-2xl animate-slide-up"
             style={{
                 top: `${position.top}px`,
                 left: `${position.left}px`,

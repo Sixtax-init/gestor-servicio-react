@@ -89,7 +89,7 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                                 Bienvenido, <span className="font-semibold">{user.nombre} {user.apellidos}</span>
                             </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap justify-center gap-2">
                             <Button variant="secondary" onClick={handleLogout} disabled={loading} className="shadow-lg hover:scale-105 transition-transform">
                                 <LogOut className="mr-2 h-4 w-4" />
                                 Cerrar Sesión
@@ -156,7 +156,7 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-4 lg:w-[600px] p-1 bg-muted/50 rounded-xl">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:w-[600px] p-1 bg-muted/50 rounded-xl h-auto gap-1">
                         <TabsTrigger value="departamentos" className="rounded-lg">
                             <Building2 className="h-4 w-4 mr-2" />
                             Departamentos

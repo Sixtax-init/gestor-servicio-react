@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileUpload } from "@/components/ui/file-upload"
 import { Plus } from "lucide-react"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface CreateCursoDialogProps {
   onSuccess: () => void
@@ -84,7 +85,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
     e.preventDefault()
 
     if (isAdminGlobal && !formData.departamento_id) {
-      alert("Debes seleccionar un departamento")
+      toast.warning("Debes seleccionar un departamento")
       return
     }
 
@@ -104,7 +105,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
       console.log("[create-curso-dialog] Respuesta del backend:", data)
 
       if (!response.ok) {
-        alert(data.error || "Error al crear curso")
+        toast.error(data.error || "Error al crear curso")
         setLoading(false)
         return
       }
@@ -112,7 +113,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
       const cursoId = data.id || data.curso?.id
       if (!cursoId) {
         console.error("[frontend] No se recibió un ID de curso en la respuesta:", data)
-        alert("Error: el backend no devolvió un ID de curso.")
+        toast.error("Error: el backend no devolvió un ID de curso.")
         setLoading(false)
         return
       }
@@ -134,13 +135,13 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
 
         if (!uploadResponse.ok) {
           console.error(uploadResult)
-          alert(uploadResult.error || "Error al subir archivo del curso")
+          toast.error(uploadResult.error || "Error al subir archivo del curso")
         } else {
           console.log("[frontend] Archivo subido:", uploadResult)
         }
       }
 
-      alert("Curso creado con éxito 🎉")
+      toast.success("Curso creado con éxito 🎉")
       setFormData({
         nombre_grupo: "",
         tipo: "servicio_social",
@@ -153,7 +154,7 @@ export function CreateCursoDialog({ onSuccess, isAdminGlobal = false }: CreateCu
       onSuccess()
     } catch (error) {
       console.error("[admin/create-curso] Error creating curso:", error)
-      alert("Error al crear curso")
+      toast.error("Error al crear curso")
     } finally {
       setLoading(false)
     }

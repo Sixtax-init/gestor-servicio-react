@@ -42,7 +42,7 @@ export function Footer() {
                                 const body = encodeURIComponent("Hola,\n\nMe he encontrado con el siguiente error al intentar:\n");
                                 window.location.href = `mailto:soporte.servicetracker@nuevoleon.tecnm.mx?subject=${subject}&body=${body}`;
                             }}
-                            className="text-primary hover:underline transition-colors"
+                            className="text-primary hover:underline transition-colors break-all"
                         >
                             soporte.servicetracker@nuevoleon.tecnm.mx
                         </a>
