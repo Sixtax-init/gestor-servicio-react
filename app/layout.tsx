@@ -26,7 +26,7 @@ export default function RootLayout({
       <body className="font-sans antialiased flex flex-col min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Navbar />
-          <main className="flex-1">
+          <main className="flex-1 max-w-full overflow-x-clip">
             {children}
           </main>
           <Footer />

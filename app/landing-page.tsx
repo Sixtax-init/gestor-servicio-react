@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Users, BookOpen, Clock, FileText, Shield } from "lucide-react"
+import { CheckCircle2, Users, BookOpen, Clock, FileText, Shield, Monitor } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const features = [
   {
@@ -42,8 +43,15 @@ const features = [
 
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    setMounted(true)
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   if (!mounted) return null
 
@@ -61,6 +69,19 @@ export default function LandingPage() {
           </Link>
         </div>
       </header>
+
+      {/* Mobile Warning */}
+      {isMobile && (
+        <div className="container mx-auto px-4 mt-6">
+          <Alert className="max-w-3xl mx-auto bg-primary/5 border-primary/20 animate-in fade-in slide-in-from-top-2 duration-500">
+            <Monitor className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-sm font-semibold">Uso en Dispositivos Móviles</AlertTitle>
+            <AlertDescription className="text-xs">
+              Para experimentar o usar de mejor manera el sistema, te recomendamos usar un ordenador.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24 text-center space-y-6">

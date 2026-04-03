@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { requireRole } from "@/lib/session.server"
+import { sendNewTaskEmailsBulk } from "@/lib/email"
 import path from "path"
 import fs from "fs/promises"
 
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // 🧠 Verificar que el curso pertenece al maestro
     const curso = await db`
-      SELECT id FROM cursos WHERE id = ${curso_id} AND maestro_id = ${session.id}
+      SELECT id, nombre_grupo FROM cursos WHERE id = ${curso_id} AND maestro_id = ${session.id}
     `
     if (curso.length === 0) {
       return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
@@ -97,6 +98,29 @@ export async function POST(request: NextRequest) {
       )
       RETURNING *
     `
+
+    // 📬 4. Notificar a los alumnos (proceso asíncrono no bloqueante)
+    try {
+      const inscritos = await db`
+        SELECT u.email 
+        FROM inscripciones i
+        INNER JOIN usuarios u ON i.alumno_id = u.id
+        WHERE i.curso_id = ${curso_id} AND i.activo = true AND u.activo = true
+      `
+      const emails = inscritos.map(ins => ins.email as string)
+      
+      if (emails.length > 0) {
+        // Ejecución "background" simulada
+        sendNewTaskEmailsBulk(emails, {
+          titulo: titulo as string,
+          descripcion: descripcion as string,
+          cursoNombre: curso[0].nombre_grupo as string,
+          prioridad: prioridad as string
+        }).catch(err => console.error("Error bulk email:", err))
+      }
+    } catch (err) {
+      console.error("Error al preparar correos de nueva tarea:", err)
+    }
 
     return NextResponse.json(tarea, { status: 201 })
   } catch (error) {

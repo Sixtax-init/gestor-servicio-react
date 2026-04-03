@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +11,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTheme } from "next-themes"
 import { apiFetch } from "@/lib/api-client"
 
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Monitor, Loader2 } from "lucide-react"
+import { AlertTitle } from "@/components/ui/alert"
+import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,7 +30,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const { theme, setTheme } = useTheme()
+  const [isMobile, setIsMobile] = useState(false)
+  const [resetEmail, setResetEmail] = useState("")
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     // ... (rest of handleSubmit is unchanged, but included for context if needed, or I can just target the specific blocks)
@@ -69,6 +89,16 @@ export default function LoginPage() {
           <CardDescription className="text-center">Ingresa tu matrícula y contraseña para acceder</CardDescription>
         </CardHeader>
         <CardContent>
+          {isMobile && (
+            <Alert className="mb-6 bg-primary/5 border-primary/20 animate-in fade-in slide-in-from-top-2 duration-500">
+              <Monitor className="h-4 w-4 text-primary" />
+              <AlertTitle className="text-sm font-semibold">Uso en Dispositivos Móviles</AlertTitle>
+              <AlertDescription className="text-xs">
+                Para experimentar o usar de mejor manera el sistema, te recomendamos usar un ordenador.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="matricula">Matrícula / Número de Control</Label>
@@ -83,7 +113,16 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Contraseña</Label>
+                <button
+                  type="button"
+                  onClick={() => setResetDialogOpen(true)}
+                  className="text-xs text-primary hover:underline transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
               <div className="relative">
                 <Input
                   id="password"
@@ -121,6 +160,79 @@ export default function LoginPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Recuperar Contraseña</DialogTitle>
+            <DialogDescription>
+              Ingresa tu correo electrónico registrado y te enviaremos un enlace para restablecer tu contraseña.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">Correo Electrónico</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="ejemplo@correo.com"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setResetDialogOpen(false)}
+              disabled={resetLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!resetEmail) {
+                  toast.error("Ingresa un correo electrónico");
+                  return;
+                }
+                setResetLoading(true);
+                try {
+                  const res = await apiFetch("/api/auth/recuperar-password", {
+                    method: "POST",
+                    body: JSON.stringify({ email: resetEmail }),
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    toast.success("Solicitud procesada", {
+                      description: data.message,
+                      duration: 6000
+                    });
+                    setResetDialogOpen(false);
+                    setResetEmail("");
+                  } else {
+                    toast.error("Error", { description: data.error });
+                  }
+                } catch (err) {
+                  toast.error("Error de conexión");
+                } finally {
+                  setResetLoading(false);
+                }
+              }}
+              disabled={resetLoading}
+            >
+              {resetLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar Enlace"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

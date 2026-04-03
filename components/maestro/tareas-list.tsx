@@ -8,6 +8,7 @@ import { Edit, Trash2, ClipboardList, Calendar, Clock, Users, Loader2, ChevronLe
 import { EditTareaDialog } from "./edit-tarea-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { VerEntregasDialog } from "./ver-entregas-dialog"
+import { TareaEntregasView } from "./TareaEntregasView"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { apiFetch } from "@/lib/api-client"
 
@@ -33,6 +34,7 @@ export function TareasList() {
   const [editingTarea, setEditingTarea] = useState<Tarea | null>(null)
   const [deletingTarea, setDeletingTarea] = useState<Tarea | null>(null)
   const [viewingEntregas, setViewingEntregas] = useState<Tarea | null>(null)
+  const [selectedTareaForReview, setSelectedTareaForReview] = useState<Tarea | null>(null)
   const [page, setPage] = useState(1)
   const COURSES_PER_PAGE = 5
 
@@ -115,6 +117,15 @@ export function TareasList() {
   const totalPages = Math.ceil(allGroups.length / COURSES_PER_PAGE)
   const pagedGroups = allGroups.slice((page - 1) * COURSES_PER_PAGE, page * COURSES_PER_PAGE)
 
+  if (selectedTareaForReview) {
+    return (
+      <TareaEntregasView 
+        tarea={selectedTareaForReview} 
+        onBack={() => setSelectedTareaForReview(null)} 
+      />
+    )
+  }
+
   return (
     <>
       <Accordion type="multiple" className="w-full space-y-4">
@@ -131,7 +142,7 @@ export function TareasList() {
             <AccordionContent className="pt-4 pb-4">
               <div className="grid gap-4">
                 {cursoTareas.map((tarea) => (
-                  <Card key={tarea.id} className="border-l-4 border-l-primary/50">
+                  <Card key={tarea.id} className="border-l-4 border-l-primary/50 shadow-sm hover:shadow-md transition-shadow">
                     <CardContent className="pt-6">
                       <div className="flex flex-col gap-4">
                         <div className="flex-1">
@@ -172,16 +183,34 @@ export function TareasList() {
                           </div>
                         </div>
 
-                        <div className="flex gap-3 sm:gap-2 justify-end sm:justify-start">
-                          <Button variant="outline" size="icon" onClick={() => setViewingEntregas(tarea)} title="Ver entregas" className="min-h-[44px] min-w-[44px]">
+                        <div className="flex gap-3 sm:gap-2 justify-end sm:justify-start pt-2 border-t sm:border-t-0">
+                          <Button 
+                            variant="default" 
+                            size="sm" 
+                            onClick={() => setSelectedTareaForReview(tarea)} 
+                            className="flex-1 sm:flex-none gap-2"
+                          >
                             <ClipboardList className="h-4 w-4" />
+                            Ver Entregas
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => setEditingTarea(tarea)} title="Editar tarea" className="min-h-[44px] min-w-[44px]">
-                            <Edit className="h-4 w-4" />
+                          <Button variant="outline" size="sm" onClick={() => setEditingTarea(tarea)} title="Editar tarea" className="hidden sm:flex">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => setDeletingTarea(tarea)} title="Eliminar tarea" className="min-h-[44px] min-w-[44px]">
-                            <Trash2 className="h-4 w-4" />
+                          <Button variant="outline" size="sm" onClick={() => setDeletingTarea(tarea)} title="Eliminar tarea" className="hidden sm:flex border-destructive/20 text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar
                           </Button>
+                          
+                          {/* Botones móviles compactos si es necesario, o mantener igual */}
+                          <div className="flex sm:hidden gap-2">
+                             <Button variant="outline" size="icon" onClick={() => setEditingTarea(tarea)} className="h-9 w-9">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="icon" onClick={() => setDeletingTarea(tarea)} className="h-9 w-9 text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>

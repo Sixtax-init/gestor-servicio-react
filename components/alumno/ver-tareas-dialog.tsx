@@ -121,15 +121,19 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                                 ? "secondary"
                                 : tarea.entrega_estado === "aprobada"
                                   ? "default"
-                                  : "outline"
+                                  : tarea.entrega_estado === "revisada"
+                                    ? "secondary" 
+                                    : "outline"
                             }
-                            className="w-fit"
+                            className={tarea.entrega_estado === "revisada" ? "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200" : "w-fit"}
                           >
                             {tarea.entrega_estado === "pendiente"
                               ? "Pendiente de revisión"
                               : tarea.entrega_estado === "aprobada"
                                 ? "Aprobada"
-                                : "Sin estado"}
+                                : tarea.entrega_estado === "revisada"
+                                  ? "Revisada (Puedes enviar más)"
+                                  : "Sin estado"}
                           </Badge>
 
                           {tarea.comentario_maestro && (
@@ -153,25 +157,27 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
 
                       {/* Botones de acción */}
                       <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
-                        {!(tarea.entrega_estado && tarea.entrega_estado !== 'rechazada') && (
+                        {!(tarea.entrega_estado && !['rechazada', 'revisada'].includes(tarea.entrega_estado)) && (
                           <Button
                             size="sm"
                             onClick={() => setSelectedTarea(tarea)}
                             className="flex items-center justify-center gap-1 w-full sm:w-auto min-h-[44px]"
                           >
                             <FilePlus2 className="w-4 h-4" />
-                            {tarea.entrega_estado === 'rechazada' ? 'Reenviar' : 'Entregar'}
+                            {tarea.entrega_estado === 'rechazada' || tarea.entrega_estado === 'revisada' ? 'Enviar Entrega Final' : 'Entregar'}
                           </Button>
                         )}
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => setSelectedAvance(tarea)}
-                          disabled={!!(tarea.entrega_estado && tarea.entrega_estado !== 'rechazada')}
+                          disabled={tarea.entrega_estado === 'aprobada' || tarea.entrega_estado === 'pendiente'}
                           title={
-                            tarea.entrega_estado && tarea.entrega_estado !== 'rechazada'
-                              ? "Ya has enviado una entrega final. No puedes agregar avances."
-                              : "Ver o agregar avances parciales"
+                            tarea.entrega_estado === 'aprobada'
+                              ? "Tarea ya aprobada."
+                              : tarea.entrega_estado === 'pendiente'
+                                ? "Espera a que el maestro revise tu avance anterior."
+                                : "Ver o agregar avances parciales"
                           }
                           className="flex items-center justify-center gap-1 w-full sm:w-auto min-h-[44px]"
                         >

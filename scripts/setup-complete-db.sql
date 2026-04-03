@@ -223,9 +223,10 @@ CREATE TABLE IF NOT EXISTS entregas_avances (
     tarea_id INTEGER REFERENCES tareas(id) ON DELETE CASCADE,
     alumno_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     archivo_url TEXT, -- ruta del archivo subido (si aplica)
-    comentario TEXT,  -- comentario del alumno o maestro
+    comentario TEXT,  -- comentario del alumno
+    comentario_revision TEXT, -- retroalimentación del maestro
     horas_asignadas DECIMAL(5,2) DEFAULT 0, -- horas de esta entrega parcial (solo informativo)
-    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado')),
+    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'revisada', 'aprobada', 'rechazada')),
     es_final BOOLEAN DEFAULT false, -- true = el alumno lo marcó como entrega final
     fecha_entrega TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     revisado_por INTEGER REFERENCES usuarios(id), -- maestro que revisó

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { requireRole } from "@/lib/session.server"
+import { sendTaskReviewedEmail } from "@/lib/email"
 
 export async function PUT(
   request: NextRequest,
@@ -77,6 +78,31 @@ export async function PUT(
           WHERE id = ${inscripcion.id}
         `
       }
+    }
+
+    // 📬 5. Notificar al alumno (Background)
+    try {
+      const [notifData] = await sql`
+        SELECT 
+          u.nombre as nombre_alumno, u.email as email_alumno,
+          t.titulo as titulo_tarea
+        FROM entregas e
+        INNER JOIN usuarios u ON e.alumno_id = u.id
+        INNER JOIN tareas t ON e.tarea_id = t.id
+        WHERE e.id = ${entregaId}
+      `
+      if (notifData) {
+        sendTaskReviewedEmail({
+          nombreAlumno: notifData.nombre_alumno as string,
+          tituloTarea: notifData.titulo_tarea as string,
+          estado: estado as string,
+          comentario: comentario as string,
+          horasAsignadas: (estado === "aprobada" && entrega.asignacion_horas) ? Number(entrega.asignacion_horas) : undefined,
+          emailAlumno: notifData.email_alumno as string
+        }).catch(e => console.error("Error al enviar correo de revision final:", e))
+      }
+    } catch (err) {
+      console.error("Error al preparar notificacion de revision final:", err)
     }
 
     return NextResponse.json({

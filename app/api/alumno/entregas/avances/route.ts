@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { requireRole } from "@/lib/session.server"
+import { sendNewAdvanceNotificationEmail } from "@/lib/email"
 
 
 export async function GET(request: NextRequest) {
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
       SELECT 
         ea.id, 
         ea.comentario, 
+        ea.comentario_revision,
         ea.archivo_url, 
         ea.estado, 
         ea.es_final, 
@@ -99,6 +101,32 @@ export async function POST(request: NextRequest) {
       VALUES (${entrega.id}, ${tarea_id}, ${session.id}, ${archivo_url || null}, ${comentario})
       RETURNING *
     `
+
+    // 📬 4. Notificar al maestro del curso (Background)
+    try {
+      const [maestroData] = await sql`
+        SELECT 
+          m.nombre as nombre_maestro, m.email as email_maestro,
+          a.nombre as nombre_alumno, a.apellidos as apellidos_alumno,
+          t.titulo as titulo_tarea
+        FROM tareas t
+        INNER JOIN cursos c ON t.curso_id = c.id
+        INNER JOIN usuarios m ON c.maestro_id = m.id
+        CROSS JOIN usuarios a
+        WHERE t.id = ${tarea_id} AND a.id = ${session.id}
+      `
+      
+      if (maestroData) {
+        sendNewAdvanceNotificationEmail({
+          nombreMaestro: maestroData.nombre_maestro as string,
+          nombreAlumno: `${maestroData.nombre_alumno} ${maestroData.apellidos_alumno}`,
+          tituloTarea: maestroData.titulo_tarea as string,
+          emailMaestro: maestroData.email_maestro as string
+        }).catch(err => console.error("Error al notificar al maestro por correo:", err))
+      }
+    } catch (err) {
+      console.error("Error al preparar notificacion para el maestro:", err)
+    }
 
     return NextResponse.json(avance, { status: 201 })
   } catch (error) {
