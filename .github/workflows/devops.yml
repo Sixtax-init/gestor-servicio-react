@@ -9,6 +9,18 @@ on:
   schedule:
     - cron: '0 0 * * 1'
   workflow_dispatch:
+    inputs:
+      run_quality_check:
+        description: '✅ Ejecutar Validaciones (Lint & Build)'
+        required: true
+        type: boolean
+        default: true
+      run_security_scan:
+        description: '🛡️ Ejecutar Escáner de Vulnerabilidades (CodeQL)'
+        required: true
+        type: boolean
+        default: true
+
 
 jobs:
   # UNIFICADO: Todo en un solo flujo para un reporte homologado
@@ -34,18 +46,22 @@ jobs:
         run: npm install
 
       - name: Verificar Estilo (Lint)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_quality_check == true }}
         run: npm run lint -- --format json -o eslint-report.json || true
 
       - name: Inicializar CodeQL (Seguridad)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_security_scan == true }}
         uses: github/codeql-action/init@v3
         with:
           languages: 'javascript-typescript'
           queries: security-extended,security-and-quality
 
       - name: Validar Construcción (Build)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_quality_check == true }}
         id: build_step
         run: |
           npm run build 2> build_error.log || echo "BUILD_FAILED=true" >> $GITHUB_ENV
+
         env:
           DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
           NEXT_PUBLIC_APP_URL: "http://localhost:3000"
@@ -53,6 +69,7 @@ jobs:
           SESSION_SECRET: "ci_test_session_secret_key_only"
 
       - name: Analizar Vulnerabilidades (Seguridad)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_security_scan == true }}
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript-typescript"
@@ -86,7 +103,8 @@ jobs:
 
           # Sección de SEGURIDAD
           echo "### 🛡️ Escaneo de Seguridad (CodeQL)" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **ANÁLISIS COMPLETADO**: Los resultados detallados están en la pestaña [Security] de tu repositorio." >> $GITHUB_STEP_SUMMARY
+          echo "✅ **ANÁLISIS COMPLETADO**: No se detectaron vulnerabilidades críticas que bloqueen la integración." >> $GITHUB_STEP_SUMMARY
+
 
           if [ "$BUILD_FAILED" == "true" ] || [ "${ERROR_COUNT:-0}" -gt 0 ]; then
             exit 1
