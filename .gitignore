@@ -15,6 +15,10 @@
 
 #public
 public/*
+!public/
+public/logos/*
+!public/logos/
+!public/logos/original.png
 
 # production
 /build
