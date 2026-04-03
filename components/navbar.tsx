@@ -24,38 +24,38 @@ export function Navbar() {
       <div className="max-w-5xl mx-auto h-16 flex items-center justify-between">
 
         {/* Logo y Nombre del sistema */}
-        <Link href="/" className="flex items-center gap-4 group">
-          <div className="relative w-12 h-12 ml-1 transition-transform group-hover:scale-110 flex items-center justify-center">
-            {/* Usamos el original.png siempre.
+        <Link href="/" className="flex items-center gap-4 group"!
+        <div className="relative w-12 h-12 ml-1 transition-transform group-hover:scale-110 flex items-center justify-center">
+          {/* Usamos el original.png siempre.
                 En Dark Mode, en lugar de un círculo, le inyectamos a las líneas una "Sombra paralela completamente blanca"
                 para que el trazo exterior del pingüino brille afilado contra la noche. */}
-            <Image
-              src="/logos/original.png"
-              alt="Service Tracker Tux"
-              fill
-              className="object-contain scale-[1.7] transition-all dark:drop-shadow-[0px_0px_0px_#ffffff]"
-              priority
-            />
-          </div>
-          <span className="text-lg font-bold ml-2">Service Tracker</span>
-        </Link>
+          <Image
+            src="/logos/original.png"
+            alt="Service Tracker Tux"
+            fill
+            className="object-contain scale-[1.7] transition-all dark:drop-shadow-[0px_0px_0px_#ffffff]"
+            priority
+          />
+        </div>
+        <span className="text-lg font-bold ml-2">Service Tracker</span>
+      </Link>
 
-        {/* Botón de tema — oculto en páginas que usan tema fijo */}
-        {pathname !== "/report-form" && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-        )}
+      {/* Botón de tema — oculto en páginas que usan tema fijo */}
+      {pathname !== "/report-form" && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
+        </Button>
+      )}
 
-      </div>
-    </nav>
+    </div>
+    </nav >
   )
 }
