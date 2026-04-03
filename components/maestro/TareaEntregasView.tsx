@@ -277,7 +277,7 @@ export function TareaEntregasView({ tarea, onBack }: TareaEntregasViewProps) {
                                       {avance.estado}
                                     </Badge>
                                   </div>
-                                  <p className="text-xs mb-2 italic line-clamp-2">"{avance.comentario || "Sin comentario"}"</p>
+                                  <p className="text-xs mb-2 italic line-clamp-2">&quot;{avance.comentario || "Sin comentario"}&quot;</p>
                                   <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-muted">
                                     <span>{new Date(avance.fecha_entrega).toLocaleDateString()}</span>
                                     {avance.archivo_url && (

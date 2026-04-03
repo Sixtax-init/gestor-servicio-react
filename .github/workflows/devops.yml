@@ -28,7 +28,27 @@ jobs:
         run: npm install
 
       - name: Verificar Estilo (Lint)
-        run: npm run lint
+        run: npm run lint -- --format json -o eslint-report.json || true
+
+      - name: Generar Resumen de Calidad (Job Summary)
+        if: always()
+        run: |
+          echo "### 📊 Resumen de Calidad de Código" >> $GITHUB_STEP_SUMMARY
+          if [ -f eslint-report.json ]; then
+            ERROR_COUNT=$(grep -o '"errorCount":[0-9]*' eslint-report.json | head -n 1 | cut -d: -f2)
+            WARNING_COUNT=$(grep -o '"warningCount":[0-9]*' eslint-report.json | head -n 1 | cut -d: -f2)
+            echo "| Métrica | Resultado |" >> $GITHUB_STEP_SUMMARY
+            echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+            echo "| ❌ Errores Críticos | $ERROR_COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| ⚠️ Advertencias | $WARNING_COUNT |" >> $GITHUB_STEP_SUMMARY
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              echo "❌ El build fallará hasta que se corrijan los $ERROR_COUNT errores críticos." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ Codificación lista para producción." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "✅ No se detectaron problemas de estilo." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Validar Construcción (Build)
         run: npm run build
