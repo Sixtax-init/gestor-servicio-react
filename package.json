@@ -13,7 +13,7 @@
     "db:setup-complete": "node scripts/setup-complete-db.js",
     "db:rollback": "node scripts/rollback-db.js",
     "dev": "next dev",
-    "lint": "next lint",
+    "lint": "eslint .",
     "start": "next start"
   },
   "dependencies": {
