@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Calendar, User, FileText, Download, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { RevisarEntregaDialog } from "./RevisarEntregaDialog"
+import { RevisarAvanceDialog } from "./RevisarAvanceDialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { apiFetch } from "@/lib/api-client"
@@ -46,6 +47,8 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
   const [loading, setLoading] = useState(true)
   const [selectedEntrega, setSelectedEntrega] = useState<number | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [avanceReviewOpen, setAvanceReviewOpen] = useState(false)
+  const [selectedAvanceData, setSelectedAvanceData] = useState<{ id: number; nombre: string } | null>(null)
   const [avances, setAvances] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState("pendiente")
 
@@ -159,8 +162,8 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
-            <div className="overflow-x-auto flex-shrink-0">
-              <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-6 h-auto p-1 bg-muted">
+            <div className="overflow-x-auto flex-shrink-0 -mx-6 px-6 sm:mx-0 sm:px-0">
+              <TabsList className="inline-flex w-max min-w-full h-auto p-1 bg-muted">
                 <TabsTrigger value="pendiente" className="flex flex-col gap-1 py-2 px-3 whitespace-nowrap data-[state=active]:bg-background">
                   <span className="font-medium text-xs sm:text-sm">Pendientes</span>
                   <Badge variant={getEntregasPorEstado("pendiente").length > 0 ? "default" : "secondary"} className="text-xs">{getEntregasPorEstado("pendiente").length}</Badge>
@@ -339,9 +342,31 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
                                     )}
 
                                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                                      <span>{new Date(avance.fecha_entrega).toLocaleString()}</span>
-                                      {avance.horas_asignadas > 0 && (
-                                        <span>{avance.horas_asignadas} horas</span>
+                                      <div className="flex flex-col gap-1">
+                                        <span>{new Date(avance.fecha_entrega).toLocaleString()}</span>
+                                        {avance.horas_asignadas > 0 && (
+                                          <Badge variant="outline" className="w-fit text-[10px] h-4">+{avance.horas_asignadas} hrs</Badge>
+                                        )}
+                                      </div>
+                                      
+                                      {avance.estado === 'pendiente' && (
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className="h-7 text-[10px]"
+                                          onClick={() => {
+                                            setSelectedAvanceData({ 
+                                              id: avance.id, 
+                                              nombre: `${avance.nombre} ${avance.apellidos}` 
+                                            });
+                                            setAvanceReviewOpen(true);
+                                          }}
+                                        >
+                                          Revisar
+                                        </Button>
+                                      )}
+                                      {avance.estado === 'revisada' && (
+                                         <Badge variant="secondary" className="text-[10px] h-5">Revisada</Badge>
                                       )}
                                     </div>
                                   </CardContent>
@@ -369,6 +394,22 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
             tareaId={tarea.id}
             entregaId={selectedEntrega}
             onSuccess={fetchEntregas}
+          />
+        )}
+
+        {selectedAvanceData && (
+          <RevisarAvanceDialog
+            open={avanceReviewOpen}
+            onOpenChange={(open) => {
+              setAvanceReviewOpen(open)
+              if (!open) setSelectedAvanceData(null)
+            }}
+            avanceId={selectedAvanceData.id}
+            alumnoNombre={selectedAvanceData.nombre}
+            onSuccess={() => {
+              fetchAvances();
+              fetchEntregas();
+            }}
           />
         )}
       </DialogContent>

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, FileText, Upload, Loader2, ClipboardList, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar, Clock, FileText, Upload, Loader2, ClipboardList, ChevronLeft, ChevronRight, Info, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
 import { apiFetch } from "@/lib/api-client"
 
@@ -104,6 +105,14 @@ export function MisTareasTab() {
             </div>
           ) : (
             <div className="space-y-4">
+              <Alert className="bg-primary/5 border-primary/20">
+                <Info className="h-4 w-4 text-primary" />
+                <AlertTitle className="text-primary font-semibold">Información sobre Entregas</AlertTitle>
+                <AlertDescription className="text-sm">
+                  Al enviar un avance parcial, el botón de envío se bloqueará temporalmente. El maestro debe **revisar** tu avance para habilitar el siguiente envío. Si es tu entrega final, marca la casilla correspondiente al subir tu archivo.
+                </AlertDescription>
+              </Alert>
+
               {tareas.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((tarea) => (
                 <Card key={tarea.id}>
                   <CardContent className="pt-6">

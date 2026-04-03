@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
+import { sendCourseEnrollmentEmail } from "@/lib/email"
 
 export async function POST(
     req: Request,
@@ -45,6 +46,31 @@ export async function POST(
       INSERT INTO inscripciones (alumno_id, curso_id, fecha_inscripcion, horas_completadas, activo)
       VALUES (${alumnoId}, ${cursoId}, NOW(), 0, true)
     `
+
+        // 4. Notificar por correo
+        try {
+            const [data] = await sql`
+                SELECT 
+                    a.nombre as nombre_alumno, a.email as email_alumno,
+                    c.nombre_grupo as nombre_curso,
+                    m.nombre as nombre_maestro, m.apellidos as apellidos_maestro
+                FROM usuarios a
+                CROSS JOIN cursos c
+                INNER JOIN usuarios m ON c.maestro_id = m.id
+                WHERE a.id = ${alumnoId} AND c.id = ${cursoId}
+            `
+            if (data) {
+                await sendCourseEnrollmentEmail({
+                    nombreAlumno: data.nombre_alumno as string,
+                    nombreCurso: data.nombre_curso as string,
+                    nombreMaestro: `${data.nombre_maestro} ${data.apellidos_maestro}`,
+                    emailAlumno: data.email_alumno as string
+                })
+            }
+        } catch (emailError) {
+            console.error("Error al enviar correo de inscripcion:", emailError)
+            // No bloqueamos la respuesta exitosa por un error de correo
+        }
 
         return NextResponse.json({ success: true })
     } catch (error) {

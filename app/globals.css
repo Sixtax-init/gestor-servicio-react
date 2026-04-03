@@ -127,8 +127,16 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground overflow-x-hidden max-w-full;
+  html {
+    font-size: 85%; /* Escala ideal para dashboards densos y limpios */
+    letter-spacing: -0.01em; /* Mejora la legibilidad y estética en tamaños reducidos */
+  }
+
+  html, body {
+    @apply bg-background text-foreground;
+    overflow-x: clip;
+    max-width: 100%;
+    position: relative;
   }
 }
 

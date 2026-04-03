@@ -73,7 +73,7 @@ export function AlumnoDashboard({ user, stats, inscripciones }: AlumnoDashboardP
   }
 
   return (
-    <div className="min-h-screen bg-background animate-fade-in">
+    <div className="min-h-screen bg-background animate-fade-in max-w-full overflow-x-clip">
       {/* Welcome Banner */}
       <div className="relative overflow-hidden border-b bg-card" data-tour="welcome-banner">
         <div className="absolute inset-0 bg-background/10 backdrop-blur-[1px]" />
