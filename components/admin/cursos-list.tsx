@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { EditCursoDialog } from "../admin/edit-curso-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface Curso {
   id: number
@@ -73,11 +74,11 @@ export function CursosList({ isAdminGlobal = false }: CursosListProps) {
         setDeletingCurso(null)
       } else {
         const data = await response.json()
-        alert(data.error || "Error al eliminar curso")
+        toast.error(data.error || "Error al eliminar curso")
       }
     } catch (error) {
       console.error("[admin/cursos-list] Error deleting curso:", error)
-      alert("Error al eliminar curso")
+      toast.error("Error al eliminar curso")
     }
   }
 

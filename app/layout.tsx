@@ -30,7 +30,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
-          <Toaster richColors closeButton />
+          <Toaster position="top-center" richColors closeButton />
         </ThemeProvider>
 
         <Analytics />

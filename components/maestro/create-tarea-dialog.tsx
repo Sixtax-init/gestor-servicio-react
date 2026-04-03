@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileUpload } from "@/components/ui/file-upload"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface CreateTareaDialogProps {
   open: boolean
@@ -33,6 +35,7 @@ interface Curso {
 }
 
 export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: CreateTareaDialogProps) {
+  const router = useRouter()
   const [cursos, setCursos] = useState<Curso[]>([])
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -101,6 +104,8 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: Cr
 
       if (response.ok) {
         onSuccess()
+        toast.success("Tarea creada con éxito 🚀")
+        router.refresh()
         setFormData({
           curso_id: cursoId ? cursoId.toString() : "",
           titulo: "",
@@ -112,10 +117,11 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: Cr
         setArchivoInstrucciones(null)
       } else {
         const errorData = await response.json()
-        console.error("Error al crear tarea:", errorData.error)
+        toast.error(errorData.error || "Error al crear tarea")
       }
     } catch (error) {
       console.error("Error al crear tarea:", error)
+      toast.error("Error de conexión al servidor")
     } finally {
       setLoading(false)
     }

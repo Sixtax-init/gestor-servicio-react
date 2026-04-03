@@ -13,6 +13,8 @@ import { BarChart3, UserPlus, Search, Loader2, UserMinus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api-client"
+import { useRouter } from "next/navigation"
+import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 
 interface Curso {
   id: number
@@ -46,6 +48,7 @@ interface AlumnoBusqueda {
 }
 
 export function MisAlumnosTab() {
+  const router = useRouter()
   const [cursos, setCursos] = useState<Curso[]>([])
   const [alumnosPorCurso, setAlumnosPorCurso] = useState<Record<string, Alumno[]>>({})
   const [alumnosGlobal, setAlumnosGlobal] = useState<(Alumno & { cursoId: number; nombre_curso: string })[]>([])
@@ -61,6 +64,8 @@ export function MisAlumnosTab() {
   const [isSearching, setIsSearching] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
+  const [deletingStudentId, setDeletingStudentId] = useState<number | null>(null)
+  const [deletingCourseId, setDeletingCourseId] = useState<number | null>(null)
 
   // Función para buscar alumnos
   const handleSearch = async (query: string) => {
@@ -103,8 +108,9 @@ export function MisAlumnosTab() {
       setSearchQuery("")
       setSearchResults([])
 
-      // Recargar datos
-      window.location.reload()
+      // Recargar datos suavemente sin refrescar página completa
+      loadData()
+      router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al agregar alumno")
     } finally {
@@ -130,14 +136,15 @@ export function MisAlumnosTab() {
       }
 
       toast.success("Alumno eliminado correctamente")
-      setAlumnosPorCurso(prev => ({
-        ...prev,
-        [cursoId]: prev[cursoId]?.filter(a => a.id !== alumnoId) || []
-      }))
+      // Actualizamos todo el estado para mantener consistencia global
+      loadData()
+      router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al eliminar alumno")
     } finally {
       setIsRemoving(false)
+      setDeletingStudentId(null)
+      setDeletingCourseId(null)
     }
   }
 
@@ -148,39 +155,40 @@ export function MisAlumnosTab() {
     setIsAddStudentOpen(true)
   }
 
-  // 🟦 1. Cargar cursos y alumnos una sola vez
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const resCursos = await apiFetch("/api/maestro/cursos")
-        const dataCursos = await resCursos.json()
+  // 🟦 1. Función para cargar cursos y alumnos (Reutilizable)
+  const loadData = async () => {
+    try {
+      const resCursos = await apiFetch("/api/maestro/cursos")
+      const dataCursos = await resCursos.json()
 
-        setCursos(dataCursos.cursos || [])
+      setCursos(dataCursos.cursos || [])
 
-        // ---- Cargar alumnos de todos los cursos ----
-        const globalList: (Alumno & { cursoId: number; nombre_curso: string })[] = []
-        const alumnosPorCursoTemp: Record<string, Alumno[]> = {}
+      // ---- Cargar alumnos de todos los cursos ----
+      const globalList: (Alumno & { cursoId: number; nombre_curso: string })[] = []
+      const alumnosPorCursoTemp: Record<string, Alumno[]> = {}
 
-        for (const curso of dataCursos.cursos || []) {
-          const resA = await apiFetch(`/api/maestro/cursos/${curso.id}/alumnos`)
-          const dataA = await resA.json()
+      for (const curso of dataCursos.cursos || []) {
+        const resA = await apiFetch(`/api/maestro/cursos/${curso.id}/alumnos`)
+        const dataA = await resA.json()
 
-          alumnosPorCursoTemp[curso.id] = dataA.alumnos || []
+        alumnosPorCursoTemp[curso.id] = dataA.alumnos || []
 
-          dataA.alumnos?.forEach((al: Alumno) =>
-            globalList.push({ ...al, cursoId: curso.id, nombre_curso: curso.nombre_grupo })
-          )
-        }
-
-        setAlumnosPorCurso(alumnosPorCursoTemp)
-        setAlumnosGlobal(globalList)
-      } catch (e) {
-        console.error("Error al cargar datos:", e)
-      } finally {
-        setLoading(false)
+        dataA.alumnos?.forEach((al: Alumno) =>
+          globalList.push({ ...al, cursoId: curso.id, nombre_curso: curso.nombre_grupo })
+        )
       }
-    }
 
+      setAlumnosPorCurso(alumnosPorCursoTemp)
+      setAlumnosGlobal(globalList)
+    } catch (e) {
+      console.error("Error al cargar datos:", e)
+      toast.error("Error al actualizar la lista de alumnos")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     loadData()
   }, [])
 
@@ -230,7 +238,8 @@ export function MisAlumnosTab() {
 
 
   return (
-    <Card className="w-full">
+    <>
+      <Card className="w-full">
       <CardHeader>
         <CardTitle className="text-xl font-bold">Alumnos por Curso</CardTitle>
       </CardHeader>
@@ -392,9 +401,8 @@ export function MisAlumnosTab() {
                               size="sm"
                               variant="ghost"
                               onClick={() => {
-                                if (confirm(`¿Estás seguro de eliminar a ${al.nombre} de este curso?`)) {
-                                  handleRemoveStudent(al.id, curso.id)
-                                }
+                                setDeletingStudentId(al.id)
+                                setDeletingCourseId(curso.id)
                               }}
                               className="flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                               title="Eliminar del curso"
@@ -430,69 +438,77 @@ export function MisAlumnosTab() {
               Busca un alumno por nombre o matrícula para agregarlo a este curso.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre o matrícula..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            <div className="max-h-[300px] overflow-y-auto space-y-2">
-              {isSearching ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : searchResults.length > 0 ? (
-                searchResults.map((alumno) => {
-                  const isEnrolled = selectedCursoId && alumnosPorCurso[selectedCursoId]?.some((a) => a.id === alumno.id)
-
-                  return (
-                    <div key={alumno.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
-                      <div>
-                        <p className="font-medium text-sm">{alumno.nombre} {alumno.apellidos}</p>
-                        <p className="text-xs text-muted-foreground">{alumno.matricula}</p>
-                        {isEnrolled && <Badge variant="secondary" className="mt-1 text-[10px]">Ya inscrito</Badge>}
-                      </div>
-
-                      {isEnrolled ? (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleRemoveStudent(alumno.id)}
-                          disabled={isRemoving}
-                        >
-                          {isRemoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddStudent(alumno.id)}
-                          disabled={isAdding}
-                        >
-                          {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Agregar"}
-                        </Button>
-                      )}
-                    </div>
-                  )
-                })
-              ) : searchQuery.length >= 3 ? (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  No se encontraron alumnos.
-                </p>
-              ) : (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  Escribe al menos 3 caracteres para buscar.
-                </p>
-              )}
-            </div>
+        <div className="space-y-4 py-4">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre o matrícula..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        </DialogContent>
-      </Dialog>
-    </Card>
-  )
+
+          <div className="max-h-[300px] overflow-y-auto space-y-2">
+            {isSearching ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : searchResults.length > 0 ? (
+              searchResults.map((alumno) => {
+                const isEnrolled = selectedCursoId && alumnosPorCurso[selectedCursoId]?.some((a) => a.id === alumno.id)
+
+                return (
+                  <div key={alumno.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                    <div>
+                      <p className="font-medium text-sm">{alumno.nombre} {alumno.apellidos}</p>
+                      <p className="text-xs text-muted-foreground">{alumno.matricula}</p>
+                      {isEnrolled && <Badge variant="secondary" className="mt-1 text-[10px]">Ya inscrito</Badge>}
+                    </div>
+
+                    {isEnrolled ? (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleRemoveStudent(alumno.id)}
+                        disabled={isRemoving}
+                      >
+                        {isRemoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddStudent(alumno.id)}
+                        disabled={isAdding}
+                      >
+                        {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Agregar"}
+                      </Button>
+                    )}
+                  </div>
+                )
+              })
+            ) : searchQuery.length >= 3 ? (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                No se encontraron alumnos.
+              </p>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                Escribe al menos 3 caracteres para buscar.
+              </p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    
+    <DeleteConfirmDialog
+      open={!!deletingStudentId}
+      onOpenChange={(open) => !open && setDeletingStudentId(null)}
+      onConfirm={() => deletingStudentId && handleRemoveStudent(deletingStudentId, deletingCourseId || undefined)}
+      title="Eliminar Alumno del Curso"
+      description="¿Estás seguro de que deseas eliminar a este alumno del curso? Esta acción no se puede deshacer."
+    />
+  </Card>
+</>
+)
 }

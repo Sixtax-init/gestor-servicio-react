@@ -41,23 +41,11 @@ export const maestroTour: Tour = {
             switchToTab: "cursos",
         },
         {
-            target: '[data-tour="cursos-content"]',
-            title: "Gestión de Cursos",
-            content: "En esta sección verás la lista de tus cursos activos. Puedes crear nuevos cursos, editarlos o eliminarlos.",
-            placement: "top",
-        },
-        {
             target: '[data-tour="tab-tareas"]',
             title: "Pestaña: Tareas",
             content: "En esta sección puedes crear nuevas tareas, ver las entregas de los alumnos y calificarlas.",
             placement: "bottom",
             switchToTab: "tareas",
-        },
-        {
-            target: '[data-tour="tareas-content"]',
-            title: "Gestión de Tareas",
-            content: "Aquí verás todas tus tareas organizadas por curso. Puedes crear nuevas tareas, ver entregas y revisar avances de los alumnos.",
-            placement: "top",
         },
         {
             target: '[data-tour="tab-alumnos"]',

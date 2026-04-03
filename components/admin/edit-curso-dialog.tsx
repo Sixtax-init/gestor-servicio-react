@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { FileUpload } from "@/components/ui/file-upload"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface Curso {
   id: number
@@ -121,11 +122,11 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
         const data = await response.json()
         setUploadedFile({ url: data.url, name: file.name })
       } else {
-        alert("Error al subir archivo")
+        toast.error("Error al subir archivo")
       }
     } catch (error) {
       console.error("[admin/edit-curso] Error uploading file:", error)
-      alert("Error al subir archivo")
+      toast.error("Error al subir archivo")
     }
   }
 
@@ -151,11 +152,11 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess, isAdminG
         onOpenChange(false)
       } else {
         const data = await response.json()
-        alert(data.error || "Error al actualizar curso")
+        toast.error(data.error || "Error al actualizar curso")
       }
     } catch (error) {
       console.error("[admin/edit-curso] Error updating curso:", error)
-      alert("Error al actualizar curso")
+      toast.error("Error al actualizar curso")
     } finally {
       setLoading(false)
     }

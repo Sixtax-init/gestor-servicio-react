@@ -8,18 +8,22 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, BookOpen, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api-client"
+import { useRouter } from "next/navigation"
 import { CreateCursoDialog } from "./create-curso-dialog"
 import { CreateTareaDialog } from "./create-tarea-dialog"
+import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 
 interface MisCursosTabProps {
   cursos: Curso[]
 }
 
 export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
+  const router = useRouter()
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [cursos, setCursos] = useState(initialCursos)
   const [showTareaDialog, setShowTareaDialog] = useState(false)
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null)
+  const [deletingCursoId, setDeletingCursoId] = useState<number | null>(null)
 
   const handleCursoCreated = (newCurso: Curso) => {
     setCursos([newCurso, ...cursos])
@@ -31,10 +35,6 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
   }
 
   const handleDeleteCurso = async (cursoId: number) => {
-    if (!confirm("⚠️ ADVERTENCIA: ¿Estás seguro de eliminar este curso PERMANENTEMENTE?\n\nEsta acción borrará:\n- Todas las tareas y entregas.\n- Todas las inscripciones de alumnos.\n- LAS HORAS ACUMULADAS por los alumnos en este curso.\n\nEsta acción NO se puede deshacer.")) {
-      return
-    }
-
     try {
       const res = await apiFetch(`/api/maestro/cursos/${cursoId}`, {
         method: "DELETE",
@@ -46,6 +46,7 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
 
       setCursos(cursos.filter(c => c.id !== cursoId))
       toast.success("Curso eliminado correctamente")
+      router.refresh()
     } catch (error) {
       toast.error("Error al eliminar el curso")
       console.error(error)
@@ -96,7 +97,7 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDeleteCurso(curso.id)}
+                          onClick={() => setDeletingCursoId(curso.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -118,6 +119,14 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
 
       <CreateCursoDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={handleCursoCreated} />
       <CreateTareaDialog open={showTareaDialog} onOpenChange={setShowTareaDialog} onSuccess={handleTareaCreated} cursoId={selectedCursoId} />
+
+      <DeleteConfirmDialog
+        open={!!deletingCursoId}
+        onOpenChange={(open) => !open && setDeletingCursoId(null)}
+        onConfirm={() => deletingCursoId && handleDeleteCurso(deletingCursoId)}
+        title="Eliminar Curso PERMANENTEMENTE"
+        description="⚠️ ADVERTENCIA: ¿Estás seguro de eliminar este curso? Esta acción borrará todas las tareas, entregas e inscripciones. ¡LAS HORAS ACUMULADAS por los alumnos se perderán y no se puede deshacer!"
+      />
     </>
   )
 }

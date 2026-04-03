@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -74,11 +75,11 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
         setDeletingUsuario(null)
       } else {
         const data = await response.json()
-        alert(data.error || "Error al eliminar usuario")
+        toast.error(data.error || "Error al eliminar usuario")
       }
     } catch (error) {
       console.error("[admin/usuarios-list] Error deleting usuario:", error)
-      alert("Error al eliminar usuario")
+      toast.error("Error al eliminar usuario")
     }
   }
 

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
 import { apiFetch } from "@/lib/api-client"
+import { toast } from "sonner"
+import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 
 interface EntregarAvanceDialogProps {
     open: boolean
@@ -31,6 +33,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
     const [subiendo, setSubiendo] = useState(false)
     const [avances, setAvances] = useState<Avance[]>([])
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
+    const [showConfirmFinal, setShowConfirmFinal] = useState<{ id: number; open: boolean }>({ id: 0, open: false })
 
 
     const fetchAvances = async () => {
@@ -101,15 +104,15 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
     }
 
     const marcarComoFinal = async (avanceId: number) => {
-        if (!confirm("¿Deseas marcar este avance como entrega final?")) return
         const res = await apiFetch("/api/alumno/entregas/avances", {
             method: "PATCH",
             body: JSON.stringify({ avance_id: avanceId }),
         })
         if (res.ok) {
             await fetchAvances()
-            alert("✅ Avance marcado como entrega final")
+            toast.success("Avance marcado como entrega final")
         }
+        setShowConfirmFinal({ id: 0, open: false })
     }
 
     return (
@@ -170,7 +173,7 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
                                 {a.es_final ? "Final" : a.estado}
                             </Badge>
                             {!a.es_final && (!a.estado_entrega_principal || a.estado_entrega_principal !== 'aprobada') && (
-                                <Button size="sm" className="ml-2" onClick={() => marcarComoFinal(a.id)}>
+                                <Button size="sm" className="ml-2" onClick={() => setShowConfirmFinal({ id: a.id, open: true })}>
                                     Marcar como final
                                 </Button>
                             )}
@@ -178,6 +181,14 @@ export function EntregarAvanceDialog({ open, onOpenChange, tareaId }: EntregarAv
                     ))}
                 </div>
             </DialogContent>
+            
+            <DeleteConfirmDialog
+                open={showConfirmFinal.open}
+                onOpenChange={(open) => setShowConfirmFinal(prev => ({ ...prev, open }))}
+                onConfirm={() => marcarComoFinal(showConfirmFinal.id)}
+                title="Marcar como Entrega Final"
+                description="¿Deseas marcar este avance como tu entrega final? Una vez marcado, ya no podrás subir más avances para esta tarea."
+            />
         </Dialog>
     )
 }
