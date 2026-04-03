@@ -84,22 +84,28 @@ function buildBaseHtml(title: string, bodyContent: string, ctaContent?: string):
 
 function buildWelcomeHtml(data: WelcomeEmailData): string {
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/login`
+
+  const safeNombre = escapeHtml(data.nombre)
+  const safeApellidos = escapeHtml(data.apellidos)
+  const safeMatricula = escapeHtml(data.matricula)
+  const safePassword = escapeHtml(data.password)
+  const safeTipoUsuarioLabel = escapeHtml(getTipoLabel(data.tipo_usuario))
   
   return buildBaseHtml(
     "Bienvenido al Sistema",
     `
-    <p class="greeting">Hola, ${data.nombre} ${data.apellidos} 👋</p>
-    <div class="badge">${getTipoLabel(data.tipo_usuario)}</div>
+    <p class="greeting">Hola, ${safeNombre} ${safeApellidos} 👋</p>
+    <div class="badge">${safeTipoUsuarioLabel}</div>
     <p class="content-text">Se ha creado exitosamente su cuenta en la plataforma de Gestión de Servicio. A continuación se presentan sus credenciales de acceso institucional.</p>
     
     <div class="info-card">
       <div style="margin-bottom: 20px;">
         <span class="info-label">Matrícula / Usuario</span>
-        <span class="info-value" style="font-family: monospace;">${data.matricula}</span>
+        <span class="info-value" style="font-family: monospace;">${safeMatricula}</span>
       </div>
       <div>
         <span class="info-label">Contraseña Temporal</span>
-        <span class="info-value" style="font-family: monospace;">${data.password}</span>
+        <span class="info-value" style="font-family: monospace;">${safePassword}</span>
       </div>
     </div>
 
@@ -295,10 +301,11 @@ export async function sendPasswordResetEmail(data: PasswordResetEmailData): Prom
 
 export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
+  const safeMatriculaForSubject = escapeHtml(data.matricula)
   await transporter.sendMail({
     from: `"Gestión Académica" <${from}>`,
     to: data.email,
-    subject: `Acceso al Sistema — ${data.matricula}`,
+    subject: `Acceso al Sistema — ${safeMatriculaForSubject}`,
     html: buildWelcomeHtml(data),
   })
 }
