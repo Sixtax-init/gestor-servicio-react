@@ -30,32 +30,54 @@ jobs:
       - name: Verificar Estilo (Lint)
         run: npm run lint -- --format json -o eslint-report.json || true
 
-      - name: Generar Resumen de Calidad (Job Summary)
+      - name: Validar Construcción (Build)
+        id: build_step
+        run: |
+          npm run build 2> build_error.log || echo "BUILD_FAILED=true" >> $GITHUB_ENV
+        env:
+          DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+          JWT_SECRET: "ci_test_secret_key_only"
+          SESSION_SECRET: "ci_test_session_secret_key_only"
+
+      - name: Generar Resumen Ejecutivo (Job Summary)
         if: always()
         run: |
-          echo "### 📊 Resumen de Calidad de Código" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Reporte Ejecutivo de Calidad y Construcción" >> $GITHUB_STEP_SUMMARY
+          
+          # Sección de LINTING (Estilo)
+          echo "### 🎨 Estilo y Estándares (Lint)" >> $GITHUB_STEP_SUMMARY
           if [ -f eslint-report.json ]; then
             ERROR_COUNT=$(grep -o '"errorCount":[0-9]*' eslint-report.json | head -n 1 | cut -d: -f2)
             WARNING_COUNT=$(grep -o '"warningCount":[0-9]*' eslint-report.json | head -n 1 | cut -d: -f2)
             echo "| Métrica | Resultado |" >> $GITHUB_STEP_SUMMARY
             echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-            echo "| ❌ Errores Críticos | $ERROR_COUNT |" >> $GITHUB_STEP_SUMMARY
-            echo "| ⚠️ Advertencias | $WARNING_COUNT |" >> $GITHUB_STEP_SUMMARY
-            if [ "$ERROR_COUNT" -gt 0 ]; then
-              echo "❌ El build fallará hasta que se corrijan los $ERROR_COUNT errores críticos." >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ Codificación lista para producción." >> $GITHUB_STEP_SUMMARY
-            fi
+            echo "| ❌ Errores de Lint | ${ERROR_COUNT:-0} |" >> $GITHUB_STEP_SUMMARY
+            echo "| ⚠️ Avisos de Lint | ${WARNING_COUNT:-0} |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ No se detectaron problemas de estilo." >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ No se generó reporte de estilo." >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Validar Construcción (Build)
-        run: npm run build
-        env:
-          DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
-          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
-          JWT_SECRET: "ci_test_secret_key_only"
+          # Sección de BUILD (Compilación)
+          echo "### 🏗️ Estado de la Construcción" >> $GITHUB_STEP_SUMMARY
+          if [ "$BUILD_FAILED" == "true" ]; then
+            echo "❌ **LA CONSTRUCCIÓN FALLÓ**: Se detectaron problemas críticos en el código o configuración." >> $GITHUB_STEP_SUMMARY
+            echo "#### Fragmento del error detectado:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
+            if [ -f build_error.log ]; then
+              tail -n 15 build_error.log >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Error desconocido durante la ejecución del build." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **CONSTRUCCIÓN EXITOSA**: El proyecto está listo para su despliegue." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Asegurar que el Job falle si hubo errores en cualquiera de las fases
+          if [ "$BUILD_FAILED" == "true" ] || [ "${ERROR_COUNT:-0}" -gt 0 ]; then
+            exit 1
+          fi
 
   # TRABAJO 2: Escaneo de Seguridad con CodeQL
   security-audit:
