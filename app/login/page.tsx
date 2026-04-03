@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTheme } from "next-themes"
 import { apiFetch } from "@/lib/api-client"
 
-import { Eye, EyeOff, Info, Monitor, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Monitor, Loader2 } from "lucide-react"
 import { AlertTitle } from "@/components/ui/alert"
 import { toast } from "sonner"
 import {

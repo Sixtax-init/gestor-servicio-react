@@ -147,6 +147,17 @@ interface CourseEnrollmentData {
   emailAlumno: string
 }
 
+// Función auxiliar para escapar caracteres especiales en HTML para prevenir XSS
+function escapeHtml(unsafe: string): string {
+  if (!unsafe) return "";
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function buildCourseEnrollmentHtml(data: CourseEnrollmentData): string {
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/login`
   
@@ -154,11 +165,11 @@ function buildCourseEnrollmentHtml(data: CourseEnrollmentData): string {
     "Nueva Inscripción Académica",
     `
     <p class="greeting">Confirmación de Inscripción 👋</p>
-    <p class="content-text">Estimado(a) ${data.nombreAlumno}, le informamos que ha sido inscrito formalmente en el siguiente curso/taller bajo la supervisión del docente <strong>${data.nombreMaestro}</strong>.</p>
+    <p class="content-text">Estimado(a) ${escapeHtml(data.nombreAlumno)}, le informamos que ha sido inscrito formalmente en el siguiente curso/taller bajo la supervisión del docente <strong>${escapeHtml(data.nombreMaestro)}</strong>.</p>
     
     <div class="info-card">
       <span class="info-label">Curso Asignado</span>
-      <span class="info-value">${data.nombreCurso}</span>
+      <span class="info-value">${escapeHtml(data.nombreCurso)}</span>
     </div>
 
     <p class="content-text">A partir de este momento puede visualizar el programa, materiales y calendario de entregas desde su panel de control.</p>
@@ -187,20 +198,20 @@ function buildNewTaskHtml(data: NewTaskData): string {
     `
     <div class="badge" style="background: ${pColor}22; color: ${pColor}; border-color: ${pColor}44;">PRIORIDAD ${data.prioridad.toUpperCase()}</div>
     <p class="greeting">Nuevo Trabajo Asignado</p>
-    <p class="content-text">Su docente ha publicado una nueva actividad académica en el curso <strong>${data.cursoNombre}</strong>. Por favor, revise las instrucciones y los plazos de entrega.</p>
+    <p class="content-text">Su docente ha publicado una nueva actividad académica en el curso <strong>${escapeHtml(data.cursoNombre)}</strong>. Por favor, revise las instrucciones y los plazos de entrega.</p>
     
     <div class="info-card">
       <span class="info-label">Título de la Actividad</span>
-      <span class="info-value">${data.titulo}</span>
+      <span class="info-value">${escapeHtml(data.titulo)}</span>
       
       <div style="margin-top: 16px; padding: 12px; background: #0f172a88; border-radius: 8px; font-size: 13px; color: #94a3b8; border-left: 3px solid ${pColor};">
-        ${data.descripcion.length > 150 ? data.descripcion.substring(0, 150) + '...' : data.descripcion}
+        ${escapeHtml(data.descripcion.length > 150 ? data.descripcion.substring(0, 150) + '...' : data.descripcion)}
       </div>
     </div>
 
     ${data.deadline ? `
     <div style="display: flex; align-items: center; gap: 8px; color: #fca5a5; font-size: 14px; font-weight: 600;">
-       <span>📅 Fecha Límite:</span> <span>${data.deadline}</span>
+       <span>📅 Fecha Límite:</span> <span>${escapeHtml(data.deadline)}</span>
     </div>` : ""}
     `,
     `<a class="btn" href="${loginUrl}">Ver Instrucciones Completas</a>`
@@ -224,15 +235,15 @@ function buildTaskReviewedHtml(data: ReviewData): string {
     "Calificación de Actividad",
     `
     <p class="greeting">Resultado de su Revisión</p>
-    <p class="content-text">Su docente ha evaluado el avance enviado para la actividad <strong>${data.tituloTarea}</strong>. El resultado de la revisión se detalla a continuación:</p>
+    <p class="content-text">Su docente ha evaluado el avance enviado para la actividad <strong>${escapeHtml(data.tituloTarea)}</strong>. El resultado de la revisión se detalla a continuación:</p>
     
     <div class="info-card" style="border-color: ${statusColor}44;">
       <span class="info-label">Estado de la Entrega</span>
-      <span class="info-value" style="color: ${statusColor}; text-transform: uppercase;">${data.estado}</span>
+      <span class="info-value" style="color: ${statusColor}; text-transform: uppercase;">${escapeHtml(data.estado)}</span>
       
       ${data.comentario ? `
       <div style="margin-top: 16px; padding: 16px; background: #ffffff05; border-radius: 12px; font-size: 14px; color: #94a3b8; border: 1px solid #334155;">
-        "${data.comentario}"
+        "${escapeHtml(data.comentario)}"
       </div>` : ""}
     </div>
 
@@ -259,11 +270,11 @@ function buildNewAdvanceHtml(data: AdvanceNotificationData): string {
     "Notificación de Entrega",
     `
     <p class="greeting">Estimado(a) Docente,</p>
-    <p class="content-text">El estudiante <strong>${data.nombreAlumno}</strong> ha registrado una nueva entrega o avance significativo en la siguiente actividad:</p>
+    <p class="content-text">El estudiante <strong>${escapeHtml(data.nombreAlumno)}</strong> ha registrado una nueva entrega o avance significativo en la siguiente actividad:</p>
     
     <div class="info-card">
       <span class="info-label">Tarea / Proyecto</span>
-      <span class="info-value" style="color: #3b82f6;">${data.tituloTarea}</span>
+      <span class="info-value" style="color: #3b82f6;">${escapeHtml(data.tituloTarea)}</span>
     </div>
 
     <p class="content-text">Favor de ingresar al sistema para realizar la evaluación correspondiente y acreditar las horas de servicio si procede.</p>

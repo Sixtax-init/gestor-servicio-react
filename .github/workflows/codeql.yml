@@ -9,6 +9,7 @@ on:
   schedule:
     # Ejecución semanal (Lunes 00:00 UTC)
     - cron: '0 0 * * 1'
+  workflow_dispatch: # Permite ejecución manual desde la pestaña Actions
 
 jobs:
   analyze:
