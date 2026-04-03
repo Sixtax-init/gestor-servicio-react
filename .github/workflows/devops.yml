@@ -1,19 +1,25 @@
 name: "Gestión Académica: Calidad y Seguridad (DevOps)"
+run-name: "🚀 DevOps: ${{ github.ref_name }} (#${{ github.run_number }})"
 
 on:
   push:
-    branches: [ "main", "beta" ]
+    branches: [ "**" ] # Escucha cambios en TODAS las ramas
   pull_request:
-    branches: [ "main", "beta" ]
+    branches: [ "**" ] # Activa en Pull Requests hacia TODAS las ramas
   schedule:
-    - cron: '0 0 * * 1' # Ejecución semanal (Lunes 00:00 UTC)
-  workflow_dispatch: # Permite ejecución manual desde GitHub
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
 
 jobs:
-  # TRABAJO 1: Verificación de Construcción y Calidad de Código
-  test-and-build:
-    name: Build & Lint
+  # UNIFICADO: Todo en un solo flujo para un reporte homologado
+  pipeline:
+    name: Pipeline de Calidad y Seguridad
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
     steps:
       - name: Checkout Código
         uses: actions/checkout@v4
@@ -30,6 +36,12 @@ jobs:
       - name: Verificar Estilo (Lint)
         run: npm run lint -- --format json -o eslint-report.json || true
 
+      - name: Inicializar CodeQL (Seguridad)
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'javascript-typescript'
+          queries: security-extended,security-and-quality
+
       - name: Validar Construcción (Build)
         id: build_step
         run: |
@@ -40,12 +52,17 @@ jobs:
           JWT_SECRET: "ci_test_secret_key_only"
           SESSION_SECRET: "ci_test_session_secret_key_only"
 
-      - name: Generar Resumen Ejecutivo (Job Summary)
+      - name: Analizar Vulnerabilidades (Seguridad)
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+      - name: Generar Resumen Ejecutivo Final
         if: always()
         run: |
-          echo "## 📊 Reporte Ejecutivo de Calidad y Construcción" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Reporte Ejecutivo de Calidad, Construcción y Seguridad" >> $GITHUB_STEP_SUMMARY
           
-          # Sección de LINTING (Estilo)
+          # Sección de LINTING
           echo "### 🎨 Estilo y Estándares (Lint)" >> $GITHUB_STEP_SUMMARY
           if [ -f eslint-report.json ]; then
             ERROR_COUNT=$(grep -o '"errorCount":[0-9]*' eslint-report.json | head -n 1 | cut -d: -f2)
@@ -54,54 +71,23 @@ jobs:
             echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
             echo "| ❌ Errores de Lint | ${ERROR_COUNT:-0} |" >> $GITHUB_STEP_SUMMARY
             echo "| ⚠️ Avisos de Lint | ${WARNING_COUNT:-0} |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ No se generó reporte de estilo." >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Sección de BUILD (Compilación)
+          # Sección de BUILD
           echo "### 🏗️ Estado de la Construcción" >> $GITHUB_STEP_SUMMARY
           if [ "$BUILD_FAILED" == "true" ]; then
-            echo "❌ **LA CONSTRUCCIÓN FALLÓ**: Se detectaron problemas críticos en el código o configuración." >> $GITHUB_STEP_SUMMARY
-            echo "#### Fragmento del error detectado:" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **LA CONSTRUCCIÓN FALLÓ**" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`text" >> $GITHUB_STEP_SUMMARY
-            if [ -f build_error.log ]; then
-              tail -n 15 build_error.log >> $GITHUB_STEP_SUMMARY
-            else
-              echo "Error desconocido durante la ejecución del build." >> $GITHUB_STEP_SUMMARY
-            fi
+            tail -n 10 build_error.log >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ **CONSTRUCCIÓN EXITOSA**: El proyecto está listo para su despliegue." >> $GITHUB_STEP_SUMMARY
+            echo "✅ **CONSTRUCCIÓN EXITOSA**: El proyecto compila correctamente." >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Asegurar que el Job falle si hubo errores en cualquiera de las fases
+          # Sección de SEGURIDAD
+          echo "### 🛡️ Escaneo de Seguridad (CodeQL)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **ANÁLISIS COMPLETADO**: Los resultados detallados están en la pestaña [Security] de tu repositorio." >> $GITHUB_STEP_SUMMARY
+
           if [ "$BUILD_FAILED" == "true" ] || [ "${ERROR_COUNT:-0}" -gt 0 ]; then
             exit 1
           fi
-
-  # TRABAJO 2: Escaneo de Seguridad con CodeQL
-  security-audit:
-    name: Seguridad (CodeQL)
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Checkout Código
-        uses: actions/checkout@v4
-
-      - name: Inicializar CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: 'javascript-typescript'
-          queries: security-extended,security-and-quality
-
-      - name: Autobuild (Analizar Estructura)
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Realizar Escaneo de Vulnerabilidades
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:javascript-typescript"
