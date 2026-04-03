@@ -7,10 +7,7 @@ import { Calendar, User, FileText, Download, Loader2, ChevronLeft } from "lucide
 import { Button } from "@/components/ui/button"
 import { RevisarEntregaDialog } from "./RevisarEntregaDialog"
 import { RevisarAvanceDialog } from "./RevisarAvanceDialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { apiFetch } from "@/lib/api-client"
-import { toast } from "sonner"
 
 interface Tarea {
   id: number

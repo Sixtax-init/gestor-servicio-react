@@ -1,0 +1,65 @@
+name: "Gestión Académica: Calidad y Seguridad (DevOps)"
+
+on:
+  push:
+    branches: [ "main", "beta" ]
+  pull_request:
+    branches: [ "main", "beta" ]
+  schedule:
+    - cron: '0 0 * * 1' # Ejecución semanal (Lunes 00:00 UTC)
+  workflow_dispatch: # Permite ejecución manual desde GitHub
+
+jobs:
+  # TRABAJO 1: Verificación de Construcción y Calidad de Código
+  test-and-build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js (v20)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar Dependencias
+        run: npm install
+
+      - name: Verificar Estilo (Lint)
+        run: npm run lint
+
+      - name: Validar Construcción (Build)
+        run: npm run build
+        env:
+          DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+          JWT_SECRET: "ci_test_secret_key_only"
+
+  # TRABAJO 2: Escaneo de Seguridad con CodeQL
+  security-audit:
+    name: Seguridad (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'javascript-typescript'
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild (Analizar Estructura)
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Realizar Escaneo de Vulnerabilidades
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
