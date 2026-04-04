@@ -38,7 +38,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Detectar Secrets (TruffleHog)
+      - name: Detectar Secrets - Diff (Push / PR)
         id: trufflehog
         if: github.event_name == 'push' || github.event_name == 'pull_request'
         # trufflesecurity/trufflehog@v3.94.2
@@ -47,6 +47,14 @@ jobs:
           path: ./
           base: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || github.event.repository.default_branch }}
           head: HEAD
+          extra_args: --json
+
+      - name: Detectar Secrets - Repo Completo (Semanal)
+        if: github.event_name == 'schedule'
+        # trufflesecurity/trufflehog@v3.94.2
+        uses: trufflesecurity/trufflehog@6bd2d14f7a4bc1e569fa3550efa7ec632a4fa67b
+        with:
+          path: ./
           extra_args: --json
 
       - name: Configurar Node.js (v20)
@@ -97,10 +105,14 @@ jobs:
           category: "/language:javascript-typescript"
 
       # ─── RESUMEN Y ARTEFACTO AL FINAL ──────────────────────────────────────
-      # IMPORTANTE: reporte-pipeline.txt se genera aquí, el upload va DESPUÉS.
+      # reporte-pipeline.txt se genera aquí — el upload va DESPUÉS.
 
       - name: Generar Resumen Ejecutivo Final
         if: always()
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          TRUFFLEHOG_OUTCOME: ${{ steps.trufflehog.outcome }}
         run: |
           echo "## 📋 Reporte Ejecutivo de Calidad, Construcción y Seguridad" >> $GITHUB_STEP_SUMMARY
 
@@ -156,78 +168,8 @@ jobs:
           echo "### 🛡️ Escaneo de Seguridad (CodeQL)" >> $GITHUB_STEP_SUMMARY
           echo "✅ **ANÁLISIS COMPLETADO**: Revisa _Security › Code scanning_ en GitHub para ver resultados detallados." >> $GITHUB_STEP_SUMMARY
 
-          # ── Generar reporte-pipeline.txt ────────────────────────────────────
-          REPORT="reporte-pipeline.txt"
-          {
-            echo "============================================"
-            echo " REPORTE DE CALIDAD Y SEGURIDAD"
-            echo " Rama   : ${{ github.ref_name }}"
-            echo " Commit : ${{ github.sha }}"
-            echo " Fecha  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            echo "============================================"
-
-            echo ""
-            echo "[ SECRETS (TruffleHog) ]"
-            if [ "${{ steps.trufflehog.outcome }}" == "failure" ]; then
-              echo "  ESTADO : SECRETS DETECTADOS"
-            elif [ "${{ steps.trufflehog.outcome }}" == "success" ]; then
-              echo "  ESTADO : Sin secrets expuestos"
-            else
-              echo "  ESTADO : Omitido (trigger manual)"
-            fi
-
-            echo ""
-            echo "[ VULNERABILIDADES EN DEPENDENCIAS (npm audit) ]"
-            if [ "$AUDIT_FAILED" == "true" ]; then
-              python3 -c "
-import json
-d = json.load(open('npm-audit-report.json'))
-v = d.get('metadata', {}).get('vulnerabilities', {})
-print(f'  ESTADO  : VULNERABILIDADES ENCONTRADAS')
-print(f'  Criticas: {v.get(\"critical\", 0)}')
-print(f'  Altas   : {v.get(\"high\", 0)}')
-" 2>/dev/null || echo "  No se pudo parsear el reporte"
-            else
-              echo "  ESTADO  : Sin vulnerabilidades altas o criticas"
-            fi
-
-            echo ""
-            echo "[ LINT (ESLint) ]"
-            echo "  Ver detalle completo en: eslint-report-legible.txt"
-            if [ -f eslint-report.json ]; then
-              python3 -c "
-import json
-d = json.load(open('eslint-report.json'))
-errors   = sum(f['errorCount'] for f in d)
-warnings = sum(f['warningCount'] for f in d)
-files_with_errors = [f['filePath'] for f in d if f['errorCount'] > 0]
-print(f'  Errores : {errors}')
-print(f'  Avisos  : {warnings}')
-if files_with_errors:
-    print('  Archivos con errores:')
-    for fp in files_with_errors[:10]:
-        print(f'    - {fp}')
-    if len(files_with_errors) > 10:
-        print(f'    ... y {len(files_with_errors) - 10} mas')
-" 2>/dev/null || echo "  No se pudo parsear el reporte"
-            else
-              echo "  ESTADO  : Reporte no generado"
-            fi
-
-            echo ""
-            echo "[ CONSTRUCCION (Build) ]"
-            if [ "$BUILD_FAILED" == "true" ]; then
-              echo "  ESTADO : FALLO"
-              [ -f build_error.log ] && tail -n 15 build_error.log
-            else
-              echo "  ESTADO : Exitosa"
-            fi
-
-            echo ""
-            echo "[ CODEQL ]"
-            echo "  Ver resultados en: Security > Code scanning en GitHub"
-            echo "============================================"
-          } >> $REPORT
+          # ── Generar reporte-pipeline.txt via script ─────────────────────────
+          python3 .github/scripts/generate_pipeline_report.py
 
           # ── Fallo del pipeline si hay problemas críticos ────────────────────
           if [ "$BUILD_FAILED" == "true" ] || [ "$AUDIT_FAILED" == "true" ] || [ "$LINT_FAILED" == "true" ]; then
