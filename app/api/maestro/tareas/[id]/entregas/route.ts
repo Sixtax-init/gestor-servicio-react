@@ -15,11 +15,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // ✅ Verificar que la tarea pertenece al maestro
     const [tarea] = await sql`
-      SELECT t.id 
+      SELECT t.id
       FROM tareas t
       INNER JOIN cursos c ON t.curso_id = c.id
       WHERE t.id = ${tareaId} AND c.maestro_id = ${session.id}
     `
+
     if (!tarea) {
       return NextResponse.json({ error: "Tarea no encontrada o no autorizada" }, { status: 404 })
     }
