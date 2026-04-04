@@ -68,72 +68,7 @@ jobs:
 
       - name: Generar Reporte Lint Legible
         if: always()
-        run: |
-          if [ ! -f eslint-report.json ]; then
-            echo "Reporte de lint no encontrado, omitiendo." && exit 0
-          fi
-          python3 << 'PYEOF'
-import json
-
-with open('eslint-report.json') as f:
-    data = json.load(f)
-
-total_errors   = sum(item['errorCount'] for item in data)
-total_warnings = sum(item['warningCount'] for item in data)
-files_with_issues = [item for item in data if item['errorCount'] > 0 or item['warningCount'] > 0]
-files_clean = len(data) - len(files_with_issues)
-
-out = []
-out.append('=' * 64)
-out.append('  REPORTE LINT - ESLint')
-out.append('=' * 64)
-out.append('')
-out.append('RESUMEN')
-out.append(f'  Errores              : {total_errors}')
-out.append(f'  Avisos               : {total_warnings}')
-out.append(f'  Archivos analizados  : {len(data)}')
-out.append(f'  Archivos con errores : {len(files_with_issues)}')
-out.append(f'  Archivos limpios     : {files_clean}')
-out.append('')
-
-if files_with_issues:
-    # Primero los que tienen errores, luego solo warnings
-    sorted_files = sorted(files_with_issues, key=lambda x: (-x['errorCount'], -x['warningCount']))
-    out.append('-' * 64)
-    out.append('  DETALLE POR ARCHIVO')
-    out.append('-' * 64)
-    for item in sorted_files:
-        path = item['filePath']
-        # Acortar ruta larga quitando el prefijo del runner
-        for prefix in ['/home/runner/work/', '/github/workspace/']:
-            if path.startswith(prefix):
-                path = path[len(prefix):]
-                break
-        errors_in_file   = item['errorCount']
-        warnings_in_file = item['warningCount']
-        tag = '[ERROR]' if errors_in_file > 0 else '[WARN] '
-        out.append(f'')
-        out.append(f'{tag} {path}  ({errors_in_file} err, {warnings_in_file} warn)')
-        out.append(f'{"─" * 60}')
-        for m in item['messages']:
-            severity = 'error  ' if m['severity'] == 2 else 'warning'
-            line_no  = str(m.get('line', '?')).rjust(4)
-            col_no   = str(m.get('column', '?')).ljust(3)
-            rule     = m.get('ruleId') or 'unknown'
-            msg      = m.get('message', '')
-            out.append(f'  Linea {line_no}:{col_no}  {severity}  ({rule})')
-            out.append(f'    {msg}')
-else:
-    out.append('✓ Sin archivos con errores o avisos.')
-
-out.append('')
-out.append('=' * 64)
-
-with open('eslint-report-legible.txt', 'w', encoding='utf-8') as f:
-    f.write('\n'.join(out))
-
-print(f"Reporte generado: {len(files_with_issues)} archivos con problemas de {len(data)} analizados.")
-PYEOF
+        run: python3 .github/scripts/generate_lint_report.py
 
       - name: Inicializar CodeQL (Seguridad)
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_security_scan == true }}
@@ -162,8 +97,7 @@ PYEOF
           category: "/language:javascript-typescript"
 
       # ─── RESUMEN Y ARTEFACTO AL FINAL ──────────────────────────────────────
-      # IMPORTANTE: el reporte-pipeline.txt se genera aquí, por eso el upload
-      # de artefactos debe ir DESPUÉS de este step (no antes).
+      # IMPORTANTE: reporte-pipeline.txt se genera aquí, el upload va DESPUÉS.
 
       - name: Generar Resumen Ejecutivo Final
         if: always()
