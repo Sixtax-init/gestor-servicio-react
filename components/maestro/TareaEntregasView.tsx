@@ -174,23 +174,37 @@ export function TareaEntregasView({ tarea, onBack }: TareaEntregasViewProps) {
         </div>
       </aside>
 
-      {/* Tabs Mobile (Horizontal Scroll) */}
-      <div className="lg:hidden w-full overflow-x-auto pb-2 scrollbar-hide border-b mb-2">
-        <div className="flex gap-2 min-w-max p-1">
-          {tabsItems.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab(tab.id)}
-              className="rounded-full gap-2"
-            >
-              {tab.label}
-              <Badge variant={activeTab === tab.id ? "secondary" : tab.variant} className="h-5 px-1.5 min-w-[20px]">
-                {tab.badge}
-              </Badge>
-            </Button>
-          ))}
+      {/* Header Mobile: botón atrás + tabs */}
+      <div className="lg:hidden w-full">
+        <div className="flex items-center gap-2 mb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="gap-1.5 text-muted-foreground hover:text-foreground px-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Atrás
+          </Button>
+          <span className="text-sm font-semibold truncate flex-1">{tarea.titulo}</span>
+        </div>
+        <div className="overflow-x-auto pb-2 scrollbar-hide border-b mb-2">
+          <div className="flex gap-2 min-w-max p-1">
+            {tabsItems.map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab(tab.id)}
+                className="rounded-full gap-2"
+              >
+                {tab.label}
+                <Badge variant={activeTab === tab.id ? "secondary" : tab.variant} className="h-5 px-1.5 min-w-[20px]">
+                  {tab.badge}
+                </Badge>
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
