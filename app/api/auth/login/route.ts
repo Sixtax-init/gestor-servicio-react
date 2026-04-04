@@ -5,7 +5,8 @@ import { createSession } from "@/lib/session.server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { matricula, password } = body
+    const matricula = typeof body.matricula === "string" ? body.matricula.trim() : ""
+    const password = typeof body.password === "string" ? body.password : ""
 
     if (!matricula || !password) {
       return NextResponse.json({ error: "Matrícula y contraseña son requeridos" }, { status: 400 })

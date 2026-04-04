@@ -53,12 +53,25 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
       })
 
       const response = await apiFetch(`/api/admin/usuarios?${params}`)
-      const data = await response.json()
 
+      if (response.status === 401) {
+        toast.error("Tu sesión ha expirado. Redirigiendo al login...")
+        setTimeout(() => { window.location.href = "/login" }, 1500)
+        return
+      }
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        toast.error(data.error || "Error al cargar usuarios")
+        return
+      }
+
+      const data = await response.json()
       setUsuarios(data.usuarios || [])
       setTotalPages(data.pages || 1)
     } catch (error) {
       console.error("[admin/usuarios-list] Error fetching usuarios:", error)
+      toast.error("Error de conexión al cargar usuarios")
     } finally {
       setLoading(false)
     }

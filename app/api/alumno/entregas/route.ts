@@ -60,13 +60,11 @@ export async function POST(request: NextRequest) {
       RETURNING *
     `
 
-    // Si hay archivo, guardarlo en la tabla de archivos
-    if (archivo_entrega) {
-      await sql`
-        INSERT INTO archivos (entrega_id, nombre_archivo, ruta_archivo, tipo_mime)
-        VALUES (${entrega.id}, ${archivo_entrega.nombre}, ${archivo_entrega.ruta}, ${archivo_entrega.tipo})
-      `
-    }
+    // Guardar el archivo en la tabla de archivos
+    await sql`
+      INSERT INTO archivos (entrega_id, nombre_archivo, ruta_archivo, tipo_mime)
+      VALUES (${entrega.id}, ${archivo_entrega.nombre}, ${archivo_entrega.ruta}, ${archivo_entrega.tipo})
+    `
 
     // 🔹 Crear o actualizar avance marcado como final
     // Siempre verificar si ya existe un avance para esta entrega (después de crear/actualizar la entrega)
