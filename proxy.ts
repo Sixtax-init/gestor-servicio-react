@@ -25,9 +25,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
+  const isApiRoute = pathname.startsWith("/api/")
   const token = request.cookies.get("session")?.value
 
   if (!token) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    }
     return redirectTo("/login", request)
   }
 
@@ -42,6 +46,9 @@ export async function proxy(request: NextRequest) {
     if (user.debe_cambiar_password) {
       const allowedWhilePending = [CHANGE_PASSWORD_PATH, CHANGE_PASSWORD_API, "/api/auth/logout"]
       if (!allowedWhilePending.some((p) => pathname.startsWith(p))) {
+        if (isApiRoute) {
+          return NextResponse.json({ error: "Debes cambiar tu contraseña" }, { status: 403 })
+        }
         return redirectTo(CHANGE_PASSWORD_PATH, request)
       }
       return NextResponse.next()
@@ -66,6 +73,9 @@ export async function proxy(request: NextRequest) {
 
     return NextResponse.next()
   } catch {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Sesión inválida o expirada" }, { status: 401 })
+    }
     return redirectTo("/login", request)
   }
 }

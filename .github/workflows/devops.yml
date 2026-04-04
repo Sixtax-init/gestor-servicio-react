@@ -35,6 +35,16 @@ jobs:
     steps:
       - name: Checkout Código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detectar Secrets (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.before || github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
 
       - name: Configurar Node.js (v20)
         uses: actions/setup-node@v4
@@ -104,6 +114,10 @@ jobs:
           # Sección de SEGURIDAD
           echo "### 🛡️ Escaneo de Seguridad (CodeQL)" >> $GITHUB_STEP_SUMMARY
           echo "✅ **ANÁLISIS COMPLETADO**: No se detectaron vulnerabilidades críticas que bloqueen la integración." >> $GITHUB_STEP_SUMMARY
+
+          # Sección de SECRETS
+          echo "### 🔑 Detección de Secrets (TruffleHog)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **ANÁLISIS COMPLETADO**: No se detectaron secrets verificados expuestos en el código." >> $GITHUB_STEP_SUMMARY
 
 
           if [ "$BUILD_FAILED" == "true" ] || [ "${ERROR_COUNT:-0}" -gt 0 ]; then

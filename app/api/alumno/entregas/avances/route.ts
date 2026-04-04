@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     // 🔹 Insertar el avance, ligándolo a esa entrega
     const [avance] = await sql`
       INSERT INTO entregas_avances (entrega_id, tarea_id, alumno_id, archivo_url, comentario)
-      VALUES (${entrega.id}, ${tarea_id}, ${session.id}, ${archivo_url || null}, ${comentario})
+      VALUES (${entrega.id}, ${tarea_id}, ${session.id}, ${archivo_url}, ${comentario})
       RETURNING *
     `
 

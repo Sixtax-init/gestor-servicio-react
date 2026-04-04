@@ -25,15 +25,12 @@ export function Navbar() {
 
         {/* Logo y Nombre del sistema */}
         <Link href="/" className="flex items-center gap-4 group">
-          <div className="relative w-12 h-12 ml-1 transition-transform group-hover:scale-110 flex items-center justify-center">
-            {/* Usamos el original.png siempre.
-                En Dark Mode, en lugar de un círculo, le inyectamos a las líneas una "Sombra paralela completamente blanca"
-                para que el trazo exterior del pingüino brille afilado contra la noche. */}
+          <div className="relative w-20 h-20 ml-1 transition-transform group-hover:scale-110 flex items-center justify-center">
             <Image
               src="/logos/original.png"
               alt="Service Tracker Tux"
               fill
-              className="object-contain scale-[1.7] transition-all dark:drop-shadow-[0px_0px_0px_#ffffff]"
+              className="object-contain dark:drop-shadow-[0px_0px_0px_#ffffff]"
               priority
             />
           </div>
