@@ -1,6 +1,6 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "service-tracker",
+  "version": "1.0.123",
   "private": true,
   "scripts": {
     "build": "next build",
