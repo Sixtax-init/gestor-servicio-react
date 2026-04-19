@@ -89,8 +89,7 @@ export default function LoginPage() {
       }
 
       // Verificar que la cookie se estableció correctamente
-      const meRes = await apiFetch("/api/auth/me")
-      const meData = await meRes.json()
+      await apiFetch("/api/auth/me")
       // cookie verificada via /api/auth/me
 
       // Redirigir según el tipo de usuario

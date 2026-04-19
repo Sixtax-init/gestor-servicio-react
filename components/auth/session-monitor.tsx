@@ -1,14 +1,13 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 // Tiempo de inactividad permitido antes de cerrar sesión (ej. 15 min total, avisa a los 14)
 const MAX_IDLE_TIME_MS = 15 * 60 * 1000 
 const WARNING_TIME_MS = 14 * 60 * 1000
 
 export function SessionMonitor() {
-  const router = useRouter()
   const pathname = usePathname()
   
   const [lastActive, setLastActive] = useState<number>(Date.now())
