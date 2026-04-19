@@ -52,6 +52,9 @@ export interface Usuario {
   tipo_usuario: TipoUsuario
   departamento_id: number | null
   password_hash: string
+  debe_cambiar_password: boolean
+  reset_token: string | null
+  reset_token_expires_at: Date | null
   activo: boolean
   created_at: Date
   updated_at: Date
