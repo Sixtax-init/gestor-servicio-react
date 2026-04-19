@@ -168,9 +168,7 @@ export function ReportPreview({ data, actividades = [] }: ReportPreviewProps) {
             </div>
           </div>
           <div className="text-center space-y-8">
-            <div className="min-h-[40px]">
-              <div className="border-2 border-black h-[40px] flex items-center justify-center font-bold">SELLO</div>
-            </div>
+            <div className="min-h-[40px]"></div>
             <div className="border-t border-black pt-1">
               <div className="font-bold">FIRMA DEL ESTUDIANTE</div>
             </div>

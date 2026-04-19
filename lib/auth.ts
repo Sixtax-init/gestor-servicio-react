@@ -93,7 +93,7 @@ export async function createUser(data: {
 export async function getUserById(id: number): Promise<SessionUser | null> {
   try {
     const result = await sql`
-      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id
+      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, debe_cambiar_password
       FROM usuarios
       WHERE id = ${id} AND activo = true
       LIMIT 1

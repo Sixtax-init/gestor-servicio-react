@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2, FilePlus2, MessageSquare, AlertCircle, ClipboardList } from "lucide-react"
+import { Loader2, FilePlus2, MessageSquare, AlertCircle, ClipboardList, FileText } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
@@ -27,6 +27,7 @@ interface TareaConEntrega {
   descripcion: string
   fecha_vencimiento: string
   prioridad: string
+  archivo_instrucciones: string | null
   entrega_id: number | null
   entrega_estado: string | null
   fecha_entrega: string | null
@@ -96,6 +97,18 @@ export function VerTareasDialog({ open, onOpenChange, cursoId, cursoNombre }: Ve
                             <Badge variant="outline">
                               Vence: {new Date(tarea.fecha_vencimiento).toLocaleDateString()}
                             </Badge>
+                          )}
+
+                          {tarea.archivo_instrucciones && (
+                            <a
+                              href={tarea.archivo_instrucciones}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline"
+                            >
+                              <FileText className="w-3 h-3" />
+                              Ver instrucciones
+                            </a>
                           )}
 
                           <Badge

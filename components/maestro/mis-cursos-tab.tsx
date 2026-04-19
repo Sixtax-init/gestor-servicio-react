@@ -5,12 +5,13 @@ import type { Curso } from "@/lib/db"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, BookOpen, Trash2 } from "lucide-react"
+import { Plus, BookOpen, Trash2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 import { CreateCursoDialog } from "./create-curso-dialog"
 import { CreateTareaDialog } from "./create-tarea-dialog"
+import { EditCursoDialog } from "./edit-curso-dialog"
 import { DeleteConfirmDialog } from "../admin/delete-confirm-dialog"
 
 interface MisCursosTabProps {
@@ -24,6 +25,7 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
   const [showTareaDialog, setShowTareaDialog] = useState(false)
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null)
   const [deletingCursoId, setDeletingCursoId] = useState<number | null>(null)
+  const [editingCurso, setEditingCurso] = useState<Curso | null>(null)
 
   const handleCursoCreated = (newCurso: Curso) => {
     setCursos([newCurso, ...cursos])
@@ -32,6 +34,11 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
 
   const handleTareaCreated = () => {
     setShowTareaDialog(false)
+  }
+
+  const handleCursoUpdated = (updated: Curso) => {
+    setCursos(cursos.map(c => c.id === updated.id ? updated : c))
+    setEditingCurso(null)
   }
 
   const handleDeleteCurso = async (cursoId: number) => {
@@ -96,6 +103,14 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => setEditingCurso(curso)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           onClick={() => setDeletingCursoId(curso.id)}
                         >
@@ -118,6 +133,14 @@ export function MisCursosTab({ cursos: initialCursos }: MisCursosTabProps) {
       </Card>
 
       <CreateCursoDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onSuccess={handleCursoCreated} />
+      {editingCurso && (
+        <EditCursoDialog
+          curso={editingCurso}
+          open={!!editingCurso}
+          onOpenChange={(open) => !open && setEditingCurso(null)}
+          onSuccess={handleCursoUpdated}
+        />
+      )}
       <CreateTareaDialog open={showTareaDialog} onOpenChange={setShowTareaDialog} onSuccess={handleTareaCreated} cursoId={selectedCursoId} />
 
       <DeleteConfirmDialog

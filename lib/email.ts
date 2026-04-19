@@ -332,7 +332,7 @@ export async function sendNewTaskEmailsBulk(emails: string[], data: NewTaskData)
       })
       await sleep(2000)
     } catch (err) {
-      console.error(`Error enviando correo a ${email}:`, err)
+      console.error("[email] Error enviando correo:", err)
     }
   }
 }

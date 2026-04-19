@@ -3,12 +3,15 @@ import { redirect } from "next/navigation"
 import { sql } from "@/lib/db"
 import { AlumnoDashboard } from "@/components/alumno/alumno-dashboard"
 
+export const dynamic = "force-dynamic"
+
 export default async function AlumnoPage() {
   const user = await getSession()
 
   if (!user || user.tipo_usuario !== "alumno") {
     redirect("/login")
   }
+
 
   // Obtener inscripciones del alumno
   const inscripciones = await sql`

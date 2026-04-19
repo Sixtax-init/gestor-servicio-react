@@ -37,20 +37,25 @@ export function Navbar() {
           <span className="text-lg font-bold ml-2">Service Tracker</span>
         </Link>
 
-        {/* Botón de tema — oculto en páginas que usan tema fijo */}
-        {pathname !== "/report-form" && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-        )}
+        {/* Botón de tema */}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            const next = theme === "dark" ? "light" : "dark"
+            if (!document.startViewTransition) {
+              setTheme(next)
+              return
+            }
+            document.startViewTransition(() => setTheme(next))
+          }}
+        >
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
+        </Button>
 
       </div>
     </nav>

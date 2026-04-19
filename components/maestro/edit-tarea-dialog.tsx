@@ -75,7 +75,7 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
       if (nuevoArchivo) {
         const uploadFormData = new FormData()
         uploadFormData.append("file", nuevoArchivo)
-        uploadFormData.append("tipo", "instrucciones")
+        uploadFormData.append("type", "instrucciones")
 
         const uploadResponse = await apiFetch("/api/upload", {
           method: "POST",
@@ -84,7 +84,7 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
 
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json()
-          archivoRuta = uploadData.filePath
+          archivoRuta = uploadData.ruta
         }
       }
 

@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 })
     }
 
-    await createSession(user)
+    const ipAddress = request.headers.get("x-forwarded-for") || "Local"
+    const userAgent = request.headers.get("user-agent") || "Unknown"
+
+    await createSession(user, userAgent, ipAddress)
 
     return NextResponse.json({ user })
   } catch (error) {

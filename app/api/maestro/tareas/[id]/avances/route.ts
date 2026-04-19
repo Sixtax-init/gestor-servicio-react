@@ -43,6 +43,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       FROM entregas_avances ea
       INNER JOIN usuarios u ON ea.alumno_id = u.id
       WHERE ea.tarea_id = ${tareaId}
+        AND ea.es_final = false
       ORDER BY ea.fecha_entrega DESC
     `
 
