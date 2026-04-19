@@ -19,15 +19,12 @@ const ALLOWED_MIME_TYPES = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 
 export async function POST(request: NextRequest) {
-  console.log("[upload] Request received")
 
   const user = await getSession()
   if (!user) {
-    console.log("[upload] ❌ No user session found")
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  console.log("[upload] ✅ User authenticated:", { id: user.id, tipo_usuario: user.tipo_usuario })
 
   try {
     const formData = await request.formData()
@@ -38,13 +35,6 @@ export async function POST(request: NextRequest) {
     const referenceId =
       (formData.get("referenceId") as string) || (formData.get("entregaId") as string) || "0"
 
-    console.log("[upload] Form data received:", {
-      hasFile: !!file,
-      fileName: file?.name,
-      fileSize: file?.size,
-      type,
-      referenceId,
-    })
 
     if (!file) {
       return NextResponse.json({ error: "Archivo requerido" }, { status: 400 })
@@ -72,19 +62,16 @@ export async function POST(request: NextRequest) {
           AND (${user.tipo_usuario} != 'alumno' OR alumno_id = ${user.id})
       `
       if (entrega.length === 0) {
-        console.log("[upload] ❌ Entrega not found or no permission")
         return NextResponse.json({ error: "Entrega no encontrada o sin permisos" }, { status: 404 })
       }
     }
 
     // 💾 Guardar archivo según tipo (agregamos 'avances')
-    console.log(`[upload] Saving file to uploads/${type}`)
     const rutaArchivo = await saveFile(
       file,
       Number(referenceId) || 0,
       type as "entregas" | "tareas" | "cursos" | "avances"
     )
-    console.log("[upload] File saved at:", rutaArchivo)
 
     // 🧾 Registrar en DB solo si es entrega
     if (type === "entregas" && referenceId !== "0") {
@@ -95,7 +82,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ⚠️ Si es 'avances', solo guardamos físicamente el archivo y devolvemos la ruta
-    console.log("[upload] ✅ File uploaded successfully")
     return NextResponse.json(
       {
         nombre: file.name,

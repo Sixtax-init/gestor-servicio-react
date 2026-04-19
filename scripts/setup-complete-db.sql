@@ -261,3 +261,24 @@ WHERE matricula = 'ADMIN001';
 
 -- Comentario final
 -- El sistema está listo para ser usado con multi-tenancy.
+
+-- =========================================================
+-- Tabla de sesiones (Ghost Tokens y Refresh Tokens)
+-- Mantiene las sesiones activas persistentes en el servidor
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS sesiones (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  refresh_token VARCHAR(255) UNIQUE NOT NULL,
+  user_agent VARCHAR(500),
+  ip_address VARCHAR(45),
+  activo BOOLEAN DEFAULT true,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para búsquedas rápidas en sesiones
+CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_sesiones_token ON sesiones(refresh_token);
+CREATE INDEX IF NOT EXISTS idx_sesiones_activo ON sesiones(activo);

@@ -208,44 +208,20 @@ export default function Page() {
   }
 
   return (
-    <div
-      className="min-h-screen p-4"
-      style={{
-        backgroundColor: '#e5e7eb',
-        color: '#0f172a',
-        colorScheme: 'light',
-        '--background': '#ffffff',
-        '--foreground': '#0f172a',
-        '--card': '#f3f4f6',
-        '--card-foreground': '#0f172a',
-        '--popover': '#f3f4f6',
-        '--popover-foreground': '#0f172a',
-        '--primary': '#0f172a',
-        '--primary-foreground': '#f8fafc',
-        '--secondary': '#f1f5f9',
-        '--secondary-foreground': '#0f172a',
-        '--muted': '#f8fafc',
-        '--muted-foreground': '#64748b',
-        '--accent': '#f1f5f9',
-        '--accent-foreground': '#0f172a',
-        '--border': '#b8bec8',
-        '--input': '#e9ebee',
-        '--ring': '#94a3b8',
-      } as React.CSSProperties}
-    >
+    <div className="min-h-screen p-4">
       <div className="container mx-auto max-w-6xl">
         <div className="mb-8 print:hidden">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/alumno")}
-            className="mb-4 gap-2 text-gray-600 hover:text-gray-900"
+            className="mb-4 gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Dashboard
           </Button>
           <h1 className="text-3xl font-bold mb-2">Reporte Bimestral de Servicio Social</h1>
-          <p className="text-gray-600">Tecnológico Nacional de México - Instituto Tecnológico de Nuevo León</p>
+          <p className="text-muted-foreground">Tecnológico Nacional de México - Instituto Tecnológico de Nuevo León</p>
         </div>
 
         {!showPreview ? (

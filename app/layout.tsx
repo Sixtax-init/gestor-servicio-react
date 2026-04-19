@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Toaster } from "@/components/ui/sonner"
+import { SessionMonitor } from "@/components/auth/session-monitor"
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -34,6 +35,7 @@ export default function RootLayout({
         </ThemeProvider>
 
         <Analytics />
+        <SessionMonitor />
       </body>
     </html>
   )

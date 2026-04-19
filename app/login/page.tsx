@@ -39,6 +39,31 @@ export default function LoginPage() {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024)
     checkMobile()
     window.addEventListener('resize', checkMobile)
+
+    // Check for explicit session logout messages sent via query URL parameters
+    const checkSessionMsg = () => {
+      const search = window.location.search;
+      const params = new URLSearchParams(search);
+      const motivo = params.get("motivo");
+      
+      if (motivo === "inactividad") {
+        toast.error("Cierre por inactividad", {
+          description: "Tu sesión ha sido cerrada debido por inactividad prolongada.",
+          duration: 8000,
+        });
+        window.history.replaceState({}, '', '/login');
+      } else if (motivo === "expirada") {
+        toast.error("Sesión Expirada", {
+          description: "Tu sesión expiró o fue cerrada de forma remota. Ingresa de nuevo.",
+          duration: 8000,
+        });
+        window.history.replaceState({}, '', '/login');
+      }
+    }
+    
+    // Solo debe correr una vez en montaje, previene flashes innecesarios
+    checkSessionMsg()
+
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
@@ -55,6 +80,7 @@ export default function LoginPage() {
       })
 
       const data = await response.json()
+      console.log("[login] POST response:", response.status, response.ok ? "ok" : "error")
 
       if (!response.ok) {
         setError(data.error || "Error al iniciar sesión")
@@ -62,17 +88,24 @@ export default function LoginPage() {
         return
       }
 
+      // Verificar que la cookie se estableció correctamente
+      await apiFetch("/api/auth/me")
+      // cookie verificada via /api/auth/me
+
       // Redirigir según el tipo de usuario
+      // IMPORTANTE: usamos window.location.href (hard navigation) en lugar de router.push
+      // para garantizar que la cookie httpOnly se envíe al Server Component en el primer request.
+      // router.push() hace soft navigation (SPA) y a veces no sincroniza la cookie a tiempo.
       const { user } = data
-      if (user.tipo_usuario === "main_admin") {
-        router.push("/main-admin")
-      } else if (user.tipo_usuario === "administrador") {
-        router.push("/admin")
-      } else if (user.tipo_usuario === "maestro") {
-        router.push("/maestro")
-      } else {
-        router.push("/alumno")
+      console.log("[login] Navigating to dashboard for tipo:", user?.tipo_usuario)
+
+      const dashboardMap: Record<string, string> = {
+        main_admin: "/main-admin",
+        administrador: "/admin",
+        maestro: "/maestro",
+        alumno: "/alumno",
       }
+      window.location.href = dashboardMap[user?.tipo_usuario] ?? "/"
     } catch (err) {
       console.error("[login] Error:", err)
       setError("Error de conexión. Intenta de nuevo.")

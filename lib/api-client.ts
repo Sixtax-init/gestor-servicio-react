@@ -29,9 +29,43 @@ export async function apiFetch(
         headers.set("Content-Type", "application/json");
     }
 
-    return fetch(url, {
+    // Bandera para evitar bucles infinitos de retry
+    const isRetry = (init as any)?._isRetry
+
+    let response = await fetch(url, {
         credentials: "include", // Importante para auth y sesiones
         ...init,
         headers,
     });
+
+    // Interceptor: Si obtenemos 401 y no es ya un segundo intento, ni es la un endpoint público, intentamos renovar
+    // (Aseguramos no atrapar el endpoint de refresh recursivamente, ni el login)
+    if (response.status === 401 && !isRetry && !url.includes('/api/auth/login') && !url.includes('/api/auth/refresh')) {
+        try {
+            // Intentamos renovar la sesión
+            const refreshRes = await fetch(`${basePath || ''}/api/auth/refresh`, {
+                method: "POST",
+                credentials: "include",
+            })
+
+            if (refreshRes.ok) {
+                // El refresh fue un éxito (tenemos cookies nuevas), repetimos la petición original
+                const retryInit = { ...init, _isRetry: true }
+                response = await fetch(url, {
+                    credentials: "include",
+                    ...retryInit,
+                    headers,
+                })
+            } else {
+                // El refresh falló (Revocado o Expirado), se forzará al usuario al login
+                if (typeof window !== "undefined") {
+                    window.location.href = `${basePath || ''}/login?motivo=expirada`
+                }
+            }
+        } catch (e) {
+            // Falla en la red al refrescar
+        }
+    }
+
+    return response;
 }
