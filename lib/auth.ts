@@ -24,6 +24,8 @@ export async function verifyCredentials(matricula: string, password: string): Pr
     `
 
     if (result.length === 0) {
+      // Dummy comparison para evitar enumeración de usuarios por timing
+      await bcrypt.compare(password, "$2b$10$invaliddummyhashfortimingprotect00000000000000000000")
       return null
     }
 

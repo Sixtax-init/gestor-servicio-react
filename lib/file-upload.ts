@@ -3,7 +3,7 @@ import { join } from "path"
 import { existsSync } from "fs"
 
 // ✅ Ahora acepta un tercer parámetro opcional `type`
-export async function saveFile(file: File, id: number, type: "entregas" | "cursos" | "tareas" | "avances" = "entregas"): Promise<string> {
+export async function saveFile(file: File, id: number, type: "entregas" | "cursos" | "tareas" | "avances" | "institucion" = "entregas"): Promise<string> {
   try {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
@@ -17,9 +17,10 @@ export async function saveFile(file: File, id: number, type: "entregas" | "curso
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // 🧾 Nombre único del archivo
+    // 🧾 Nombre único del archivo — sanitizar para evitar path traversal
     const timestamp = Date.now()
-    const fileName = `${timestamp}-${file.name}`
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_")
+    const fileName = `${timestamp}-${safeName}`
     const filePath = join(uploadDir, fileName)
 
     // 💾 Guardar archivo físicamente

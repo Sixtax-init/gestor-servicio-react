@@ -21,7 +21,8 @@ export default async function AlumnoPage() {
       c.tipo,
       c.descripcion,
       u.nombre as maestro_nombre,
-      u.apellidos as maestro_apellidos
+      u.apellidos as maestro_apellidos,
+      u.email as maestro_email
     FROM inscripciones i
     INNER JOIN cursos c ON i.curso_id = c.id
     LEFT JOIN usuarios u ON c.maestro_id = u.id

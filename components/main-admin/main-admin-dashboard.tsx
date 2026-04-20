@@ -29,6 +29,7 @@ import {
 import { DepartamentosTab } from "./departamentos-tab"
 import { UsuariosTab } from "../admin/usuarios-tab"
 import { CursosTab } from "../admin/cursos-tab"
+import { InstitucionTab } from "./institucion-tab"
 import type { SessionUser } from "@/lib/auth"
 import { apiFetch } from "@/lib/api-client"
 
@@ -188,14 +189,7 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                     </TabsContent>
 
                     <TabsContent value="configuracion" className="mt-0">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Configuración del Sistema</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground">Configuraciones institucionales próximamente...</p>
-                            </CardContent>
-                        </Card>
+                        <InstitucionTab />
                     </TabsContent>
                 </Tabs>
             </main>

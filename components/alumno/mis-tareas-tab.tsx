@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, FileText, Upload, Loader2, ClipboardList, ChevronLeft, ChevronRight, Info } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Calendar, Clock, FileText, Loader2, ClipboardList, ChevronLeft, ChevronRight, Lock } from "lucide-react"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { EntregarTareaDialog } from "./entregar-tarea-dialog"
 import { apiFetch } from "@/lib/api-client"
 
@@ -27,6 +27,7 @@ interface Tarea {
 export function MisTareasTab() {
   const [tareas, setTareas] = useState<Tarea[]>([])
   const [loading, setLoading] = useState(true)
+  const [confirmandoTarea, setConfirmandoTarea] = useState<Tarea | null>(null)
   const [entregandoTarea, setEntregandoTarea] = useState<Tarea | null>(null)
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 8
@@ -34,6 +35,7 @@ export function MisTareasTab() {
   useEffect(() => {
     fetchTareas()
   }, [])
+
   const fetchTareas = async () => {
     setLoading(true)
     try {
@@ -51,32 +53,19 @@ export function MisTareasTab() {
 
   const getPrioridadColor = (prioridad: string) => {
     switch (prioridad) {
-      case "urgente":
-        return "destructive"
-      case "alta":
-        return "default"
-      case "media":
-        return "secondary"
-      case "baja":
-        return "outline"
-      default:
-        return "outline"
+      case "urgente": return "destructive"
+      case "alta":    return "default"
+      case "media":   return "secondary"
+      default:        return "outline"
     }
   }
 
   const getEstadoColor = (estado: string | null) => {
-    if (!estado) return "outline"
     switch (estado) {
-      case "pendiente":
-        return "secondary"
-      case "aprobada":
-        return "default"
-      case "rechazada":
-        return "destructive"
-      case "revisada":
-        return "outline"
-      default:
-        return "outline"
+      case "pendiente":  return "secondary"
+      case "aprobada":   return "default"
+      case "rechazada":  return "destructive"
+      default:           return "outline"
     }
   }
 
@@ -105,14 +94,6 @@ export function MisTareasTab() {
             </div>
           ) : (
             <div className="space-y-4">
-              <Alert className="bg-primary/5 border-primary/20">
-                <Info className="h-4 w-4 text-primary" />
-                <AlertTitle className="text-primary font-semibold">Información sobre Entregas</AlertTitle>
-                <AlertDescription className="text-sm">
-                  Al enviar un avance parcial, el botón de envío se bloqueará temporalmente. El maestro debe **revisar** tu avance para habilitar el siguiente envío. Si es tu entrega final, marca la casilla correspondiente al subir tu archivo.
-                </AlertDescription>
-              </Alert>
-
               {tareas.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((tarea) => (
                 <Card key={tarea.id}>
                   <CardContent className="pt-6">
@@ -135,7 +116,6 @@ export function MisTareasTab() {
                               <span>Vence: {new Date(tarea.fecha_vencimiento).toLocaleString()}</span>
                             </div>
                           )}
-
                           {tarea.asignacion_horas && (
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
@@ -169,19 +149,20 @@ export function MisTareasTab() {
 
                       <div className="flex justify-end">
                         <Button
-                          onClick={() => setEntregandoTarea(tarea)}
+                          variant="default"
+                          onClick={() => setConfirmandoTarea(tarea)}
                           disabled={tarea.entrega_estado === "pendiente" || tarea.entrega_estado === "aprobada"}
-                          className="w-full sm:w-auto"
+                          className="w-full sm:w-auto gap-2"
                         >
-
-                          <Upload className="mr-2 h-4 w-4" />
-                          {tarea.entrega_id ? (tarea.entrega_estado === 'rechazada' ? 'Reenviar' : 'Reenviar') : 'Entregar'}
+                          <Lock className="h-4 w-4" />
+                          Enviar Entrega Final
                         </Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
+
               {tareas.length > PAGE_SIZE && (
                 <div className="flex items-center justify-end space-x-2 pt-2">
                   <span className="text-sm text-muted-foreground">
@@ -199,6 +180,37 @@ export function MisTareasTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Confirmación antes de abrir el dialog de entrega final */}
+      <AlertDialog open={!!confirmandoTarea} onOpenChange={(open) => !open && setConfirmandoTarea(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" />
+              ¿Enviar entrega final?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 pt-1">
+              <span className="block">
+                Estás a punto de enviar la entrega final de <b>{confirmandoTarea?.titulo}</b>.
+              </span>
+              <span className="block">
+                El maestro la recibirá para revisión y <b>no podrás editarla después</b>. Si quieres seguir trabajando en avances parciales primero, usa el botón <b>&ldquo;Ver/Agregar Avance&rdquo;</b> desde la pestaña <b>Mis Cursos</b>.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setEntregandoTarea(confirmandoTarea)
+                setConfirmandoTarea(null)
+              }}
+            >
+              Sí, enviar entrega final
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {entregandoTarea && (
         <EntregarTareaDialog

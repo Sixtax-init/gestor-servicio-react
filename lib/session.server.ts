@@ -29,14 +29,15 @@ export async function createSession(user: SessionUser, userAgent: string = "", i
 
     // 2. Generar e insertar Refresh Token en Base de Datos (Ghost Token architecture)
     const refreshToken = crypto.randomBytes(32).toString("hex")
-    
+    const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex")
+
     // Expires in 7 days
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
     const result = await sql`
         INSERT INTO sesiones (usuario_id, refresh_token, user_agent, ip_address, expires_at)
-        VALUES (${user.id}, ${refreshToken}, ${userAgent}, ${ipAddress}, ${expiresAt})
+        VALUES (${user.id}, ${refreshTokenHash}, ${userAgent}, ${ipAddress}, ${expiresAt})
         RETURNING id
     `
     const sessionId = result[0].id
@@ -121,7 +122,8 @@ export async function destroySession(): Promise<void> {
             // Si expira o falla durante logout, también podemos tratar de matar por refresh token
             const fallbackToken = cookieStore.get(REFRESH_COOKIE_NAME)?.value
             if (fallbackToken) {
-                await sql`UPDATE sesiones SET activo = false WHERE refresh_token = ${fallbackToken}`
+                const fallbackHash = crypto.createHash("sha256").update(fallbackToken).digest("hex")
+                await sql`UPDATE sesiones SET activo = false WHERE refresh_token = ${fallbackHash}`
             }
         }
     }
