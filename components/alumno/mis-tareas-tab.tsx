@@ -194,7 +194,7 @@ export function MisTareasTab() {
                 Estás a punto de enviar la entrega final de <b>{confirmandoTarea?.titulo}</b>.
               </span>
               <span className="block">
-                El maestro la recibirá para revisión y <b>no podrás editarla después</b>. Si quieres seguir trabajando en avances parciales primero, usa el botón <b>"Ver/Agregar Avance"</b> desde la pestaña <b>Mis Cursos</b>.
+                El maestro la recibirá para revisión y <b>no podrás editarla después</b>. Si quieres seguir trabajando en avances parciales primero, usa el botón <b>&ldquo;Ver/Agregar Avance&rdquo;</b> desde la pestaña <b>Mis Cursos</b>.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
