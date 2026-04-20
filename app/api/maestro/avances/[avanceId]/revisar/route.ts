@@ -36,7 +36,9 @@ export async function PUT(
       UPDATE entregas_avances
       SET estado = 'revisada',
           comentario_revision = ${comentario || avance.comentario_revision},
-          horas_asignadas = ${horas_asignadas || 0}
+          horas_asignadas = ${horas_asignadas || 0},
+          revisado_por = ${session.id},
+          fecha_revision = CURRENT_TIMESTAMP
       WHERE id = ${avanceId}
     `
 

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { BookOpen, Clock } from "lucide-react"
+import { BookOpen, Clock, Mail } from "lucide-react"
 import { VerTareasDialog } from "./ver-tareas-dialog"
 
 interface Inscripcion {
@@ -17,6 +17,7 @@ interface Inscripcion {
   nombre_grupo: string
   tipo: string
   maestro_id: number
+  maestro_email: string | null
 }
 
 interface MisCursosAlumnoTabProps {
@@ -48,8 +49,20 @@ export function MisCursosAlumnoTab({ inscripciones }: MisCursosAlumnoTabProps) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-lg">{inscripcion.nombre_grupo}</CardTitle>
-                      <CardDescription className="mt-1">
-                        Maestro: {inscripcion.maestro_nombre} {inscripcion.maestro_apellidos}
+                      <CardDescription className="mt-1 flex flex-wrap items-center gap-y-1">
+                        <span>Maestro: {inscripcion.maestro_nombre} {inscripcion.maestro_apellidos}</span>
+                        {inscripcion.maestro_email && (
+                          <>
+                            <span className="mx-2 text-muted-foreground/40">·</span>
+                            <a
+                              href={`mailto:${inscripcion.maestro_email}`}
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline underline-offset-2"
+                            >
+                              <Mail className="w-3 h-3" />
+                              {inscripcion.maestro_email}
+                            </a>
+                          </>
+                        )}
                       </CardDescription>
                       <p className="text-sm text-muted-foreground mt-2">{inscripcion.descripcion}</p>
                     </div>

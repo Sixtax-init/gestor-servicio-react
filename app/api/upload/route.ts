@@ -67,10 +67,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 💾 Guardar archivo según tipo (agregamos 'avances')
+    // Solo main_admin puede subir logos institucionales
+    if (type === "institucion" && user.tipo_usuario !== "main_admin") {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    }
+
     const rutaArchivo = await saveFile(
       file,
       Number(referenceId) || 0,
-      type as "entregas" | "tareas" | "cursos" | "avances"
+      type as "entregas" | "tareas" | "cursos" | "avances" | "institucion"
     )
 
     // 🧾 Registrar en DB solo si es entrega

@@ -12,9 +12,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Gestor Horas Linux',
+  title: 'Service Tracker',
   description: 'Gestor de horas para Linux',
-  generator: 'Gestor Horas Linux',
+  generator: 'Service Tracker',
 }
 
 export default function RootLayout({

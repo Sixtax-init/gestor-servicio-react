@@ -282,3 +282,29 @@ CREATE TABLE IF NOT EXISTS sesiones (
 CREATE INDEX IF NOT EXISTS idx_sesiones_usuario ON sesiones(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_sesiones_token ON sesiones(refresh_token);
 CREATE INDEX IF NOT EXISTS idx_sesiones_activo ON sesiones(activo);
+
+-- =========================================================
+-- Tabla de configuración institucional (fila única id=1)
+-- =========================================================
+CREATE TABLE IF NOT EXISTS configuracion_institucional (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  nombre VARCHAR(200),
+  abreviatura VARCHAR(20),
+  direccion TEXT,
+  email VARCHAR(255),
+  telefono VARCHAR(50),
+  logo_url VARCHAR(500),
+  encargado_nombre VARCHAR(200),
+  encargado_cargo VARCHAR(200),
+  encargado_email VARCHAR(255),
+  encargado_telefono VARCHAR(50),
+  ciclo_nombre VARCHAR(100),
+  ciclo_inicio DATE,
+  ciclo_fin DATE,
+  horas_minimas INTEGER DEFAULT 480,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO configuracion_institucional (id)
+VALUES (1)
+ON CONFLICT (id) DO NOTHING;

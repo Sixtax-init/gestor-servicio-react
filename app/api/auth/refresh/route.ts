@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { SignJWT } from "jose"
 import { sql } from "@/lib/db"
+import crypto from "crypto"
 
 const COOKIE_NAME = "session"
 const REFRESH_COOKIE_NAME = "refresh_token"
@@ -18,11 +19,12 @@ async function performRefresh(request: NextRequest) {
 
   try {
     // Buscar la sesión ligada a este refresh token
+    const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex")
     const sessions = await sql`
         SELECT s.id, s.usuario_id, s.activo, u.tipo_usuario, u.departamento_id, u.debe_cambiar_password
         FROM sesiones s
         JOIN usuarios u ON s.usuario_id = u.id
-        WHERE s.refresh_token = ${refreshToken} AND s.expires_at > NOW()
+        WHERE s.refresh_token = ${refreshTokenHash} AND s.expires_at > NOW()
     `
 
     if (sessions.length === 0) {
