@@ -42,7 +42,7 @@ jobs:
         id: trufflehog
         if: github.event_name == 'push' || github.event_name == 'pull_request'
         # trufflesecurity/trufflehog@v3.94.2
-        uses: trufflesecurity/trufflehog@47e7b7cd74f578e1e3145d48f669f22fd1330ca6
+        uses: trufflesecurity/trufflehog@17456f8c7d042d8c82c9a8ca9e937231f9f42e26
         with:
           path: ./
           base: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || github.event.repository.default_branch }}
@@ -52,7 +52,7 @@ jobs:
       - name: Detectar Secrets - Repo Completo (Semanal)
         if: github.event_name == 'schedule'
         # trufflesecurity/trufflehog@v3.94.2
-        uses: trufflesecurity/trufflehog@47e7b7cd74f578e1e3145d48f669f22fd1330ca6
+        uses: trufflesecurity/trufflehog@17456f8c7d042d8c82c9a8ca9e937231f9f42e26
         with:
           path: ./
           extra_args: --json
