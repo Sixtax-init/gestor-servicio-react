@@ -27,10 +27,10 @@ export async function POST(request: NextRequest) {
     if (!matricula || !nombre || !apellidos || !email || !carrera || !password) {
       return NextResponse.json({ error: "Todos los campos obligatorios son requeridos" }, { status: 400 })
     }
-    if (!MATRICULA_REGEX.test(matricula)) {
+    if (typeof matricula !== "string" || matricula.length > 20 || !MATRICULA_REGEX.test(matricula)) {
       return NextResponse.json({ error: "Formato de matrícula inválido. Debe ser 8 dígitos o V + 8 dígitos" }, { status: 400 })
     }
-    if (!EMAIL_REGEX.test(email)) {
+    if (typeof email !== "string" || email.length > 254 || !EMAIL_REGEX.test(email)) {
       return NextResponse.json({ error: "Formato de correo electrónico inválido" }, { status: 400 })
     }
     if (sexo && !["H", "M"].includes(sexo)) {
