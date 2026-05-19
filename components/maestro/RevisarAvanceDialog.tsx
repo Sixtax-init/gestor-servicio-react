@@ -14,10 +14,11 @@ interface RevisarAvanceDialogProps {
   onOpenChange: (open: boolean) => void
   avanceId: number
   alumnoNombre: string
+  tipoCurso?: string
   onSuccess: () => void
 }
 
-export function RevisarAvanceDialog({ open, onOpenChange, avanceId, alumnoNombre, onSuccess }: RevisarAvanceDialogProps) {
+export function RevisarAvanceDialog({ open, onOpenChange, avanceId, alumnoNombre, tipoCurso, onSuccess }: RevisarAvanceDialogProps) {
   const [comentario, setComentario] = useState<string>("")
   const [horas, setHoras] = useState<string>("")
   const [loading, setLoading] = useState(false)
@@ -62,21 +63,23 @@ export function RevisarAvanceDialog({ open, onOpenChange, avanceId, alumnoNombre
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="horas-avance">Horas parciales a asignar</Label>
-            <Input
-              id="horas-avance"
-              type="number"
-              step="0.5"
-              min="0"
-              value={horas}
-              onChange={(e) => setHoras(e.target.value)}
-              placeholder="Ej. 2.5 (Opcional)"
-            />
-            <p className="text-[10px] text-muted-foreground italic">
-              Estas horas se sumarán inmediatamente al progreso del alumno.
-            </p>
-          </div>
+          {tipoCurso !== "curso_taller" && (
+            <div className="space-y-2">
+              <Label htmlFor="horas-avance">Horas parciales a asignar</Label>
+              <Input
+                id="horas-avance"
+                type="number"
+                step="0.5"
+                min="0"
+                value={horas}
+                onChange={(e) => setHoras(e.target.value)}
+                placeholder="Ej. 2.5 (Opcional)"
+              />
+              <p className="text-[10px] text-muted-foreground italic">
+                Estas horas se sumarán inmediatamente al progreso del alumno.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="comentario-avance">Retroalimentación / Comentarios</Label>

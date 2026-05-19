@@ -11,7 +11,8 @@ import {
     HelpCircle,
     LayoutDashboard,
     Settings,
-    ShieldAlert
+    ShieldAlert,
+    GraduationCap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,6 +31,7 @@ import { DepartamentosTab } from "./departamentos-tab"
 import { UsuariosTab } from "../admin/usuarios-tab"
 import { CursosTab } from "../admin/cursos-tab"
 import { InstitucionTab } from "./institucion-tab"
+import { InscripcionTab } from "../admin/inscripcion/inscripcion-tab"
 import type { SessionUser } from "@/lib/auth"
 import { apiFetch } from "@/lib/api-client"
 
@@ -157,7 +159,7 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:w-[600px] p-1 bg-muted/50 rounded-xl h-auto gap-1">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-[750px] p-1 bg-muted/50 rounded-xl h-auto gap-1">
                         <TabsTrigger value="departamentos" className="rounded-lg">
                             <Building2 className="h-4 w-4 mr-2" />
                             Departamentos
@@ -169,6 +171,10 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                         <TabsTrigger value="cursos" className="rounded-lg">
                             <BookOpen className="h-4 w-4 mr-2" />
                             Cursos
+                        </TabsTrigger>
+                        <TabsTrigger value="inscripcion" className="rounded-lg">
+                            <GraduationCap className="h-4 w-4 mr-2" />
+                            Inscripción
                         </TabsTrigger>
                         <TabsTrigger value="configuracion" className="rounded-lg">
                             <Settings className="h-4 w-4 mr-2" />
@@ -186,6 +192,10 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
 
                     <TabsContent value="cursos" className="animate-fade-in mt-0">
                         <CursosTab isAdminGlobal={true} />
+                    </TabsContent>
+
+                    <TabsContent value="inscripcion" className="animate-fade-in mt-0">
+                        <InscripcionTab />
                     </TabsContent>
 
                     <TabsContent value="configuracion" className="mt-0">

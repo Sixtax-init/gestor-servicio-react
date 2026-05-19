@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import type { Curso } from "@/lib/db"
+import type { Curso, TipoCurso } from "@/lib/db"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -86,7 +86,7 @@ export function EditCursoDialog({ curso, open, onOpenChange, onSuccess }: EditCu
 
           <div className="space-y-2">
             <Label htmlFor="tipo">Tipo</Label>
-            <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+            <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value as TipoCurso })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

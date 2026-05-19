@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     const queryText = `
-      SELECT u.id, u.matricula, u.nombre, u.apellidos, u.email, u.tipo_usuario, u.activo, u.debe_cambiar_password, u.created_at, u.departamento_id, d.nombre as departamento_nombre
+      SELECT u.id, u.matricula, u.nombre, u.apellidos, u.email, u.tipo_usuario, u.activo, u.pendiente_verificacion, u.created_at, u.departamento_id, d.nombre as departamento_nombre
       FROM usuarios u
       LEFT JOIN departamentos d ON u.departamento_id = d.id
       ${whereClauses}

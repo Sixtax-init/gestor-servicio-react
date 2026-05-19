@@ -58,6 +58,12 @@ export default function LoginPage() {
           duration: 8000,
         });
         window.history.replaceState({}, '', '/login');
+      } else if (motivo === "token_invalido") {
+        toast.error("Enlace inválido o expirado", {
+          description: "El enlace de verificación no es válido o ya expiró. Inicia sesión y reenvía el correo.",
+          duration: 8000,
+        });
+        window.history.replaceState({}, '', '/login');
       }
     }
     
@@ -104,6 +110,7 @@ export default function LoginPage() {
         administrador: "/admin",
         maestro: "/maestro",
         alumno: "/alumno",
+        pre_candidato: "/inscripcion",
       }
       window.location.href = dashboardMap[user?.tipo_usuario] ?? "/"
     } catch (err) {
@@ -187,9 +194,20 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Si tiene algun problema contacte al administrador</p>
-            <p> o visitanos en el Edificio 20 Grupo Usuarios de Linux</p>
+          <div className="mt-6 text-center text-sm text-muted-foreground space-y-1">
+            <p>
+              ¿Eres alumno y quieres inscribirte al Servicio Social?{" "}
+              <a href="/registro" className="text-primary hover:underline font-medium">
+                Regístrate aquí
+              </a>
+            </p>
+            <p>
+              <a href="/programas" className="text-primary hover:underline">
+                Ver catálogo de programas disponibles
+              </a>
+            </p>
+            <p>Si tiene algún problema contacte al administrador</p>
+            <p>o visítanos en el Edificio 20 Grupo Usuarios de Linux</p>
           </div>
         </CardContent>
       </Card>

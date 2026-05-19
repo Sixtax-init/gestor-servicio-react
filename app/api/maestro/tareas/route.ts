@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         INNER JOIN usuarios u ON i.alumno_id = u.id
         WHERE i.curso_id = ${curso_id} AND i.activo = true AND u.activo = true
       `
-      const emails = inscritos.map(ins => ins.email as string)
+      const emails = inscritos.map((ins: { email: string }) => ins.email)
       
       if (emails.length > 0) {
         // Ejecución "background" simulada

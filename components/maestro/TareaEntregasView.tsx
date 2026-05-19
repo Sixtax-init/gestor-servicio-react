@@ -12,6 +12,7 @@ import { apiFetch } from "@/lib/api-client"
 interface Tarea {
   id: number
   titulo: string
+  curso_tipo?: string
 }
 
 interface Entrega {
@@ -390,6 +391,7 @@ export function TareaEntregasView({ tarea, onBack }: TareaEntregasViewProps) {
           }}
           avanceId={selectedAvanceData.id}
           alumnoNombre={selectedAvanceData.nombre}
+          tipoCurso={tarea.curso_tipo}
           onSuccess={() => {
             fetchAvances();
             fetchEntregas();

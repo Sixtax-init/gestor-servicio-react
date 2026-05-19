@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
   tipo_usuario VARCHAR(20) NOT NULL CHECK (tipo_usuario IN ('main_admin', 'administrador', 'maestro', 'alumno')),
   departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL,
   password_hash VARCHAR(255) NOT NULL,
-  debe_cambiar_password BOOLEAN DEFAULT true,
-  reset_token VARCHAR(255),
-  reset_token_expires_at TIMESTAMP,
+  pendiente_verificacion BOOLEAN DEFAULT true,
+  token_accion VARCHAR(255),
+  token_accion_expires_at TIMESTAMP,
   activo BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -51,12 +51,12 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_activo ON usuarios(activo);
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS departamento_id INTEGER REFERENCES departamentos(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_usuarios_departamento ON usuarios(departamento_id);
 
--- Columnas para cambio de contraseña forzado al primer login
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS debe_cambiar_password BOOLEAN DEFAULT true;
+-- Columna de verificación pendiente (email para pre_candidato, cambio de contraseña para otros)
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS pendiente_verificacion BOOLEAN DEFAULT true;
 
--- Columnas para reset de contraseña por correo (uso único, expira en 1 hora)
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP;
+-- Token de acción único: reset de contraseña O verificación de email (expira en 1–24h)
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS token_accion VARCHAR(255);
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS token_accion_expires_at TIMESTAMP;
 
 -- Actualizar constraint de tipo_usuario para incluir main_admin
 DO $$ 
@@ -308,3 +308,344 @@ CREATE TABLE IF NOT EXISTS configuracion_institucional (
 INSERT INTO configuracion_institucional (id)
 VALUES (1)
 ON CONFLICT (id) DO NOTHING;
+
+-- =========================================================
+-- 007 — Módulo de Inscripción Digital al Servicio Social
+-- =========================================================
+
+DO $$
+BEGIN
+    ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_tipo_usuario_check;
+    ALTER TABLE usuarios ADD CONSTRAINT usuarios_tipo_usuario_check
+        CHECK (tipo_usuario IN ('main_admin', 'administrador', 'maestro', 'alumno', 'pre_candidato'));
+EXCEPTION
+    WHEN others THEN
+        RAISE NOTICE 'Error al actualizar constraint de tipo_usuario: %', SQLERRM;
+END $$;
+
+CREATE TABLE IF NOT EXISTS convocatorias (
+    id                      SERIAL PRIMARY KEY,
+    nombre                  VARCHAR(200) NOT NULL,
+    descripcion             TEXT,
+    fecha_inicio_registro   TIMESTAMP NOT NULL,
+    fecha_fin_registro      TIMESTAMP NOT NULL,
+    fecha_platica           TIMESTAMP,
+    fecha_inicio_seleccion  TIMESTAMP,
+    fecha_fin_seleccion     TIMESTAMP,
+    fecha_inicio_repechaje  TIMESTAMP,
+    fecha_fin_repechaje     TIMESTAMP,
+    estado                  VARCHAR(20) NOT NULL DEFAULT 'borrador'
+                                CHECK (estado IN ('borrador', 'activa', 'en_seleccion', 'repechaje', 'cerrada')),
+    activo                  BOOLEAN DEFAULT true,
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_convocatorias_estado ON convocatorias(estado);
+CREATE INDEX IF NOT EXISTS idx_convocatorias_activo ON convocatorias(activo);
+
+DROP TRIGGER IF EXISTS update_convocatorias_updated_at ON convocatorias;
+CREATE TRIGGER update_convocatorias_updated_at
+    BEFORE UPDATE ON convocatorias
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS programas (
+    id                              SERIAL PRIMARY KEY,
+    convocatoria_id                 INTEGER NOT NULL REFERENCES convocatorias(id) ON DELETE CASCADE,
+    departamento_id                 INTEGER REFERENCES departamentos(id) ON DELETE SET NULL,
+    curso_id                        INTEGER REFERENCES cursos(id) ON DELETE SET NULL,
+    nombre                          VARCHAR(200) NOT NULL,
+    descripcion                     TEXT,
+    objetivo                        TEXT,
+    tipo_ubicacion                  VARCHAR(20) NOT NULL DEFAULT 'interno'
+                                        CHECK (tipo_ubicacion IN ('interno', 'externo')),
+    actividades                     TEXT,
+    carreras_permitidas             TEXT[],
+    requiere_constancia_laboral     BOOLEAN DEFAULT false,
+    requisitos_adicionales          TEXT,
+    responsable_dependencia_nombre  VARCHAR(200),
+    responsable_dependencia_puesto  VARCHAR(200),
+    responsable_programa_nombre     VARCHAR(200),
+    responsable_programa_puesto     VARCHAR(200),
+    domicilio                       TEXT,
+    telefono                        VARCHAR(50),
+    email_contacto                  VARCHAR(255),
+    nombre_dependencia              TEXT,
+    departamento_externo            TEXT,
+    activo                          BOOLEAN DEFAULT true,
+    created_at                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_programas_convocatoria ON programas(convocatoria_id);
+CREATE INDEX IF NOT EXISTS idx_programas_departamento ON programas(departamento_id);
+CREATE INDEX IF NOT EXISTS idx_programas_activo       ON programas(activo);
+
+DROP TRIGGER IF EXISTS update_programas_updated_at ON programas;
+CREATE TRIGGER update_programas_updated_at
+    BEFORE UPDATE ON programas
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS horarios_programa (
+    id          SERIAL PRIMARY KEY,
+    programa_id INTEGER NOT NULL REFERENCES programas(id) ON DELETE CASCADE,
+    dias        VARCHAR(100) NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin    TIME NOT NULL,
+    plazas      INTEGER NOT NULL CHECK (plazas > 0),
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_horarios_programa ON horarios_programa(programa_id);
+
+CREATE TABLE IF NOT EXISTS solicitudes_inscripcion (
+    id              SERIAL PRIMARY KEY,
+    usuario_id      INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    convocatoria_id INTEGER NOT NULL REFERENCES convocatorias(id) ON DELETE CASCADE,
+    estado          VARCHAR(30) NOT NULL DEFAULT 'borrador'
+                        CHECK (estado IN (
+                            'borrador', 'pendiente', 'aprobada', 'rechazada',
+                            'en_seleccion', 'programa_seleccionado',
+                            'confirmada', 'desistio'
+                        )),
+    motivo_rechazo  TEXT,
+    revisado_por    INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    fecha_revision  TIMESTAMP,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(usuario_id, convocatoria_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_solicitudes_usuario      ON solicitudes_inscripcion(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_solicitudes_convocatoria ON solicitudes_inscripcion(convocatoria_id);
+CREATE INDEX IF NOT EXISTS idx_solicitudes_estado       ON solicitudes_inscripcion(estado);
+CREATE INDEX IF NOT EXISTS idx_solicitudes_revisado_por ON solicitudes_inscripcion(revisado_por);
+
+DROP TRIGGER IF EXISTS update_solicitudes_inscripcion_updated_at ON solicitudes_inscripcion;
+CREATE TRIGGER update_solicitudes_inscripcion_updated_at
+    BEFORE UPDATE ON solicitudes_inscripcion
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS documentos_solicitud (
+    id              SERIAL PRIMARY KEY,
+    solicitud_id    INTEGER NOT NULL REFERENCES solicitudes_inscripcion(id) ON DELETE CASCADE,
+    tipo_documento  VARCHAR(30) NOT NULL
+                        CHECK (tipo_documento IN (
+                            'kardex', 'horario', 'solicitud_prestador',
+                            'fotografia', 'constancia_laboral', 'propuesta_formato'
+                        )),
+    nombre_archivo  VARCHAR(255) NOT NULL,
+    ruta_archivo    VARCHAR(500) NOT NULL,
+    tipo_mime       VARCHAR(100),
+    tamano_bytes    INTEGER,
+    uploaded_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(solicitud_id, tipo_documento)
+);
+
+CREATE INDEX IF NOT EXISTS idx_documentos_solicitud ON documentos_solicitud(solicitud_id);
+
+CREATE TABLE IF NOT EXISTS turnos (
+    id              SERIAL PRIMARY KEY,
+    solicitud_id    INTEGER NOT NULL UNIQUE REFERENCES solicitudes_inscripcion(id) ON DELETE CASCADE,
+    convocatoria_id INTEGER NOT NULL REFERENCES convocatorias(id) ON DELETE CASCADE,
+    numero_turno    INTEGER NOT NULL,
+    tipo            VARCHAR(20) NOT NULL DEFAULT 'normal'
+                        CHECK (tipo IN ('normal', 'repechaje')),
+    fecha_inicio    TIMESTAMP NOT NULL,
+    fecha_fin       TIMESTAMP NOT NULL,
+    estado          VARCHAR(20) NOT NULL DEFAULT 'pendiente'
+                        CHECK (estado IN ('pendiente', 'activo', 'usado', 'vencido')),
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(convocatoria_id, numero_turno, tipo)
+);
+
+CREATE INDEX IF NOT EXISTS idx_turnos_convocatoria ON turnos(convocatoria_id);
+CREATE INDEX IF NOT EXISTS idx_turnos_estado       ON turnos(estado);
+
+CREATE TABLE IF NOT EXISTS preferencias_programa (
+    id           SERIAL PRIMARY KEY,
+    solicitud_id INTEGER NOT NULL REFERENCES solicitudes_inscripcion(id) ON DELETE CASCADE,
+    programa_id  INTEGER NOT NULL REFERENCES programas(id) ON DELETE CASCADE,
+    orden        SMALLINT NOT NULL CHECK (orden IN (1, 2, 3)),
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(solicitud_id, orden),
+    UNIQUE(solicitud_id, programa_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_preferencias_solicitud ON preferencias_programa(solicitud_id);
+
+CREATE TABLE IF NOT EXISTS inscripciones_programa (
+    id                    SERIAL PRIMARY KEY,
+    solicitud_id          INTEGER NOT NULL UNIQUE REFERENCES solicitudes_inscripcion(id) ON DELETE CASCADE,
+    horario_programa_id   INTEGER REFERENCES horarios_programa(id) ON DELETE RESTRICT,
+    convocatoria_id       INTEGER NOT NULL REFERENCES convocatorias(id) ON DELETE CASCADE,
+    estado                VARCHAR(30) NOT NULL DEFAULT 'pendiente_oficio'
+                              CHECK (estado IN (
+                                  'pendiente_oficio', 'oficio_enviado',
+                                  'firmado_subido', 'confirmada', 'rechazada_programa'
+                              )),
+    oficio_url            VARCHAR(500),
+    oficio_firmado_url    VARCHAR(500),
+    confirmado_por        INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    fecha_confirmacion    TIMESTAMP,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_inscripciones_prog_horario      ON inscripciones_programa(horario_programa_id);
+CREATE INDEX IF NOT EXISTS idx_inscripciones_prog_convocatoria ON inscripciones_programa(convocatoria_id);
+CREATE INDEX IF NOT EXISTS idx_inscripciones_prog_estado       ON inscripciones_programa(estado);
+
+DROP TRIGGER IF EXISTS update_inscripciones_programa_updated_at ON inscripciones_programa;
+CREATE TRIGGER update_inscripciones_programa_updated_at
+    BEFORE UPDATE ON inscripciones_programa
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =========================================================
+-- 008 — Propuestas de programa + campos documentos oficiales
+-- =========================================================
+
+ALTER TABLE usuarios
+    ADD COLUMN IF NOT EXISTS carrera   VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS sexo      VARCHAR(1) CHECK (sexo IN ('H', 'M')),
+    ADD COLUMN IF NOT EXISTS telefono  VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS domicilio TEXT;
+
+ALTER TABLE solicitudes_inscripcion
+    ADD COLUMN IF NOT EXISTS semestre                  VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS periodo                   VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS horas_previas_acreditadas INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE programas
+    ADD COLUMN IF NOT EXISTS tipo_programa VARCHAR(30)
+        CHECK (tipo_programa IN (
+            'educacion_adultos', 'desarrollo_comunidad', 'actividades_deportivas',
+            'actividades_civicas', 'actividades_culturales', 'medio_ambiente',
+            'desarrollo_sustentable', 'apoyo_salud', 'otros'
+        ));
+
+CREATE TABLE IF NOT EXISTS propuestas_programa (
+    id                       SERIAL PRIMARY KEY,
+    solicitud_id             INTEGER NOT NULL UNIQUE
+                                 REFERENCES solicitudes_inscripcion(id) ON DELETE CASCADE,
+    tipo_ubicacion           VARCHAR(20) NOT NULL DEFAULT 'externo'
+                                 CHECK (tipo_ubicacion IN ('interno', 'externo')),
+    dependencia              VARCHAR(200) NOT NULL,
+    responsable_nombre       VARCHAR(200) NOT NULL,
+    responsable_puesto       VARCHAR(100),
+    departamento_solicitante VARCHAR(200),
+    nombre_programa          VARCHAR(200) NOT NULL,
+    actividades              TEXT,
+    objetivo                 TEXT,
+    domicilio                TEXT,
+    telefono                 VARCHAR(50),
+    email_contacto           VARCHAR(255),
+    horario                  VARCHAR(200),
+    tipo_programa            VARCHAR(30)
+                                 CHECK (tipo_programa IN (
+                                     'educacion_adultos', 'desarrollo_comunidad', 'actividades_deportivas',
+                                     'actividades_civicas', 'actividades_culturales', 'medio_ambiente',
+                                     'desarrollo_sustentable', 'apoyo_salud', 'otros'
+                                 )),
+    estado                   VARCHAR(20) NOT NULL DEFAULT 'pendiente'
+                                 CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
+    motivo_rechazo           TEXT,
+    revisado_por             INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    fecha_revision           TIMESTAMP,
+    created_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_propuestas_solicitud ON propuestas_programa(solicitud_id);
+CREATE INDEX IF NOT EXISTS idx_propuestas_estado    ON propuestas_programa(estado);
+
+DROP TRIGGER IF EXISTS update_propuestas_programa_updated_at ON propuestas_programa;
+CREATE TRIGGER update_propuestas_programa_updated_at
+    BEFORE UPDATE ON propuestas_programa
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE inscripciones_programa
+    ADD COLUMN IF NOT EXISTS propuesta_id             INTEGER
+        REFERENCES propuestas_programa(id) ON DELETE RESTRICT,
+    ADD COLUMN IF NOT EXISTS numero_oficio            VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS fecha_inicio_actividades DATE,
+    ADD COLUMN IF NOT EXISTS fecha_fin_actividades    DATE;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_inscripcion_fuente'
+    ) THEN
+        ALTER TABLE inscripciones_programa
+            ADD CONSTRAINT chk_inscripcion_fuente
+                CHECK (
+                    (horario_programa_id IS NOT NULL AND propuesta_id IS NULL) OR
+                    (horario_programa_id IS NULL     AND propuesta_id IS NOT NULL)
+                );
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_inscripciones_prog_propuesta ON inscripciones_programa(propuesta_id);
+
+-- =========================================================
+-- 011 — nombre_dependencia en programas
+-- =========================================================
+
+ALTER TABLE programas
+    ADD COLUMN IF NOT EXISTS nombre_dependencia TEXT;
+
+-- =========================================================
+-- 012 — Ampliar semestre y periodo a VARCHAR(50)
+-- =========================================================
+
+ALTER TABLE solicitudes_inscripcion
+    ALTER COLUMN semestre TYPE VARCHAR(50),
+    ALTER COLUMN periodo  TYPE VARCHAR(50);
+
+-- =========================================================
+-- 013 — Estado 'borrador' en solicitudes_inscripcion
+-- =========================================================
+
+DO $$
+BEGIN
+    ALTER TABLE solicitudes_inscripcion
+        DROP CONSTRAINT IF EXISTS solicitudes_inscripcion_estado_check;
+    ALTER TABLE solicitudes_inscripcion
+        ADD CONSTRAINT solicitudes_inscripcion_estado_check
+        CHECK (estado IN (
+            'borrador', 'pendiente', 'aprobada', 'rechazada',
+            'en_seleccion', 'programa_seleccionado', 'confirmada', 'desistio'
+        ));
+    ALTER TABLE solicitudes_inscripcion
+        ALTER COLUMN estado SET DEFAULT 'borrador';
+EXCEPTION
+    WHEN others THEN
+        RAISE NOTICE 'Error al actualizar constraint de solicitudes estado: %', SQLERRM;
+END $$;
+
+-- =========================================================
+-- 014 — Estado 'firmado_subido' en inscripciones_programa
+-- =========================================================
+
+DO $$
+BEGIN
+    ALTER TABLE inscripciones_programa
+        DROP CONSTRAINT IF EXISTS inscripciones_programa_estado_check;
+    ALTER TABLE inscripciones_programa
+        ADD CONSTRAINT inscripciones_programa_estado_check
+        CHECK (estado IN (
+            'pendiente_oficio', 'oficio_enviado',
+            'firmado_subido', 'confirmada', 'rechazada_programa'
+        ));
+EXCEPTION
+    WHEN others THEN
+        RAISE NOTICE 'Error al actualizar constraint de inscripciones estado: %', SQLERRM;
+END $$;
+
+-- =========================================================
+-- 015 — departamento_externo en programas
+-- =========================================================
+
+ALTER TABLE programas
+    ADD COLUMN IF NOT EXISTS departamento_externo TEXT;

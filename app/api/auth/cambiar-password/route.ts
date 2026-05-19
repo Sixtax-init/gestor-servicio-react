@@ -46,13 +46,13 @@ export async function POST(request: Request) {
     await sql`
       UPDATE usuarios
       SET password_hash = ${nuevoHash},
-          debe_cambiar_password = false,
+          pendiente_verificacion = false,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${session.id}
     `
 
     // Actualizar la sesión para reflejar el cambio
-    await createSession({ ...session, debe_cambiar_password: false })
+    await createSession({ ...session, pendiente_verificacion: false })
 
     return NextResponse.json({ message: "Contraseña actualizada correctamente" })
   } catch (error) {

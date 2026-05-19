@@ -13,8 +13,8 @@ export async function GET(request: Request) {
 
   const [usuario] = await sql`
     SELECT id FROM usuarios
-    WHERE reset_token = ${token}
-      AND reset_token_expires_at > NOW()
+    WHERE token_accion = ${token}
+      AND token_accion_expires_at > NOW()
       AND activo = true
     LIMIT 1
   `
@@ -37,8 +37,8 @@ export async function POST(request: Request) {
     // Buscar usuario con ese token que no haya expirado
     const [usuario] = await sql`
       SELECT id FROM usuarios
-      WHERE reset_token = ${token}
-        AND reset_token_expires_at > NOW()
+      WHERE token_accion = ${token}
+        AND token_accion_expires_at > NOW()
         AND activo = true
       LIMIT 1
     `
@@ -53,9 +53,9 @@ export async function POST(request: Request) {
     await sql`
       UPDATE usuarios
       SET password_hash = ${nuevoHash},
-          reset_token = NULL,
-          reset_token_expires_at = NULL,
-          debe_cambiar_password = false,
+          token_accion = NULL,
+          token_accion_expires_at = NULL,
+          pendiente_verificacion = false,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${usuario.id}
     `

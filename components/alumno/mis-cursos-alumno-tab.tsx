@@ -17,7 +17,10 @@ interface Inscripcion {
   nombre_grupo: string
   tipo: string
   maestro_id: number
+  maestro_nombre: string | null
+  maestro_apellidos: string | null
   maestro_email: string | null
+  descripcion: string | null
 }
 
 interface MisCursosAlumnoTabProps {

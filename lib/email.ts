@@ -289,6 +289,47 @@ function buildNewAdvanceHtml(data: AdvanceNotificationData): string {
   )
 }
 
+// ─── Email verification ───────────────────────────────────────────────────────
+
+interface EmailVerificationData {
+  nombre: string
+  apellidos: string
+  email: string
+  verifyUrl: string
+}
+
+function buildEmailVerificationHtml(data: EmailVerificationData): string {
+  return buildBaseHtml(
+    "Verifica tu correo electrónico",
+    `
+    <p class="greeting">Hola, ${escapeHtml(data.nombre)} ${escapeHtml(data.apellidos)} 👋</p>
+    <p class="content-text">
+      Gracias por registrarte en el Sistema de Gestión de Servicio Social.<br>
+      Para activar tu cuenta y comenzar el proceso de inscripción, confirma tu correo electrónico haciendo clic en el botón de abajo.
+    </p>
+    <div class="info-card" style="text-align: center; border-color: #10b98144;">
+      <p style="color: #10b981; margin: 0; font-size: 13px; font-weight: 600;">
+        Este enlace es válido por <strong>24 horas</strong>.
+      </p>
+    </div>
+    <div class="warning" style="background: transparent; color: #94a3b8; border: 1px dashed #334155;">
+      Si no creaste esta cuenta, puedes ignorar este mensaje de forma segura.
+    </div>
+    `,
+    `<a class="btn" href="${data.verifyUrl}" style="background:#10b981; box-shadow:0 4px 12px rgba(16,185,129,0.3);">Verificar mi correo →</a>`
+  )
+}
+
+export async function sendEmailVerificationEmail(data: EmailVerificationData): Promise<void> {
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
+  await transporter.sendMail({
+    from: `"Gestión de Servicio Social" <${from}>`,
+    to: data.email,
+    subject: "Verifica tu correo — Servicio Social",
+    html: buildEmailVerificationHtml(data),
+  })
+}
+
 export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<void> {
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
   await transporter.sendMail({
@@ -354,5 +395,127 @@ export async function sendNewAdvanceNotificationEmail(data: AdvanceNotificationD
     to: data.emailMaestro,
     subject: `Nueva Entrega de ${data.nombreAlumno} — ${data.tituloTarea}`,
     html: buildNewAdvanceHtml(data),
+  })
+}
+
+// ─── Inscripción: aprobación / rechazo ───────────────────────────────────────
+
+interface SolicitudRevisadaData {
+  nombre: string
+  apellidos: string
+  email: string
+  convocatoriaNombre: string
+  motivo_rechazo?: string
+}
+
+function buildSolicitudAprobadaHtml(data: SolicitudRevisadaData): string {
+  const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/inscripcion`
+  return buildBaseHtml(
+    "Solicitud Aprobada",
+    `
+    <p class="greeting">¡Felicidades, ${escapeHtml(data.nombre)}!</p>
+    <p class="content-text">
+      Tu solicitud de inscripción al servicio social ha sido <strong style="color:#10b981;">aprobada</strong> por el departamento.
+    </p>
+    <div class="info-card" style="border-color:#10b98144;">
+      <span class="info-label">Convocatoria</span>
+      <span class="info-value">${escapeHtml(data.convocatoriaNombre)}</span>
+    </div>
+    <p class="content-text">
+      Próximamente se te asignará un número de turno para que puedas seleccionar tu programa de servicio social.
+      Mantente pendiente de tu portal de inscripción.
+    </p>
+    `,
+    `<a class="btn" href="${loginUrl}" style="background:#10b981; box-shadow:0 4px 12px rgba(16,185,129,0.3);">Ver mi portal →</a>`
+  )
+}
+
+function buildSolicitudRechazadaHtml(data: SolicitudRevisadaData): string {
+  const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/inscripcion`
+  return buildBaseHtml(
+    "Solicitud Rechazada",
+    `
+    <p class="greeting">Hola, ${escapeHtml(data.nombre)} ${escapeHtml(data.apellidos)}</p>
+    <p class="content-text">
+      Lamentablemente, tu solicitud de inscripción al servicio social ha sido <strong style="color:#ef4444;">rechazada</strong>.
+      A continuación encontrarás el motivo indicado por el departamento.
+    </p>
+    <div class="info-card" style="border-color:#ef444444;">
+      <span class="info-label">Motivo del rechazo</span>
+      <span class="info-value" style="color:#fca5a5; font-size:14px; font-weight:500;">${escapeHtml(data.motivo_rechazo ?? "Sin especificar")}</span>
+    </div>
+    <p class="content-text">
+      Puedes corregir los documentos indicados y volver a enviar tu solicitud desde el portal de inscripción,
+      <strong>siempre que la convocatoria siga abierta</strong>.
+    </p>
+    <div class="warning">
+      Si tienes dudas, acude al departamento de Servicio Social en el Edificio 20.
+    </div>
+    `,
+    `<a class="btn" href="${loginUrl}">Corregir y reenviar →</a>`
+  )
+}
+
+export async function sendSolicitudAprobadaEmail(data: SolicitudRevisadaData): Promise<void> {
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
+  await transporter.sendMail({
+    from: `"Servicio Social" <${from}>`,
+    to: data.email,
+    subject: `Solicitud aprobada — ${escapeHtml(data.convocatoriaNombre)}`,
+    html: buildSolicitudAprobadaHtml(data),
+  })
+}
+
+export async function sendSolicitudRechazadaEmail(data: SolicitudRevisadaData): Promise<void> {
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
+  await transporter.sendMail({
+    from: `"Servicio Social" <${from}>`,
+    to: data.email,
+    subject: `Solicitud rechazada — ${escapeHtml(data.convocatoriaNombre)}`,
+    html: buildSolicitudRechazadaHtml(data),
+  })
+}
+
+// ─── Inscripción: oficio listo ────────────────────────────────────────────────
+
+interface OficioListoData {
+  nombre: string
+  apellidos: string
+  email: string
+  numero_oficio: string
+  cartaUrl: string
+}
+
+function buildOficioListoHtml(data: OficioListoData): string {
+  return buildBaseHtml(
+    "Tu carta de asignación está lista",
+    `
+    <p class="greeting">Hola, ${escapeHtml(data.nombre)} 👋</p>
+    <p class="content-text">
+      Tu carta de asignación ha sido generada y ya está disponible en tu portal.
+      Descárgala, imprímela y llévala <strong>personalmente</strong> a la dependencia donde realizarás tu servicio social para que la firmen y sellen.
+    </p>
+    <div class="info-card" style="border-color:#3b82f644;">
+      <span class="info-label">Número de Oficio</span>
+      <span class="info-value" style="font-family: monospace;">${escapeHtml(data.numero_oficio)}</span>
+    </div>
+    <p class="content-text">
+      Una vez que la dependencia firme y selle la carta, <strong>escanea o fotografía el documento</strong> y súbelo desde tu portal de inscripción para continuar con el proceso.
+    </p>
+    <div class="warning" style="background: transparent; color: #94a3b8; border: 1px dashed #334155;">
+      Si tienes dudas sobre el proceso, acude al Departamento de Gestión Tecnológica y Vinculación.
+    </div>
+    `,
+    `<a class="btn" href="${data.cartaUrl}">Ver e Imprimir mi Carta →</a>`
+  )
+}
+
+export async function sendOficioListoEmail(data: OficioListoData): Promise<void> {
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER
+  await transporter.sendMail({
+    from: `"Servicio Social" <${from}>`,
+    to: data.email,
+    subject: `Tu carta de asignación está lista — Oficio ${escapeHtml(data.numero_oficio)}`,
+    html: buildOficioListoHtml(data),
   })
 }
