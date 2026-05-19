@@ -103,7 +103,7 @@ export function CartaAsignacionPreview({ data }: { data: CartaData }) {
       {/* Firma institucional */}
       <div className="mb-8">
         <p>ATENTAMENTE.-</p>
-        <p className="italic">"Ciencia y Tecnología al Servicio del Hombre"</p>
+        <p className="italic">&ldquo;Ciencia y Tecnología al Servicio del Hombre&rdquo;</p>
         <br />
         <p className="font-bold">LIC. MARIA ARMANDINA RAMIREZ OROZCO</p>
         <p className="font-bold">Jefa Depto. de Gestión Tecnológica y Vinculación</p>

@@ -58,7 +58,7 @@ export default function CartaAsignacionPage() {
             Imprimir / Guardar como PDF
           </Button>
           <p className="text-xs text-muted-foreground">
-            En el diálogo de impresión selecciona "Guardar como PDF" y desmarca encabezados y pies de página.
+            En el diálogo de impresión selecciona &ldquo;Guardar como PDF&rdquo; y desmarca encabezados y pies de página.
             Una vez descargado, <strong>cierra esta ventana</strong> para regresar al portal.
           </p>
         </div>
