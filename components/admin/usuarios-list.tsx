@@ -184,7 +184,7 @@ export function UsuariosList({ isAdminGlobal = false }: UsuariosListProps) {
                           <Badge variant={usuario.activo ? "default" : "outline"}>
                             {usuario.activo ? "Activo" : "Inactivo"}
                           </Badge>
-                          {usuario.activo && (usuario as any).debe_cambiar_password && (
+                          {usuario.activo && (usuario as any).pendiente_verificacion && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>

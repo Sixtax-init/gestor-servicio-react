@@ -48,7 +48,7 @@ export async function proxy(request: NextRequest) {
 
     // Los claims ahora están en la RAÍZ del payload (no en payload.user)
     const tipo_usuario = payload.tipo_usuario as string | undefined
-    const debe_cambiar_password = Boolean(payload.debe_cambiar_password)
+    const pendiente_verificacion = Boolean(payload.pendiente_verificacion)
 
     if (!tipo_usuario) {
       // Token malformado — no tiene tipo_usuario
@@ -58,14 +58,22 @@ export async function proxy(request: NextRequest) {
       return redirectTo("/login", request)
     }
 
-    // Si el usuario debe cambiar su contraseña, solo puede acceder a esa página/API
-    if (debe_cambiar_password) {
-      const allowedWhilePending = [CHANGE_PASSWORD_PATH, CHANGE_PASSWORD_API, "/api/auth/logout"]
-      if (!allowedWhilePending.some((p) => pathname.startsWith(p))) {
-        if (isApiRoute) {
-          return NextResponse.json({ error: "Debes cambiar tu contraseña" }, { status: 403 })
+    // Bloqueo por acción pendiente — diferencia el rol para redirigir correctamente
+    if (pendiente_verificacion) {
+      if (tipo_usuario === "pre_candidato") {
+        // Pre-candidato: debe verificar su correo antes de continuar
+        const VERIFY_PATHS = ["/pendiente-verificacion", "/api/auth/verificar-email", "/api/auth/reenviar-verificacion", "/api/auth/logout"]
+        if (!VERIFY_PATHS.some((p) => pathname.startsWith(p))) {
+          if (isApiRoute) return NextResponse.json({ error: "Debes verificar tu correo electrónico" }, { status: 403 })
+          return redirectTo("/pendiente-verificacion", request)
         }
-        return redirectTo(CHANGE_PASSWORD_PATH, request)
+      } else {
+        // Otros roles (admin, maestro, alumno): deben cambiar su contraseña temporal
+        const allowedWhilePending = [CHANGE_PASSWORD_PATH, CHANGE_PASSWORD_API, "/api/auth/logout"]
+        if (!allowedWhilePending.some((p) => pathname.startsWith(p))) {
+          if (isApiRoute) return NextResponse.json({ error: "Debes cambiar tu contraseña" }, { status: 403 })
+          return redirectTo(CHANGE_PASSWORD_PATH, request)
+        }
       }
       return NextResponse.next()
     }
@@ -84,6 +92,16 @@ export async function proxy(request: NextRequest) {
     }
 
     if (pathname.startsWith("/alumno") && tipo_usuario !== "alumno") {
+      return redirectTo("/login", request)
+    }
+
+    if (
+      pathname.startsWith("/inscripcion") &&
+      tipo_usuario !== "pre_candidato" &&
+      tipo_usuario !== "alumno" &&
+      tipo_usuario !== "administrador" &&
+      tipo_usuario !== "main_admin"
+    ) {
       return redirectTo("/login", request)
     }
 
@@ -112,5 +130,7 @@ export const config = {
     "/api/maestro/:path*",
     "/api/alumno/:path*",
     "/api/auth/cambiar-password",
+    "/inscripcion/:path*",
+    "/api/inscripcion/:path*",
   ],
 }

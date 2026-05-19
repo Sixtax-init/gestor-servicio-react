@@ -48,7 +48,7 @@ export async function createSession(user: SessionUser, userAgent: string = "", i
         session_id: sessionId,
         tipo_usuario: user.tipo_usuario,
         departamento_id: user.departamento_id ?? null,
-        debe_cambiar_password: user.debe_cambiar_password,
+        pendiente_verificacion: user.pendiente_verificacion,
     })
         .setProtectedHeader({ alg: "HS256" })
         .setSubject(String(user.id))
@@ -134,7 +134,7 @@ export async function destroySession(): Promise<void> {
 
 // Verificar si el usuario tiene un rol específico
 export async function requireRole(
-    allowedRoles: Array<"main_admin" | "administrador" | "maestro" | "alumno">,
+    allowedRoles: Array<"main_admin" | "administrador" | "maestro" | "alumno" | "pre_candidato">,
 ): Promise<SessionUser | null> {
     const user = await getSession()
 

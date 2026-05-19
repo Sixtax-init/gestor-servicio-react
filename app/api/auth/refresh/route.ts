@@ -21,7 +21,7 @@ async function performRefresh(request: NextRequest) {
     // Buscar la sesión ligada a este refresh token
     const refreshTokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex")
     const sessions = await sql`
-        SELECT s.id, s.usuario_id, s.activo, u.tipo_usuario, u.departamento_id, u.debe_cambiar_password
+        SELECT s.id, s.usuario_id, s.activo, u.tipo_usuario, u.departamento_id, u.pendiente_verificacion
         FROM sesiones s
         JOIN usuarios u ON s.usuario_id = u.id
         WHERE s.refresh_token = ${refreshTokenHash} AND s.expires_at > NOW()
@@ -51,7 +51,7 @@ async function performRefresh(request: NextRequest) {
         session_id: session.id,
         tipo_usuario: session.tipo_usuario,
         departamento_id: session.departamento_id ?? null,
-        debe_cambiar_password: session.debe_cambiar_password,
+        pendiente_verificacion: session.pendiente_verificacion,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setSubject(String(session.usuario_id))

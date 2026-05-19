@@ -5,11 +5,11 @@ export async function GET() {
   try {
     console.log("Iniciando migración de base de datos...")
     
-    // Añadir reset_token si no existe
+    // Añadir token_accion si no existe
     await sql`
       ALTER TABLE usuarios 
-      ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255),
-      ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP
+      ADD COLUMN IF NOT EXISTS token_accion VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS token_accion_expires_at TIMESTAMP
     `
 
     // Añadir comentario_revision a entregas_avances si no existe

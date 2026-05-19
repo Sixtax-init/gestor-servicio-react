@@ -48,6 +48,9 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: Cr
   })
   const [archivoInstrucciones, setArchivoInstrucciones] = useState<File | null>(null)
 
+  const selectedCurso = cursos.find((c) => c.id === Number(formData.curso_id)) ?? null
+  const esServicioSocial = selectedCurso?.tipo === "servicio_social"
+
   useEffect(() => {
     if (open) {
       fetchCursos()
@@ -209,17 +212,19 @@ export function CreateTareaDialog({ open, onOpenChange, onSuccess, cursoId }: Cr
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="asignacion_horas">Horas asignadas (opcional)</Label>
-              <Input
-                id="asignacion_horas"
-                type="number"
-                min="0"
-                value={formData.asignacion_horas}
-                onChange={(e) => setFormData({ ...formData, asignacion_horas: e.target.value })}
-                placeholder="Para servicio social"
-              />
-            </div>
+            {esServicioSocial && (
+              <div className="space-y-2">
+                <Label htmlFor="asignacion_horas">Horas asignadas (opcional)</Label>
+                <Input
+                  id="asignacion_horas"
+                  type="number"
+                  min="0"
+                  value={formData.asignacion_horas}
+                  onChange={(e) => setFormData({ ...formData, asignacion_horas: e.target.value })}
+                  placeholder="Para servicio social"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="limite_alumnos">Límite de alumnos (opcional)</Label>

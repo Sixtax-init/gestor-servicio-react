@@ -18,6 +18,7 @@ import { toast } from "sonner"
 interface Tarea {
   id: number
   titulo: string
+  curso_tipo?: string
 }
 
 interface Entrega {
@@ -406,6 +407,7 @@ export function VerEntregasDialog({ tarea, open, onOpenChange }: VerEntregasDial
             }}
             avanceId={selectedAvanceData.id}
             alumnoNombre={selectedAvanceData.nombre}
+            tipoCurso={tarea.curso_tipo}
             onSuccess={() => {
               fetchAvances();
               fetchEntregas();

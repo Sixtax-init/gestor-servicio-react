@@ -1,8 +1,13 @@
-import { Pool } from "pg"
+import { Pool, types } from "pg"
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not defined")
 }
+
+// node-postgres reads TIMESTAMP WITHOUT TIME ZONE as local server time.
+// Since the server may run in UTC-6 (Windows) and values are stored as UTC,
+// this parser forces all TIMESTAMP values to be interpreted as UTC.
+types.setTypeParser(1114, (str: string) => (str ? new Date(str + "Z") : null))
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -28,7 +33,101 @@ export async function sql(query: TemplateStringsArray, ...params: any[]) {
   }
 }
 
-export type TipoUsuario = "main_admin" | "administrador" | "maestro" | "alumno"
+export type TipoUsuario = "main_admin" | "administrador" | "maestro" | "alumno" | "pre_candidato"
+
+export type EstadoConvocatoria = "borrador" | "activa" | "en_seleccion" | "repechaje" | "cerrada"
+export type EstadoSolicitud =
+  | "pendiente"
+  | "aprobada"
+  | "rechazada"
+  | "en_seleccion"
+  | "programa_seleccionado"
+  | "confirmada"
+  | "desistio"
+export type TipoDocumento =
+  | "kardex"
+  | "horario"
+  | "solicitud_prestador"
+  | "fotografia"
+  | "constancia_laboral"
+  | "propuesta_formato"
+export type TipoUbicacion = "interno" | "externo"
+export type EstadoTurno = "pendiente" | "activo" | "usado" | "vencido"
+export type EstadoInscripcionPrograma =
+  | "pendiente_oficio"
+  | "oficio_enviado"
+  | "firmado_subido"
+  | "confirmada"
+  | "rechazada_programa"
+export type EstadoPropuesta = "pendiente" | "aprobada" | "rechazada"
+
+export interface Convocatoria {
+  id: number
+  nombre: string
+  descripcion: string | null
+  fecha_inicio_registro: Date
+  fecha_fin_registro: Date
+  fecha_platica: Date | null
+  fecha_inicio_seleccion: Date | null
+  fecha_fin_seleccion: Date | null
+  fecha_inicio_repechaje: Date | null
+  fecha_fin_repechaje: Date | null
+  estado: EstadoConvocatoria
+  activo: boolean
+  created_at: Date
+  updated_at: Date
+}
+
+export interface Programa {
+  id: number
+  convocatoria_id: number
+  departamento_id: number | null
+  curso_id: number | null
+  nombre: string
+  descripcion: string | null
+  objetivo: string | null
+  tipo_ubicacion: TipoUbicacion
+  actividades: string | null
+  carreras_permitidas: string[] | null
+  requiere_constancia_laboral: boolean
+  requisitos_adicionales: string | null
+  responsable_dependencia_nombre: string | null
+  responsable_dependencia_puesto: string | null
+  responsable_programa_nombre: string | null
+  responsable_programa_puesto: string | null
+  domicilio: string | null
+  telefono: string | null
+  email_contacto: string | null
+  tipo_programa: string | null
+  activo: boolean
+  created_at: Date
+  updated_at: Date
+}
+
+export interface HorarioPrograma {
+  id: number
+  programa_id: number
+  dias: string
+  hora_inicio: string
+  hora_fin: string
+  plazas: number
+  created_at: Date
+}
+
+export interface SolicitudInscripcion {
+  id: number
+  usuario_id: number
+  convocatoria_id: number
+  estado: EstadoSolicitud
+  motivo_rechazo: string | null
+  revisado_por: number | null
+  fecha_revision: Date | null
+  semestre: string | null
+  periodo: string | null
+  horas_previas_acreditadas: number
+  created_at: Date
+  updated_at: Date
+}
 export type TipoCurso = "servicio_social" | "taller_curso"
 export type Prioridad = "baja" | "media" | "alta" | "urgente"
 export type EstadoEntrega = "pendiente" | "revisada" | "aprobada" | "rechazada"
@@ -52,9 +151,9 @@ export interface Usuario {
   tipo_usuario: TipoUsuario
   departamento_id: number | null
   password_hash: string
-  debe_cambiar_password: boolean
-  reset_token: string | null
-  reset_token_expires_at: Date | null
+  pendiente_verificacion: boolean
+  token_accion: string | null
+  token_accion_expires_at: Date | null
   activo: boolean
   created_at: Date
   updated_at: Date

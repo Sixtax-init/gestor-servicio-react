@@ -3,14 +3,12 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useTheme } from "next-themes"
-import { usePathname } from "next/navigation"
 import { Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
-  const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

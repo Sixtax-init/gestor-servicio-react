@@ -30,6 +30,7 @@ interface Tarea {
   limite_alumnos: number | null
   archivo_instrucciones: string | null
   activo: boolean
+  curso_tipo?: string
 }
 
 interface EditTareaDialogProps {
@@ -169,16 +170,18 @@ export function EditTareaDialog({ tarea, open, onOpenChange, onSuccess }: EditTa
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="asignacion_horas">Horas asignadas</Label>
-              <Input
-                id="asignacion_horas"
-                type="number"
-                min="0"
-                value={formData.asignacion_horas}
-                onChange={(e) => setFormData({ ...formData, asignacion_horas: e.target.value })}
-              />
-            </div>
+            {tarea.curso_tipo === "servicio_social" && (
+              <div className="space-y-2">
+                <Label htmlFor="asignacion_horas">Horas asignadas</Label>
+                <Input
+                  id="asignacion_horas"
+                  type="number"
+                  min="0"
+                  value={formData.asignacion_horas}
+                  onChange={(e) => setFormData({ ...formData, asignacion_horas: e.target.value })}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="limite_alumnos">Límite de alumnos</Label>

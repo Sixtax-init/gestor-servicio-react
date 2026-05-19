@@ -31,8 +31,8 @@ export async function POST(request: Request) {
     // 3. Guardar token con expiración de 1 hora
     await sql`
       UPDATE usuarios
-      SET reset_token = ${token},
-          reset_token_expires_at = NOW() + INTERVAL '1 hour',
+      SET token_accion = ${token},
+          token_accion_expires_at = NOW() + INTERVAL '1 hour',
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${usuario.id}
     `

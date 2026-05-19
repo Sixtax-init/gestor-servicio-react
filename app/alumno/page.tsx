@@ -33,7 +33,7 @@ export default async function AlumnoPage() {
 
 
   // Calcular horas totales
-  const horasTotales = inscripciones.reduce((sum, insc) => sum + (insc.horas_completadas || 0), 0)
+  const horasTotales = inscripciones.reduce((sum: number, insc: { horas_completadas?: number }) => sum + (insc.horas_completadas || 0), 0)
 
   const stats = {
     cursosInscritos: inscripciones.length,

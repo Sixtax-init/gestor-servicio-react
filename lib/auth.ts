@@ -8,16 +8,16 @@ export interface SessionUser {
   nombre: string
   apellidos: string
   email: string
-  tipo_usuario: "main_admin" | "administrador" | "maestro" | "alumno"
+  tipo_usuario: "main_admin" | "administrador" | "maestro" | "alumno" | "pre_candidato"
   departamento_id: number | null
-  debe_cambiar_password: boolean
+  pendiente_verificacion: boolean
 }
 
 // Verificar credenciales de usuario
 export async function verifyCredentials(matricula: string, password: string): Promise<SessionUser | null> {
   try {
     const result = await sql`
-      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, password_hash, activo, debe_cambiar_password
+      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, password_hash, activo, pendiente_verificacion
       FROM usuarios
       WHERE matricula = ${matricula}
       LIMIT 1
@@ -52,7 +52,7 @@ export async function verifyCredentials(matricula: string, password: string): Pr
       email: usuario.email,
       tipo_usuario: usuario.tipo_usuario,
       departamento_id: usuario.departamento_id,
-      debe_cambiar_password: usuario.debe_cambiar_password ?? false,
+      pendiente_verificacion: usuario.pendiente_verificacion ?? false,
     }
   } catch (error) {
     console.error("[auth] Error verifying credentials:", error)
@@ -67,17 +67,30 @@ export async function createUser(data: {
   apellidos: string
   email: string
   password: string
-  tipo_usuario: "main_admin" | "administrador" | "maestro" | "alumno"
+  tipo_usuario: "main_admin" | "administrador" | "maestro" | "alumno" | "pre_candidato"
   departamento_id?: number | null
+  pendiente_verificacion?: boolean
+  carrera?: string | null
+  sexo?: string | null
+  telefono?: string | null
+  domicilio?: string | null
 }): Promise<SessionUser | null> {
   try {
-    // Hash de la contraseña
     const password_hash = await bcrypt.hash(data.password, 10)
+    const debe_cambiar = data.pendiente_verificacion ?? true
 
     const result = await sql`
-      INSERT INTO usuarios (matricula, nombre, apellidos, email, tipo_usuario, departamento_id, password_hash, activo, debe_cambiar_password)
-      VALUES (${data.matricula}, ${data.nombre}, ${data.apellidos}, ${data.email}, ${data.tipo_usuario}, ${data.departamento_id || null}, ${password_hash}, true, true)
-      RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, debe_cambiar_password
+      INSERT INTO usuarios (
+        matricula, nombre, apellidos, email, tipo_usuario,
+        departamento_id, password_hash, activo, pendiente_verificacion,
+        carrera, sexo, telefono, domicilio
+      )
+      VALUES (
+        ${data.matricula}, ${data.nombre}, ${data.apellidos}, ${data.email}, ${data.tipo_usuario},
+        ${data.departamento_id || null}, ${password_hash}, true, ${debe_cambiar},
+        ${data.carrera ?? null}, ${data.sexo ?? null}, ${data.telefono ?? null}, ${data.domicilio ?? null}
+      )
+      RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, pendiente_verificacion
     `
 
     if (result.length === 0) {
@@ -95,7 +108,7 @@ export async function createUser(data: {
 export async function getUserById(id: number): Promise<SessionUser | null> {
   try {
     const result = await sql`
-      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, debe_cambiar_password
+      SELECT id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, pendiente_verificacion
       FROM usuarios
       WHERE id = ${id} AND activo = true
       LIMIT 1

@@ -9,28 +9,7 @@ import { Printer, Loader2, Monitor, Smartphone, ArrowLeft } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { apiFetch } from "@/lib/api-client"
-
-export interface ReportData {
-  reportNumber: string
-  apellidoPaterno: string
-  apellidoMaterno: string
-  nombre: string
-  carrera: string
-  numeroControl: string
-  fechaInicioDia: string
-  fechaInicioMes: string
-  fechaInicioAno: string
-  fechaFinDia: string
-  fechaFinMes: string
-  fechaFinAno: string
-  dependencia: string
-  programa: string
-  resumenActividades: string
-  horasReporte: string
-  horasAcumuladas: string
-  nombreJefe: string
-  puestoJefe: string
-}
+import type { ReportData } from "@/types/report"
 
 export default function Page() {
   const router = useRouter()
@@ -66,6 +45,7 @@ export default function Page() {
     horasAcumuladas: "",
     nombreJefe: "",
     puestoJefe: "",
+    actividades: [],
   })
 
   const [showPreview, setShowPreview] = useState(false)
