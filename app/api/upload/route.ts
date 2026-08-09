@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/session.server"
 import { sql } from "@/lib/db"
-import { saveFile } from "@/lib/file-upload"
+import { saveFile, isUploadType, hasBlockedExtension } from "@/lib/file-upload"
 
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
@@ -31,10 +31,21 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File
 
     // ✅ Nuevos parámetros (opcionales)
-    const type = (formData.get("type") as string) || "entregas"
+    const rawType = (formData.get("type") as string) || "entregas"
     const referenceId =
       (formData.get("referenceId") as string) || (formData.get("entregaId") as string) || "0"
 
+    // El tipo llega del cliente y se usa para construir una ruta en disco:
+    // se valida contra la lista blanca antes de tocar el sistema de archivos.
+    if (!isUploadType(rawType)) {
+      return NextResponse.json({ error: "Tipo de subida no permitido" }, { status: 400 })
+    }
+    const type = rawType
+
+    const parsedReferenceId = Number(referenceId)
+    if (!Number.isInteger(parsedReferenceId) || parsedReferenceId < 0) {
+      return NextResponse.json({ error: "referenceId inválido" }, { status: 400 })
+    }
 
     if (!file) {
       return NextResponse.json({ error: "Archivo requerido" }, { status: 400 })
@@ -46,24 +57,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar tipo de archivo
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    if (!ALLOWED_MIME_TYPES.includes(file.type) || hasBlockedExtension(file.name)) {
       return NextResponse.json({ error: "Tipo de archivo no permitido. Solo se aceptan PDF, imágenes, Word, Excel y PowerPoint" }, { status: 400 })
     }
 
-    // ✅ Validación solo para ENTREGAS (no para AVANCES)
-    if (type === "entregas") {
-      if (!referenceId || referenceId === "0") {
+    // ✅ Validación de propiedad para ENTREGAS y AVANCES ligados a una entrega
+    if (type === "entregas" || (type === "avances" && parsedReferenceId !== 0)) {
+      if (type === "entregas" && parsedReferenceId === 0) {
         return NextResponse.json({ error: "Falta entregaId" }, { status: 400 })
       }
 
       const entrega = await sql`
-        SELECT * FROM entregas
-        WHERE id = ${Number(referenceId)} 
+        SELECT id FROM entregas
+        WHERE id = ${parsedReferenceId}
           AND (${user.tipo_usuario} != 'alumno' OR alumno_id = ${user.id})
       `
       if (entrega.length === 0) {
         return NextResponse.json({ error: "Entrega no encontrada o sin permisos" }, { status: 404 })
       }
+    }
+
+    // Los materiales de curso/tarea sólo los sube el personal docente
+    if (["cursos", "tareas", "instrucciones"].includes(type) &&
+        !["maestro", "administrador", "main_admin"].includes(user.tipo_usuario)) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     // 💾 Guardar archivo según tipo (agregamos 'avances')
@@ -72,17 +89,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
-    const rutaArchivo = await saveFile(
-      file,
-      Number(referenceId) || 0,
-      type as "entregas" | "tareas" | "cursos" | "avances" | "institucion"
-    )
+    const rutaArchivo = await saveFile(file, parsedReferenceId, type)
 
     // 🧾 Registrar en DB solo si es entrega
-    if (type === "entregas" && referenceId !== "0") {
+    if (type === "entregas" && parsedReferenceId !== 0) {
       await sql`
         INSERT INTO archivos (entrega_id, nombre_archivo, ruta_archivo, tipo_mime, tamano_bytes)
-        VALUES (${Number(referenceId)}, ${file.name}, ${rutaArchivo}, ${file.type}, ${file.size})
+        VALUES (${parsedReferenceId}, ${file.name}, ${rutaArchivo}, ${file.type}, ${file.size})
       `
     }
 

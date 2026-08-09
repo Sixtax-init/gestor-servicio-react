@@ -11,7 +11,16 @@
 /scripts/*
 !/scripts/setup-complete-db.sql
 !/scripts/003-add-reset-token.sql
+# Las migraciones sueltas NNN-*.sql / rNNN-*.sql NO se versionan: son trabajo
+# transitorio que se integra a setup-complete-db.sql una vez validado (ver §5
+# de PRODUCCION.md). Este script es la excepción porque no es una migración de
+# esquema: el servidor lo necesita para mover los archivos ya subidos fuera de
+# public/ y no puede consolidarse en un .sql.
+!/scripts/migrate-uploads-privados.js
 /docs
+
+# archivos privados de alumnos — fuera de public/, nunca se versionan
+/private-uploads/
 
 #public
 public/*

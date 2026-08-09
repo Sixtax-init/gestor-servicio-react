@@ -33,7 +33,7 @@ else:
 
 # ── npm audit ─────────────────────────────────────────────────
 lines.append("")
-lines.append("[ VULNERABILIDADES EN DEPENDENCIAS (npm audit) ]")
+lines.append("[ VULNERABILIDADES EN DEPENDENCIAS (pnpm audit) ]")
 if audit_failed:
     try:
         with open("npm-audit-report.json") as f:
