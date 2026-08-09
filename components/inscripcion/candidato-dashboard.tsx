@@ -33,7 +33,6 @@ import {
   MapPin,
   Phone,
   Mail,
-  Users,
   Building2,
   TriangleAlert,
   PartyPopper,

@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server"
 import { requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 import { readFile } from "fs/promises"
-import { existsSync } from "fs"
 import { getPrivateUploadRoot, resolveWithinRoot } from "@/lib/file-upload"
 
 type Params = { params: Promise<{ id: string; docId: string }> }
@@ -35,11 +34,18 @@ export async function GET(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Ruta inválida" }, { status: 400 })
     }
 
-    if (!existsSync(filePath)) {
-      return NextResponse.json({ error: "Archivo no encontrado en el servidor" }, { status: 404 })
+    // Se lee directo: comprobar antes con existsSync y leer después deja una
+    // ventana en la que el archivo puede cambiar entre ambas llamadas.
+    let buffer: Buffer
+    try {
+      buffer = await readFile(filePath)
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code
+      if (code === "ENOENT" || code === "EISDIR" || code === "ENOTDIR") {
+        return NextResponse.json({ error: "Archivo no encontrado en el servidor" }, { status: 404 })
+      }
+      throw err
     }
-
-    const buffer = await readFile(filePath)
     const contentType = documento.tipo_mime || "application/octet-stream"
     const safeFilename = encodeURIComponent(documento.nombre_archivo)
 

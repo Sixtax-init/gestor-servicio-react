@@ -17,15 +17,6 @@ export interface CartaData {
   hora_fin: string
 }
 
-function Blank({ width = "160px" }: { width?: string }) {
-  return (
-    <span
-      className="inline-block border-b border-black align-bottom"
-      style={{ minWidth: width, paddingLeft: 4, paddingRight: 4 }}
-    />
-  )
-}
-
 export function CartaAsignacionPreview({ data }: { data: CartaData }) {
   const nombreCompleto = `${data.nombre} ${data.apellidos}`.trim()
 

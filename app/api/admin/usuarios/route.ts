@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSession, requireRole } from "@/lib/session.server"
-import { sql, pool } from "@/lib/db"
+import { requireRole } from "@/lib/session.server"
+import { pool } from "@/lib/db"
 import { createUser } from "@/lib/auth"
 import { puedeAsignarRol, rolesAsignablesPor } from "@/lib/roles"
 import { sendWelcomeEmail } from "@/lib/email"
