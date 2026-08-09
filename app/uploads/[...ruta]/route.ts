@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { readFile, stat } from "fs/promises"
+import { readFile } from "fs/promises"
 import { getSession } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 import {
@@ -162,12 +162,21 @@ export async function GET(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Ruta inválida" }, { status: 400 })
     }
 
-    const info = await stat(filePath).catch(() => null)
-    if (!info || !info.isFile()) {
-      return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 })
+    // Se lee directamente en vez de comprobar antes con stat(): un
+    // comprobar-luego-usar deja una ventana en la que el archivo puede cambiar
+    // entre ambas llamadas. Los casos de "no existe" o "es un directorio"
+    // llegan como error de readFile y se traducen a 404.
+    let buffer: Buffer
+    try {
+      buffer = await readFile(filePath)
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code
+      if (code === "ENOENT" || code === "EISDIR" || code === "ENOTDIR") {
+        return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 })
+      }
+      throw err
     }
 
-    const buffer = await readFile(filePath)
     const contentType = contentTypeFor(filename)
     const disposition = INLINE_TYPES.has(contentType) ? "inline" : "attachment"
 
@@ -175,7 +184,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Content-Length": String(info.size),
+        "Content-Length": String(buffer.byteLength),
         "Content-Disposition": `${disposition}; filename*=UTF-8''${encodeURIComponent(filename)}`,
         "X-Content-Type-Options": "nosniff",
         "Cache-Control": "private, no-store",
