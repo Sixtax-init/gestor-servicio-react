@@ -78,7 +78,9 @@ jobs:
 
       - name: Verificar Estilo (Lint)
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_quality_check == true }}
-        run: pnpm run lint -- --format json --output-file eslint-report.json || echo "LINT_FAILED=true" >> $GITHUB_ENV
+        # Sin "--": a diferencia de npm, pnpm no lo consume y se lo pasa literal
+        # a eslint, que entonces trata "--format" como patrón de archivos.
+        run: pnpm run lint --format json --output-file eslint-report.json || echo "LINT_FAILED=true" >> $GITHUB_ENV
 
       - name: Generar Reporte Lint Legible
         if: always()
@@ -133,7 +135,7 @@ jobs:
           fi
 
           # ── npm audit ───────────────────────────────────────────────────────
-          echo "### 📦 Vulnerabilidades en Dependencias (npm audit)" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Vulnerabilidades en Dependencias (pnpm audit)" >> $GITHUB_STEP_SUMMARY
           if [ "$AUDIT_FAILED" == "true" ]; then
             HIGH=$(python3 -c "import json; d=json.load(open('npm-audit-report.json')); print(d.get('metadata',{}).get('vulnerabilities',{}).get('high',0))" 2>/dev/null || echo "?")
             CRITICAL=$(python3 -c "import json; d=json.load(open('npm-audit-report.json')); print(d.get('metadata',{}).get('vulnerabilities',{}).get('critical',0))" 2>/dev/null || echo "?")
