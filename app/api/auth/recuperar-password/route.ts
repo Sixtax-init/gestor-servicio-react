@@ -2,6 +2,12 @@ import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { sendPasswordResetEmail } from "@/lib/email"
 import { randomBytes } from "crypto"
+import { rateLimit, getClientIp, respuesta429 } from "@/lib/rate-limit"
+
+// Endpoint público que dispara un envío de correo: sin límite sirve para
+// bombardear el buzón de un tercero y para quemar la cuota del SMTP.
+const LIMITE_POR_IP = { limite: 5, ventanaMs: 15 * 60 * 1000 }
+const LIMITE_POR_EMAIL = { limite: 3, ventanaMs: 60 * 60 * 1000 }
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +15,16 @@ export async function POST(request: Request) {
 
     if (!email) {
       return NextResponse.json({ error: "Email requerido" }, { status: 400 })
+    }
+
+    const porIp = rateLimit(`recuperar:ip:${getClientIp(request)}`, LIMITE_POR_IP)
+    if (!porIp.permitido) {
+      return respuesta429(porIp.reintentarEnSeg, "Demasiadas solicitudes. Espera unos minutos.")
+    }
+
+    const porEmail = rateLimit(`recuperar:email:${String(email).toLowerCase().trim()}`, LIMITE_POR_EMAIL)
+    if (!porEmail.permitido) {
+      return respuesta429(porEmail.reintentarEnSeg, "Ya se enviaron varios correos a esta dirección. Revisa tu bandeja o intenta más tarde.")
     }
 
     // 1. Buscar al usuario por correo electrónico

@@ -22,7 +22,7 @@ const TRANSICIONES_VALIDAS: Record<string, string[]> = {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const user = await requireRole(["administrador", "main_admin"])
+    const user = await requireRole(["main_admin"])
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 403 })
 
     const { id } = await params

@@ -5,11 +5,20 @@ import { sql } from "@/lib/db"
 import { sendEmailVerificationEmail } from "@/lib/email"
 import { randomBytes } from "crypto"
 
+import { rateLimit, getClientIp, respuesta429 } from "@/lib/rate-limit"
+
 const MATRICULA_REGEX = /^V?\d{8}$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const LIMITE_POR_IP = { limite: 5, ventanaMs: 60 * 60 * 1000 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Alta pública: crea cuenta y manda correo de verificación en cada llamada.
+    const porIp = rateLimit(`registro:ip:${getClientIp(request)}`, LIMITE_POR_IP)
+    if (!porIp.permitido) {
+      return respuesta429(porIp.reintentarEnSeg, "Demasiados registros desde esta conexión. Intenta más tarde.")
+    }
+
     const body = await request.json()
     const {
       matricula,

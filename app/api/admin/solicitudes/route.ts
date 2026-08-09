@@ -4,7 +4,7 @@ import { pool } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireRole(["administrador", "main_admin"])
+    const user = await requireRole(["main_admin"])
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 403 })
 
     const { searchParams } = new URL(request.url)

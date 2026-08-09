@@ -6,7 +6,9 @@ type Params = { params: Promise<{ inscripcionId: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
-    const user = await requireRole(["administrador", "main_admin", "pre_candidato", "alumno"])
+    // La carta lleva datos personales del alumno: sólo él mismo y main_admin.
+    // El administrador no gestiona servicio social (ver PRODUCCION.md / roles).
+    const user = await requireRole(["main_admin", "pre_candidato", "alumno"])
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 403 })
 
     const { inscripcionId } = await params
@@ -41,10 +43,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     if (!row) return NextResponse.json({ error: "Carta no encontrada" }, { status: 404 })
 
-    if (!["administrador", "main_admin"].includes(user.tipo_usuario)) {
-      if (row.usuario_id !== user.id) {
-        return NextResponse.json({ error: "No autorizado" }, { status: 403 })
-      }
+    if (user.tipo_usuario !== "main_admin" && row.usuario_id !== user.id) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { usuario_id, ...carta } = row

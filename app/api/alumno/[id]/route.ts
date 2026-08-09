@@ -14,16 +14,21 @@ export async function GET(
     }
 
     const { id } = await params
+    const alumnoId = Number(id)
+    if (!Number.isInteger(alumnoId) || alumnoId <= 0) {
+      return NextResponse.json({ error: "Identificador inválido" }, { status: 400 })
+    }
 
     const alumno = await sql`
-      SELECT 
+      SELECT
         id,
         matricula,
         nombre,
         apellidos,
-        horas_acumuladas
+        horas_acumuladas,
+        departamento_id
       FROM usuarios
-      WHERE id = ${id}
+      WHERE id = ${alumnoId}
       AND tipo_usuario = 'alumno'
       AND activo = true
     `
@@ -32,7 +37,36 @@ export async function GET(
       return NextResponse.json({ error: "Alumno no encontrado" }, { status: 404 })
     }
 
-    return NextResponse.json(alumno[0])
+    // Antes bastaba con tener sesión para leer a cualquier alumno: un alumno
+    // podía recorrer los ids y sacar matrícula, nombre y horas de todos.
+    // Ahora sólo pasan quienes tienen una relación real con ese alumno.
+    const esElMismo = session.id === alumnoId
+    const esMainAdmin = session.tipo_usuario === "main_admin"
+    const esAdminDeSuDepto =
+      session.tipo_usuario === "administrador" &&
+      session.departamento_id != null &&
+      session.departamento_id === alumno[0].departamento_id
+
+    let esSuMaestro = false
+    if (!esElMismo && !esMainAdmin && !esAdminDeSuDepto && session.tipo_usuario === "maestro") {
+      const [vinculo] = await sql`
+        SELECT 1
+        FROM inscripciones i
+        JOIN cursos c ON c.id = i.curso_id
+        WHERE i.alumno_id = ${alumnoId}
+          AND c.maestro_id = ${session.id}
+          AND i.activo = true
+        LIMIT 1
+      `
+      esSuMaestro = Boolean(vinculo)
+    }
+
+    if (!esElMismo && !esMainAdmin && !esAdminDeSuDepto && !esSuMaestro) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    }
+
+    const { departamento_id, ...datos } = alumno[0]
+    return NextResponse.json(datos)
   } catch (error) {
     console.error("Error al obtener datos del alumno:", error)
     return NextResponse.json(

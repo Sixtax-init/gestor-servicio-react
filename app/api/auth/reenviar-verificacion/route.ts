@@ -3,6 +3,9 @@ import { getSession } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 import { sendEmailVerificationEmail } from "@/lib/email"
 import { randomBytes } from "crypto"
+import { rateLimit, respuesta429 } from "@/lib/rate-limit"
+
+const LIMITE_POR_USUARIO = { limite: 3, ventanaMs: 60 * 60 * 1000 }
 
 export async function POST() {
   try {
@@ -10,6 +13,13 @@ export async function POST() {
 
     if (!session || session.tipo_usuario !== "pre_candidato") {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    }
+
+    // Ya hay sesión, así que se limita por usuario: evita que se pulse
+    // "reenviar" en bucle y se agote la cuota del SMTP.
+    const limite = rateLimit(`reenviar:usuario:${session.id}`, LIMITE_POR_USUARIO)
+    if (!limite.permitido) {
+      return respuesta429(limite.reintentarEnSeg, "Ya enviamos varios correos. Revisa tu bandeja y spam antes de pedir otro.")
     }
 
     const [usuario] = await sql`
