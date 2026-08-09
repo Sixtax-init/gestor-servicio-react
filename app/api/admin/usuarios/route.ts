@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSession, requireRole } from "@/lib/session.server"
 import { sql, pool } from "@/lib/db"
 import { createUser } from "@/lib/auth"
+import { puedeAsignarRol, rolesAsignablesPor } from "@/lib/roles"
 import { sendWelcomeEmail } from "@/lib/email"
 import { randomBytes } from "crypto"
 
@@ -104,6 +105,15 @@ export async function POST(request: NextRequest) {
 
     if (!matricula || !nombre || !apellidos || !email || !tipo_usuario) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 })
+    }
+
+    // El rol llega del cliente: sólo se acepta si el actor tiene permiso de asignarlo.
+    // Evita que un `administrador` cree cuentas `main_admin`.
+    if (!puedeAsignarRol(user.tipo_usuario, tipo_usuario)) {
+      return NextResponse.json(
+        { error: `No puedes asignar el rol solicitado. Permitidos: ${rolesAsignablesPor(user.tipo_usuario).join(", ")}` },
+        { status: 403 },
+      )
     }
 
     const MATRICULA_REGEX = /^V?\d{8}$/

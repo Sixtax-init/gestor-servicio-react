@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { requireRole } from "@/lib/session.server"
+import { puedeAsignarRol, rolesAsignablesPor } from "@/lib/roles"
 import bcrypt from "bcryptjs"
 
 // Actualizar usuario
@@ -17,7 +18,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { matricula, nombre, apellidos, email, tipo_usuario, activo, password, departamento_id } = body
 
     // 1. Verificar si el admin tiene acceso a este usuario
-    const [targetUser] = await sql`SELECT departamento_id FROM usuarios WHERE id = ${id}`
+    const [targetUser] = await sql`SELECT departamento_id, tipo_usuario FROM usuarios WHERE id = ${id}`
 
     if (!targetUser) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
@@ -25,6 +26,31 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (admin.tipo_usuario === "administrador" && targetUser.departamento_id !== admin.departamento_id) {
       return NextResponse.json({ error: "No tienes permiso para editar usuarios de otro departamento" }, { status: 403 })
+    }
+
+    // Un administrador no puede tocar cuentas de igual o mayor privilegio,
+    // ni siquiera dentro de su departamento.
+    if (admin.tipo_usuario === "administrador" && !puedeAsignarRol(admin.tipo_usuario, targetUser.tipo_usuario)) {
+      return NextResponse.json({ error: "No tienes permiso para editar esta cuenta" }, { status: 403 })
+    }
+
+    // El rol destino debe estar dentro de lo que el actor puede asignar:
+    // sin esto, un administrador se promueve a sí mismo a main_admin.
+    if (!puedeAsignarRol(admin.tipo_usuario, tipo_usuario)) {
+      return NextResponse.json(
+        { error: `No puedes asignar el rol solicitado. Permitidos: ${rolesAsignablesPor(admin.tipo_usuario).join(", ")}` },
+        { status: 403 },
+      )
+    }
+
+    // Nadie cambia su propio rol ni se desactiva a sí mismo desde este endpoint.
+    if (Number(id) === admin.id) {
+      if (tipo_usuario !== admin.tipo_usuario) {
+        return NextResponse.json({ error: "No puedes cambiar tu propio rol" }, { status: 403 })
+      }
+      if (activo === false) {
+        return NextResponse.json({ error: "No puedes desactivar tu propia cuenta" }, { status: 403 })
+      }
     }
 
     let hashedPass = null
@@ -96,6 +122,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // Seguridad: El administrador solo puede borrar usuarios de su propio departamento
     if (admin.tipo_usuario === "administrador" && usuario.departamento_id !== admin.departamento_id) {
       return NextResponse.json({ error: "No tienes permiso para eliminar usuarios de otro departamento" }, { status: 403 })
+    }
+
+    // Ni cuentas de igual o mayor privilegio que la suya
+    if (admin.tipo_usuario === "administrador" && !puedeAsignarRol(admin.tipo_usuario, usuario.tipo_usuario)) {
+      return NextResponse.json({ error: "No tienes permiso para eliminar esta cuenta" }, { status: 403 })
+    }
+
+    if (userId === admin.id) {
+      return NextResponse.json({ error: "No puedes eliminar tu propia cuenta" }, { status: 403 })
     }
 
     if (usuario.activo) {

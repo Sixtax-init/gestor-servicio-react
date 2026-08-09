@@ -2,8 +2,22 @@ import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { requireRole } from "@/lib/session.server"
 import { sendNewTaskEmailsBulk } from "@/lib/email"
-import path from "path"
-import fs from "fs/promises"
+import { saveFile, hasBlockedExtension } from "@/lib/file-upload"
+
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+]
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,29 +66,29 @@ export async function POST(request: NextRequest) {
     const limite_alumnos = formData.get("limite_alumnos")
     const archivo = formData.get("archivo_instrucciones") as File | null
 
-    let archivo_instrucciones = null
-
-    // 📂 Guardar el archivo si se adjuntó
-    if (archivo) {
-      const uploadDir = path.join(process.cwd(), "public/uploads/curso")
-      await fs.mkdir(uploadDir, { recursive: true })
-
-      const filePath = path.join(uploadDir, archivo.name)
-      const buffer = Buffer.from(await archivo.arrayBuffer())
-      await fs.writeFile(filePath, buffer)
-
-      // Ruta accesible desde el navegador
-      archivo_instrucciones = `/uploads/curso/${archivo.name}`
-    }
-
     const db = sql
 
-    // 🧠 Verificar que el curso pertenece al maestro
+    // 🧠 Verificar que el curso pertenece al maestro ANTES de escribir nada en disco
     const curso = await db`
-      SELECT id, nombre_grupo FROM cursos WHERE id = ${curso_id} AND maestro_id = ${session.id}
+      SELECT id, nombre_grupo FROM cursos WHERE id = ${Number(curso_id)} AND maestro_id = ${session.id}
     `
     if (curso.length === 0) {
       return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
+    }
+
+    let archivo_instrucciones = null
+
+    // 📂 Guardar el archivo si se adjuntó — vía saveFile, que sanea el nombre,
+    // valida el tipo y escribe fuera de public/.
+    if (archivo && archivo.size > 0) {
+      if (archivo.size > MAX_FILE_SIZE) {
+        return NextResponse.json({ error: "El archivo excede el tamaño máximo de 10 MB" }, { status: 400 })
+      }
+      if (!ALLOWED_MIME_TYPES.includes(archivo.type) || hasBlockedExtension(archivo.name)) {
+        return NextResponse.json({ error: "Tipo de archivo no permitido" }, { status: 400 })
+      }
+
+      archivo_instrucciones = await saveFile(archivo, Number(curso_id), "instrucciones")
     }
 
     // 🗄️ Guardar la tarea en la base de datos

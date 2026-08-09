@@ -1,7 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
-import { saveFile } from "@/lib/file-upload"
+import { saveFile, hasBlockedExtension } from "@/lib/file-upload"
+
+const MIME_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png", "application/octet-stream"]
+const EXT_PERMITIDAS = [".pdf", ".jpg", ".jpeg", ".png"]
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +18,11 @@ export async function POST(request: NextRequest) {
     }
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: "El archivo no puede superar los 10 MB" }, { status: 400 })
+    }
+
+    const ext = "." + (file.name.split(".").pop()?.toLowerCase() ?? "")
+    if (hasBlockedExtension(file.name) || !EXT_PERMITIDAS.includes(ext) || !MIME_PERMITIDOS.includes(file.type)) {
+      return NextResponse.json({ error: "Solo se aceptan archivos PDF, JPG y PNG" }, { status: 400 })
     }
 
     const [inscripcion] = await sql`

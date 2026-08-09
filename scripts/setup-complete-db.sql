@@ -52,6 +52,27 @@ ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS departamento_id INTEGER REFERENCES
 CREATE INDEX IF NOT EXISTS idx_usuarios_departamento ON usuarios(departamento_id);
 
 -- Columna de verificación pendiente (email para pre_candidato, cambio de contraseña para otros)
+--
+-- Migración 010: la columna se llamaba debe_cambiar_password. En una BD que
+-- venga de antes hay que RENOMBRARLA, no añadir una nueva: si sólo se añade,
+-- los datos reales se quedan en la columna vieja y todos los usuarios heredan
+-- el DEFAULT true, que los deja encerrados en /cambiar-password (ver proxy.ts).
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'usuarios' AND column_name = 'debe_cambiar_password'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'usuarios' AND column_name = 'pendiente_verificacion'
+    ) THEN
+        ALTER TABLE usuarios RENAME COLUMN debe_cambiar_password TO pendiente_verificacion;
+        RAISE NOTICE 'Columna debe_cambiar_password renombrada a pendiente_verificacion.';
+    END IF;
+END $$;
+
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS pendiente_verificacion BOOLEAN DEFAULT true;
 
 -- Token de acción único: reset de contraseña O verificación de email (expira en 1–24h)

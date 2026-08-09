@@ -13,6 +13,19 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    // El flat config de ESLint 9 sólo ignora node_modules por defecto. Sin esto
+    // se linteaba el output de build (.next), que generaba cientos de errores
+    // falsos sobre código minificado y ocultaba los reales del código fuente.
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+      "private-uploads/**",
+      "public/**",
+    ],
+  },
   ...compat.extends("next/core-web-vitals"),
 ];
 

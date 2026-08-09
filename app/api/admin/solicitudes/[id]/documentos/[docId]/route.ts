@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { requireRole } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 import { readFile } from "fs/promises"
-import { join } from "path"
 import { existsSync } from "fs"
+import { getPrivateUploadRoot, resolveWithinRoot } from "@/lib/file-upload"
 
 type Params = { params: Promise<{ id: string; docId: string }> }
 
@@ -26,13 +26,12 @@ export async function GET(_request: NextRequest, { params }: Params) {
     }
 
     // ruta_archivo = "/uploads/solicitudes/{id}/{filename}"
-    // Map to filesystem: strip leading "/uploads" and resolve against baseDir
-    const baseDir = process.env.UPLOAD_DIR ?? join(process.cwd(), "public/uploads")
+    // Los expedientes viven fuera de public/ — se resuelven contra la raíz privada.
     const relativePath = documento.ruta_archivo.replace(/^\/uploads\//, "")
-    const filePath = join(baseDir, relativePath)
+    const filePath = resolveWithinRoot(getPrivateUploadRoot(), relativePath)
 
     // Prevent path traversal
-    if (!filePath.startsWith(baseDir)) {
+    if (!filePath) {
       return NextResponse.json({ error: "Ruta inválida" }, { status: 400 })
     }
 
