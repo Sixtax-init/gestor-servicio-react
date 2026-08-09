@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import bcrypt from "bcryptjs"
+import { rateLimit, getClientIp, respuesta429 } from "@/lib/rate-limit"
+
+const LIMITE_POR_IP = { limite: 10, ventanaMs: 15 * 60 * 1000 }
 
 // Verificar si un token sigue siendo válido (para validación al cargar la página)
 export async function GET(request: Request) {
@@ -24,6 +27,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // El token es el único secreto que protege el cambio de contraseña:
+    // sin límite, se puede intentar adivinar a volumen.
+    const porIp = rateLimit(`reset:ip:${getClientIp(request)}`, LIMITE_POR_IP)
+    if (!porIp.permitido) {
+      return respuesta429(porIp.reintentarEnSeg, "Demasiados intentos. Espera unos minutos.")
+    }
+
     const { token, passwordNuevo } = await request.json()
 
     if (!token || !passwordNuevo) {

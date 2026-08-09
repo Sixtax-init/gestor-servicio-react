@@ -3,6 +3,9 @@ import { getSession } from "@/lib/session.server"
 import { sql } from "@/lib/db"
 import { sendPasswordResetEmail } from "@/lib/email"
 import { randomBytes } from "crypto"
+import { rateLimit, respuesta429 } from "@/lib/rate-limit"
+
+const LIMITE_POR_USUARIO = { limite: 3, ventanaMs: 60 * 60 * 1000 }
 
 export async function POST() {
   try {
@@ -14,6 +17,11 @@ export async function POST() {
 
     if (!["administrador", "alumno", "maestro"].includes(session.tipo_usuario)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    }
+
+    const limite = rateLimit(`solicitar-reset:usuario:${session.id}`, LIMITE_POR_USUARIO)
+    if (!limite.permitido) {
+      return respuesta429(limite.reintentarEnSeg, "Ya enviamos varios correos. Revisa tu bandeja y spam antes de pedir otro.")
     }
 
     const [usuario] = await sql`

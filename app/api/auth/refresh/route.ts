@@ -87,14 +87,29 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(result)
 }
 
+/**
+ * Sólo se acepta una ruta interna. Sin esto, `?continue=//evil.com` produce
+ * `new URL("//evil.com", origen)` = `https://evil.com`, y el sitio redirige a
+ * un dominio ajeno tras autenticar (open redirect → phishing).
+ */
+function rutaInternaSegura(valor: string | null): string {
+  if (!valor) return "/"
+  // Debe empezar por una sola barra y no ser "//" ni "/\", que el navegador
+  // interpreta como URL protocol-relative hacia otro host.
+  if (!valor.startsWith("/") || valor.startsWith("//") || valor.startsWith("/\\")) return "/"
+  // Descarta cualquier cosa con esquema o credenciales embebidas
+  if (/^\/[^/]*:/.test(valor)) return "/"
+  return valor
+}
+
 export async function GET(request: NextRequest) {
   const result = await performRefresh(request)
-  const continueUrl = request.nextUrl.searchParams.get("continue") || "/"
+  const continueUrl = rutaInternaSegura(request.nextUrl.searchParams.get("continue"))
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ""
-  
+
   if (result.error) {
     return NextResponse.redirect(new URL(`${basePath}/login?motivo=expirada`, request.url))
   }
-  
+
   return NextResponse.redirect(new URL(`${basePath}${continueUrl}`, request.url))
 }
