@@ -47,7 +47,7 @@ interface Programa {
   objetivo: string | null
   tipo_ubicacion: "interno" | "externo"
   actividades: string | null
-  carreras_permitidas: string[] | null
+  carreras_permitidas: number[] | null
   requiere_constancia_laboral: boolean
   requisitos_adicionales: string | null
   responsable_dependencia_nombre: string | null
@@ -60,6 +60,8 @@ interface Programa {
   tipo_programa: string | null
   departamento_id: number | null
   departamento_nombre: string | null
+  maestro_id: number | null
+  maestro_nombre: string | null
   plazas_total: number
   cupo_disponible: number
   total_horarios: number
@@ -79,6 +81,19 @@ interface Departamento {
   nombre: string
 }
 
+interface Carrera {
+  id: number
+  nombre: string
+  clave: string
+}
+
+interface Maestro {
+  id: number
+  nombre: string
+  apellidos: string
+  departamento_id: number | null
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type ProgramaForm = {
@@ -88,7 +103,7 @@ type ProgramaForm = {
   objetivo: string
   tipo_ubicacion: "interno" | "externo"
   actividades: string
-  carreras_permitidas_raw: string
+  carreras_permitidas_ids: number[]
   requiere_constancia_laboral: boolean
   requisitos_adicionales: string
   responsable_dependencia_nombre: string
@@ -101,6 +116,7 @@ type ProgramaForm = {
   tipo_programa: string
   departamento_id: string
   departamento_externo: string
+  maestro_id: string
 }
 
 const EMPTY_FORM: ProgramaForm = {
@@ -110,7 +126,7 @@ const EMPTY_FORM: ProgramaForm = {
   objetivo: "",
   tipo_ubicacion: "externo",
   actividades: "",
-  carreras_permitidas_raw: "",
+  carreras_permitidas_ids: [],
   requiere_constancia_laboral: false,
   requisitos_adicionales: "",
   responsable_dependencia_nombre: "",
@@ -123,6 +139,7 @@ const EMPTY_FORM: ProgramaForm = {
   tipo_programa: "",
   departamento_id: "",
   departamento_externo: "",
+  maestro_id: "",
 }
 
 function programaToForm(p: Programa): ProgramaForm {
@@ -133,7 +150,7 @@ function programaToForm(p: Programa): ProgramaForm {
     objetivo: p.objetivo ?? "",
     tipo_ubicacion: p.tipo_ubicacion,
     actividades: p.actividades ?? "",
-    carreras_permitidas_raw: (p.carreras_permitidas ?? []).join(", "),
+    carreras_permitidas_ids: p.carreras_permitidas ?? [],
     requiere_constancia_laboral: p.requiere_constancia_laboral,
     requisitos_adicionales: p.requisitos_adicionales ?? "",
     responsable_dependencia_nombre: p.responsable_dependencia_nombre ?? "",
@@ -146,14 +163,11 @@ function programaToForm(p: Programa): ProgramaForm {
     tipo_programa: p.tipo_programa ?? "",
     departamento_id: p.departamento_id ? String(p.departamento_id) : "",
     departamento_externo: (p as any).departamento_externo ?? "",
+    maestro_id: p.maestro_id ? String(p.maestro_id) : "",
   }
 }
 
 function formToPayload(f: ProgramaForm) {
-  const carreras = f.carreras_permitidas_raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
   return {
     nombre: f.nombre.trim(),
     nombre_dependencia: f.nombre_dependencia.trim() || undefined,
@@ -161,7 +175,8 @@ function formToPayload(f: ProgramaForm) {
     objetivo: f.objetivo || undefined,
     tipo_ubicacion: f.tipo_ubicacion,
     actividades: f.actividades || undefined,
-    carreras_permitidas: carreras.length > 0 ? carreras : undefined,
+    // Vacío = abierto a todas las carreras
+    carreras_permitidas: f.carreras_permitidas_ids.length > 0 ? f.carreras_permitidas_ids : null,
     requiere_constancia_laboral: f.requiere_constancia_laboral,
     requisitos_adicionales: f.requisitos_adicionales || undefined,
     responsable_dependencia_nombre: f.responsable_dependencia_nombre || undefined,
@@ -174,6 +189,7 @@ function formToPayload(f: ProgramaForm) {
     tipo_programa: f.tipo_programa || undefined,
     departamento_id: f.tipo_ubicacion === "interno" && f.departamento_id ? Number(f.departamento_id) : null,
     departamento_externo: f.tipo_ubicacion === "externo" ? f.departamento_externo.trim() || null : null,
+    maestro_id: f.maestro_id ? Number(f.maestro_id) : null,
   }
 }
 
@@ -377,12 +393,16 @@ function ProgramaFormDialog({
   convocatoriaId,
   programa,
   departamentos,
+  maestros,
+  carreras,
   onClose,
   onSaved,
 }: {
   convocatoriaId: number
   programa: Programa | null
   departamentos: Departamento[]
+  maestros: Maestro[]
+  carreras: Carrera[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -392,7 +412,15 @@ function ProgramaFormDialog({
   const [guardando, setGuardando] = useState(false)
   const isEdit = programa !== null
 
-  const set = (key: keyof ProgramaForm, value: string | boolean) =>
+  // En un programa interno se ofrecen los maestros de ese departamento; en uno
+  // externo no hay departamento del Tec al que acotar, así que se ofrecen todos.
+  const maestrosDisponibles =
+    form.tipo_ubicacion === "interno" && form.departamento_id
+      ? maestros.filter((m) => String(m.departamento_id ?? "") === form.departamento_id)
+      : maestros
+
+  // number[] para las carreras permitidas, que ahora son referencias al catálogo
+  const set = (key: keyof ProgramaForm, value: string | boolean | number[]) =>
     setForm((p) => ({ ...p, [key]: value }))
 
   async function handleSubmit(e: React.FormEvent) {
@@ -505,16 +533,19 @@ function ProgramaFormDialog({
                 </div>
               </div>
               <div className="space-y-1">
-                <Label>Departamento</Label>
+                <Label>
+                  Departamento {form.tipo_ubicacion === "interno" && <span className="text-destructive">*</span>}
+                </Label>
                 {form.tipo_ubicacion === "interno" ? (
+                  // Obligatorio: el alumno hereda este departamento al confirmarse
+                  // su inscripción, así que "sin departamento" dejaría al alumno sin él.
                   <Select
-                    value={form.departamento_id || "ninguno"}
-                    onValueChange={(v) => set("departamento_id", v === "ninguno" ? "" : v)}
+                    value={form.departamento_id}
+                    onValueChange={(v) => set("departamento_id", v)}
                     disabled={guardando}
                   >
-                    <SelectTrigger><SelectValue placeholder="Sin departamento" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Selecciona un departamento" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ninguno">Sin departamento</SelectItem>
                       {departamentos.map((d) => (
                         <SelectItem key={d.id} value={String(d.id)}>{d.nombre}</SelectItem>
                       ))}
@@ -571,12 +602,38 @@ function ProgramaFormDialog({
               </div>
               <div className="space-y-1">
                 <Label>Carreras permitidas</Label>
-                <Input
-                  placeholder="ISC, IIA, IDG — separadas por coma. Vacío = todas."
-                  value={form.carreras_permitidas_raw}
-                  onChange={(e) => set("carreras_permitidas_raw", e.target.value)}
-                  disabled={guardando}
-                />
+                <div className="rounded-md border p-3 space-y-2 max-h-44 overflow-y-auto">
+                  {carreras.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No hay carreras en el catálogo.</p>
+                  ) : (
+                    carreras.map((c) => {
+                      const marcada = form.carreras_permitidas_ids.includes(c.id)
+                      return (
+                        <div key={c.id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`carrera-${c.id}`}
+                            checked={marcada}
+                            disabled={guardando}
+                            onCheckedChange={(v) =>
+                              set(
+                                "carreras_permitidas_ids",
+                                v === true
+                                  ? [...form.carreras_permitidas_ids, c.id]
+                                  : form.carreras_permitidas_ids.filter((id) => id !== c.id),
+                              )
+                            }
+                          />
+                          <Label htmlFor={`carrera-${c.id}`} className="font-normal cursor-pointer">
+                            {c.nombre} <span className="text-muted-foreground">({c.clave})</span>
+                          </Label>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Sin ninguna marcada, el programa queda abierto a todas las carreras.
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -586,6 +643,42 @@ function ProgramaFormDialog({
                   disabled={guardando}
                 />
                 <Label htmlFor="constancia">Requiere constancia laboral</Label>
+              </div>
+
+              <Separator />
+
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Supervisión de horas
+              </p>
+              <div className="space-y-1">
+                <Label>
+                  Responsable de validar las horas <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={form.maestro_id}
+                  onValueChange={(v) => set("maestro_id", v)}
+                  disabled={guardando}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecciona un maestro" /></SelectTrigger>
+                  <SelectContent>
+                    {maestrosDisponibles.length === 0 ? (
+                      <div className="px-2 py-3 text-sm text-muted-foreground">
+                        No hay maestros disponibles
+                      </div>
+                    ) : (
+                      maestrosDisponibles.map((m) => (
+                        <SelectItem key={m.id} value={String(m.id)}>
+                          {m.nombre} {m.apellidos}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Se creará un curso de servicio social para este programa. Los alumnos
+                  quedarán inscritos en él al confirmarse su inscripción, y esta persona
+                  revisará sus avances y les asignará horas.
+                </p>
               </div>
 
               <Separator />
@@ -695,6 +788,8 @@ export function ProgramasDialog({
   const [departamentos, setDepartamentos] = useState<Departamento[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [maestros, setMaestros] = useState<Maestro[]>([])
+  const [carreras, setCarreras] = useState<Carrera[]>([])
   const [programaForm, setProgramaForm] = useState<{ programa: Programa | null } | null>(null)
   const [horariosFor, setHorariosFor] = useState<Programa | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Programa | null>(null)
@@ -703,18 +798,25 @@ export function ProgramasDialog({
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [resP, resD] = await Promise.all([
+      const [resP, resD, resM, resC] = await Promise.all([
         apiFetch(`/api/admin/convocatorias/${convocatoria.id}/programas`),
         apiFetch("/api/main-admin/departamentos"),
+        // Candidatos a responsable de validar las horas del programa
+        apiFetch("/api/admin/usuarios?tipo=maestro&status=active&limit=200"),
+        apiFetch("/api/main-admin/carreras"),
       ])
       const dataP = await resP.json()
       const dataD = await resD.json()
+      const dataM = await resM.json()
+      const dataC = await resC.json()
       if (!resP.ok) {
         toast.error(dataP.error || `Error al cargar programas (${resP.status})`)
         return
       }
       setProgramas(dataP.programas ?? [])
       setDepartamentos(dataD.departamentos ?? [])
+      setMaestros(dataM.usuarios ?? [])
+      setCarreras(dataC.carreras ?? [])
     } catch (e) {
       toast.error(`Error de conexión: ${e}`)
     } finally {
@@ -879,6 +981,8 @@ export function ProgramasDialog({
           convocatoriaId={convocatoria.id}
           programa={programaForm.programa}
           departamentos={departamentos}
+          maestros={maestros}
+          carreras={carreras}
           onClose={() => setProgramaForm(null)}
           onSaved={async () => { setProgramaForm(null); await load() }}
         />

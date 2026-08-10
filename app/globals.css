@@ -19,7 +19,9 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  /* Texto sobre fondo destructive. Antes repetía el mismo rojo del fondo,
+     lo que dejaba los toasts destructivos ilegibles también en modo claro. */
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -58,8 +60,15 @@
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  /* Claro sobre fondo oscuro: este token se usa como COLOR DE TEXTO en alertas,
+     errores de formulario y menús. El valor anterior (L 0.396) daba 1.78:1 de
+     contraste sobre --card, muy por debajo del 4.5:1 que exige WCAG AA — era
+     prácticamente ilegible. Éste da 6.19:1.
+     Para fondos, los componentes ya lo atenúan con dark:bg-destructive/60. */
+  --destructive: oklch(0.704 0.191 22.216);
+  /* Texto que va ENCIMA de un fondo destructive (p. ej. toasts): casi blanco.
+     Antes era otro rojo, así que quedaba rojo sobre rojo. */
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --ring: oklch(0.439 0 0);
@@ -129,10 +138,15 @@
   }
 
   html {
-    font-size: 85%;
-    /* Escala ideal para dashboards densos y limpios */
-    letter-spacing: -0.01em;
-    /* Mejora la legibilidad y estética en tamaños reducidos */
+    /* Escala base de toda la interfaz. Estaba en 85% buscando densidad, pero
+       dejaba text-xs en 10.2px y text-sm en 11.9px, por debajo de lo cómodo
+       de leer. Al 95% quedan en 11.4px y 13.3px.
+       Subirlo aquí agranda texto Y espaciado a la vez, porque Tailwind expresa
+       ambos en rem: las proporciones del diseño se conservan. */
+    font-size: 95%;
+    /* Sin apretar tanto: el interletraje negativo compensaba los tamaños
+       reducidos de antes; con la escala mayor ya no hace falta forzarlo. */
+    letter-spacing: -0.005em;
   }
 
   html,
@@ -175,7 +189,11 @@
   animation: slide-up 0.5s ease-out forwards;
 }
 
-/* Theme transition — diagonal sweep from top-right to bottom-left */
+/* Theme transition — diagonal sweep from top-right to bottom-left.
+   Animar clip-path obliga al navegador a recortar en cada fotograma una
+   instantánea de la página entera; no se compone en GPU. En escritorio pasa
+   desapercibido, pero en móvil provoca tirones. Por eso: duración corta aquí,
+   y un simple fundido —sí acelerado por GPU— en pantallas táctiles. */
 ::view-transition-old(root) {
   animation: none;
   z-index: 1;
@@ -183,7 +201,7 @@
 
 ::view-transition-new(root) {
   z-index: 2;
-  animation: diagonal-reveal 0.95s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: diagonal-reveal 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes diagonal-reveal {
@@ -193,6 +211,24 @@
 
   to {
     clip-path: polygon(0% 0%, 250% 0%, 0% 250%);
+  }
+}
+
+/* Móvil y táctiles: fundido de opacidad, que la GPU sí compone barato. */
+@media (max-width: 768px),
+(hover: none) and (pointer: coarse) {
+  ::view-transition-new(root) {
+    animation: theme-fade 0.2s ease-out;
+  }
+}
+
+@keyframes theme-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 

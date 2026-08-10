@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { requireRole } from "@/lib/session.server"
-import { sql } from "@/lib/db"
+import { sql, withTransaction } from "@/lib/db"
 import { sendOficioListoEmail } from "@/lib/email"
 
 type Params = { params: Promise<{ id: string }> }
@@ -71,7 +71,33 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       ? `/carta-asignacion/${inscripcionId}`
       : null
 
-    const [actualizada] = await sql`
+    // Confirmar es el único punto donde el alumno cruza de la inscripción al
+    // seguimiento de horas, y toca tres tablas. Va en una transacción para que
+    // no pueda quedar a medias (p. ej. convertido en alumno pero sin curso, que
+    // es justo el fallo silencioso que esto viene a cerrar).
+    if (estado === "confirmada") {
+      // Sin curso asociado no hay dónde acumular horas. Se falla aquí, de forma
+      // visible, en vez de confirmar y dejar al alumno sin manera de avanzar.
+      const [programa] = await sql`
+        SELECT p.id, p.nombre, p.curso_id
+        FROM inscripciones_programa ip
+        JOIN horarios_programa h ON h.id = ip.horario_programa_id
+        JOIN programas p         ON p.id = h.programa_id
+        WHERE ip.id = ${inscripcionId}
+      `
+      if (!programa?.curso_id) {
+        return NextResponse.json(
+          {
+            error: `El programa "${programa?.nombre ?? "asignado"}" no tiene un curso de servicio social donde registrar las horas. ` +
+                   `Edítalo y asigna un responsable de horas antes de confirmar esta inscripción.`,
+          },
+          { status: 422 },
+        )
+      }
+    }
+
+    const actualizada = await withTransaction(async (tx) => {
+      const [inscripcionActualizada] = await tx`
       UPDATE inscripciones_programa SET
         estado                   = ${estado},
         numero_oficio            = COALESCE(${numero_oficio?.trim() ?? null}, numero_oficio),
@@ -85,18 +111,46 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       RETURNING *
     `
 
-    if (estado === "confirmada") {
-      await sql`
-        UPDATE usuarios
-        SET tipo_usuario = 'alumno', updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${inscripcion.usuario_id} AND tipo_usuario = 'pre_candidato'
-      `
-      await sql`
-        UPDATE solicitudes_inscripcion
-        SET estado = 'confirmada', updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${inscripcion.solicitud_id}
-      `
-    }
+      if (estado === "confirmada") {
+        // El alumno hereda el departamento del programa al que quedó asignado.
+        // Los programas externos no tienen departamento_id (usan el texto
+        // departamento_externo), así que en ese caso se conserva lo que hubiera:
+        // esos alumnos los sigue viendo main_admin, que no filtra por depto.
+        await tx`
+          UPDATE usuarios u
+          SET tipo_usuario    = 'alumno',
+              departamento_id = COALESCE(p.departamento_id, u.departamento_id),
+              updated_at      = CURRENT_TIMESTAMP
+          FROM inscripciones_programa ip
+          JOIN horarios_programa h ON h.id = ip.horario_programa_id
+          JOIN programas p         ON p.id = h.programa_id
+          WHERE ip.id = ${inscripcionId}
+            AND u.id  = ${inscripcion.usuario_id}
+            AND u.tipo_usuario = 'pre_candidato'
+        `
+
+        // Aquí cruza al módulo de horas: queda inscrito en el curso del programa,
+        // que es donde el responsable le pondrá tareas y le validará las horas.
+        // ON CONFLICT lo hace idempotente si se reintenta la confirmación.
+        await tx`
+          INSERT INTO inscripciones (alumno_id, curso_id, fecha_inscripcion, horas_completadas, activo)
+          SELECT ${inscripcion.usuario_id}, p.curso_id, NOW(), 0, true
+          FROM inscripciones_programa ip
+          JOIN horarios_programa h ON h.id = ip.horario_programa_id
+          JOIN programas p         ON p.id = h.programa_id
+          WHERE ip.id = ${inscripcionId} AND p.curso_id IS NOT NULL
+          ON CONFLICT (alumno_id, curso_id) DO UPDATE SET activo = true
+        `
+
+        await tx`
+          UPDATE solicitudes_inscripcion
+          SET estado = 'confirmada', updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${inscripcion.solicitud_id}
+        `
+      }
+
+      return inscripcionActualizada
+    })
 
     if (estado === "oficio_enviado") {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"

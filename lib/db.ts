@@ -33,6 +33,46 @@ export async function sql(query: TemplateStringsArray, ...params: any[]) {
   }
 }
 
+/**
+ * Igual que `sql`, pero ligado a un único cliente dentro de una transacción.
+ */
+export type SqlTx = (query: TemplateStringsArray, ...params: any[]) => Promise<any[]>
+
+/**
+ * Ejecuta varias consultas como una sola unidad: o se aplican todas o ninguna.
+ *
+ * Hace falta donde un cambio abarca varias tablas y dejarlo a medias corrompe
+ * el estado — por ejemplo crear un programa junto con su curso, o confirmar una
+ * inscripción (que convierte al usuario en alumno y lo inscribe a su curso).
+ * `sql` toma un cliente distinto del pool en cada llamada, así que por sí solo
+ * no puede dar esa garantía.
+ */
+export async function withTransaction<T>(fn: (tx: SqlTx) => Promise<T>): Promise<T> {
+  const client = await pool.connect()
+
+  const tx: SqlTx = async (query, ...params) => {
+    let text = ""
+    for (let i = 0; i < query.length; i++) {
+      text += query[i]
+      if (i < params.length) text += `$${i + 1}`
+    }
+    const res = await client.query(text, params)
+    return res.rows
+  }
+
+  try {
+    await client.query("BEGIN")
+    const resultado = await fn(tx)
+    await client.query("COMMIT")
+    return resultado
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {})
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
 export type TipoUsuario = "main_admin" | "administrador" | "maestro" | "alumno" | "pre_candidato"
 
 export type EstadoConvocatoria = "borrador" | "activa" | "en_seleccion" | "repechaje" | "cerrada"
@@ -150,6 +190,8 @@ export interface Usuario {
   email: string
   tipo_usuario: TipoUsuario
   departamento_id: number | null
+  /** Referencia al catálogo de carreras; sólo aplica a alumno y pre_candidato. */
+  carrera_id: number | null
   password_hash: string
   pendiente_verificacion: boolean
   token_accion: string | null

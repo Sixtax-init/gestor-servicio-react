@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       nombre,
       apellidos,
       email,
-      carrera,
+      carrera_id,
       sexo,
       telefono,
       domicilio,
@@ -33,8 +33,21 @@ export async function POST(request: NextRequest) {
       confirmPassword,
     } = body
 
-    if (!matricula || !nombre || !apellidos || !email || !carrera || !password) {
+    if (!matricula || !nombre || !apellidos || !email || !password) {
       return NextResponse.json({ error: "Todos los campos obligatorios son requeridos" }, { status: 400 })
+    }
+
+    // La carrera se elige del catálogo, ya no se escribe. Antes era texto libre
+    // y era imposible compararla contra las carreras permitidas de un programa.
+    const carreraId = Number(carrera_id)
+    if (!Number.isInteger(carreraId) || carreraId <= 0) {
+      return NextResponse.json({ error: "Debes seleccionar tu carrera" }, { status: 400 })
+    }
+    const [carreraElegida] = await sql`
+      SELECT id, nombre FROM carreras WHERE id = ${carreraId} AND activo = true
+    `
+    if (!carreraElegida) {
+      return NextResponse.json({ error: "La carrera seleccionada no es válida" }, { status: 400 })
     }
     if (typeof matricula !== "string" || matricula.length > 20 || !MATRICULA_REGEX.test(matricula)) {
       return NextResponse.json({ error: "Formato de matrícula inválido. Debe ser 8 dígitos o V + 8 dígitos" }, { status: 400 })
@@ -82,7 +95,8 @@ export async function POST(request: NextRequest) {
       password,
       tipo_usuario: "pre_candidato",
       pendiente_verificacion: true,
-      carrera: carrera.trim(),
+      carrera: carreraElegida.nombre,
+      carrera_id: carreraElegida.id,
       sexo: sexo ?? null,
       telefono: telefono?.trim() ?? null,
       domicilio: domicilio?.trim() ?? null,

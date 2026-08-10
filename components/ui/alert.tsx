@@ -39,7 +39,9 @@ function AlertTitle({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="alert-title"
       className={cn(
-        'col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight',
+        // Sin line-clamp-1: truncaba con puntos suspensivos cualquier título
+        // que no cupiera en una línea. Es preferible que el texto fluya.
+        'col-start-2 min-h-4 font-medium tracking-tight',
         className,
       )}
       {...props}
@@ -55,7 +57,12 @@ function AlertDescription({
     <div
       data-slot="alert-description"
       className={cn(
-        'text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed',
+        // Antes era un `grid gap-1`: en un grid cada hijo ocupa su propia fila,
+        // así que un <strong> o un <em> dentro de una frase se partía a otra
+        // línea y hasta la coma siguiente quedaba suelta. Como bloque normal,
+        // el texto en línea fluye; la separación entre párrafos se conserva
+        // con el margen entre <p> consecutivos.
+        'text-muted-foreground col-start-2 text-sm [&_p]:leading-relaxed [&>p+p]:mt-1',
         className,
       )}
       {...props}

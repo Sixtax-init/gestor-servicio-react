@@ -31,6 +31,7 @@ interface EditUsuarioDialogProps {
 export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAdminGlobal = false }: EditUsuarioDialogProps) {
   const [loading, setLoading] = useState(false)
   const [departamentos, setDepartamentos] = useState<{ id: number; nombre: string }[]>([])
+  const [carreras, setCarreras] = useState<{ id: number; nombre: string; clave: string }[]>([])
   const [formData, setFormData] = useState({
     matricula: "",
     nombre: "",
@@ -40,6 +41,7 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
     activo: true,
     password: "",
     departamento_id: "",
+    carrera_id: "",
   })
 
   useEffect(() => {
@@ -53,7 +55,15 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
         activo: usuario.activo,
         password: "",
         departamento_id: usuario.departamento_id?.toString() || "",
+        carrera_id: usuario.carrera_id?.toString() || "",
       })
+    }
+
+    if (open) {
+      apiFetch("/api/public/carreras")
+        .then((res) => res.json())
+        .then((data) => setCarreras(data.carreras ?? []))
+        .catch(() => {})
     }
 
     if (isAdminGlobal && open) {
@@ -78,7 +88,8 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
         method: "PUT",
         body: JSON.stringify({
           ...formData,
-          departamento_id: formData.departamento_id ? Number(formData.departamento_id) : null
+          departamento_id: formData.departamento_id ? Number(formData.departamento_id) : null,
+          carrera_id: formData.carrera_id ? Number(formData.carrera_id) : null,
         }),
       })
 
@@ -166,7 +177,33 @@ export function EditUsuarioDialog({ usuario, open, onOpenChange, onSuccess, isAd
               </Select>
             </div>
 
-            {isAdminGlobal && (
+            {/* La carrera es del alumno, no derivada: sin ella no puede
+                inscribirse a programas que restrinjan por carrera. */}
+            {["alumno", "pre_candidato"].includes(formData.tipo_usuario) && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-carrera">Carrera</Label>
+                <Select
+                  value={formData.carrera_id}
+                  onValueChange={(value) => setFormData({ ...formData, carrera_id: value })}
+                >
+                  <SelectTrigger id="edit-carrera">
+                    <SelectValue placeholder="Sin carrera asignada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {carreras.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.nombre} ({c.clave})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Mismo criterio que el alta: sólo maestro y administrador.
+                El alumno lo hereda del programa al confirmarse su inscripción,
+                así que editarlo a mano aquí lo dejaría inconsistente. */}
+            {isAdminGlobal && ["maestro", "administrador"].includes(formData.tipo_usuario) && (
               <div className="grid gap-2">
                 <Label htmlFor="edit-departamento">Departamento</Label>
                 <Select

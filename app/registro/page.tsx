@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,7 +17,7 @@ interface FormState {
   nombre: string
   apellidos: string
   email: string
-  carrera: string
+  carrera_id: string
   sexo: string
   telefono: string
   domicilio: string
@@ -31,7 +31,7 @@ export default function RegistroPage() {
     nombre: "",
     apellidos: "",
     email: "",
-    carrera: "",
+    carrera_id: "",
     sexo: "",
     telefono: "",
     domicilio: "",
@@ -41,6 +41,15 @@ export default function RegistroPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [carreras, setCarreras] = useState<{ id: number; nombre: string; clave: string }[]>([])
+
+  // Catálogo público: esta página se ve sin sesión.
+  useEffect(() => {
+    apiFetch("/api/public/carreras")
+      .then((res) => res.json())
+      .then((data) => setCarreras(data.carreras ?? []))
+      .catch(() => setError("No se pudieron cargar las carreras. Recarga la página."))
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -72,7 +81,7 @@ export default function RegistroPage() {
           nombre: form.nombre,
           apellidos: form.apellidos,
           email: form.email,
-          carrera: form.carrera,
+          carrera_id: form.carrera_id ? Number(form.carrera_id) : null,
           sexo: form.sexo,
           telefono: form.telefono,
           domicilio: form.domicilio,
@@ -123,16 +132,23 @@ export default function RegistroPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="carrera">Carrera *</Label>
-                <Input
-                  id="carrera"
-                  name="carrera"
-                  placeholder="Ingeniería en Sistemas..."
-                  value={form.carrera}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
+                <Label htmlFor="carrera_id">Carrera *</Label>
+                <Select
+                  value={form.carrera_id}
+                  onValueChange={(v) => setForm((f) => ({ ...f, carrera_id: v }))}
+                  disabled={loading || carreras.length === 0}
+                >
+                  <SelectTrigger id="carrera_id">
+                    <SelectValue placeholder={carreras.length === 0 ? "Cargando..." : "Selecciona tu carrera"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {carreras.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.nombre} ({c.clave})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
