@@ -19,18 +19,24 @@ export async function GET(
       return NextResponse.json({ error: "Identificador inválido" }, { status: 400 })
     }
 
+    // Las horas viven en las inscripciones a cursos; `usuarios.horas_acumuladas`
+    // no existe en el esquema y hacía que esta ruta devolviera 500 siempre.
     const alumno = await sql`
       SELECT
-        id,
-        matricula,
-        nombre,
-        apellidos,
-        horas_acumuladas,
-        departamento_id
-      FROM usuarios
-      WHERE id = ${alumnoId}
-      AND tipo_usuario = 'alumno'
-      AND activo = true
+        u.id,
+        u.matricula,
+        u.nombre,
+        u.apellidos,
+        u.departamento_id,
+        COALESCE((
+          SELECT SUM(i.horas_completadas)
+          FROM inscripciones i
+          WHERE i.alumno_id = u.id AND i.activo = true
+        ), 0) AS horas_acumuladas
+      FROM usuarios u
+      WHERE u.id = ${alumnoId}
+      AND u.tipo_usuario = 'alumno'
+      AND u.activo = true
     `
 
     if (alumno.length === 0) {

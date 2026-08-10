@@ -142,7 +142,7 @@ export function AlumnoDashboard({ user, stats, inscripciones }: AlumnoDashboardP
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
+          <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/50 rounded-xl h-auto [&>button]:max-md:min-h-12" data-tour="tabs">
             <TabsTrigger value="mis-cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm gap-2" data-tour="tab-mis-cursos">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Mis Cursos</span>

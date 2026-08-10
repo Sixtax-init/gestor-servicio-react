@@ -159,7 +159,13 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-[750px] p-1 bg-muted/50 rounded-xl h-auto gap-1">
+                    {/* Móvil: una sola fila que se arrastra con el dedo. Con 5 pestañas,
+                        la rejilla de 2 columnas dejaba la última huérfana en su propia
+                        fila, y el desbalance se movía de sitio con cada pestaña nueva.
+                        Escritorio: rejilla de 5, que ahí sí cabe.
+                        min-h-12 en móvil ≈ 46px, dentro de lo recomendado para el dedo
+                        (Apple 44, Material 48); antes eran ~27px. */}
+                    <TabsList className="flex w-full justify-start overflow-x-auto no-scrollbar md:grid md:grid-cols-5 lg:w-[750px] p-1 bg-muted/50 rounded-xl h-auto gap-1 [&>button]:shrink-0 [&>button]:max-md:min-h-12 [&>button]:max-md:px-4">
                         <TabsTrigger value="departamentos" className="rounded-lg">
                             <Building2 className="h-4 w-4 mr-2" />
                             Departamentos

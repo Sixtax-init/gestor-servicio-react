@@ -476,19 +476,22 @@ export function CandidatoDashboard({ user }: CandidatoDashboardProps) {
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-full">
+          {/* flex-wrap: en móvil los botones bajan de línea en vez de salirse.
+              min-w-0: sin esto el bloque del título no puede encogerse —los flex
+              items traen min-width:auto— y es lo que empujaba los botones fuera. */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-full shrink-0">
                 <GraduationCap className="h-6 w-6 text-primary" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-xl font-bold">Portal de Inscripción</h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="truncate text-sm text-muted-foreground">
                   {user.nombre} {user.apellidos} · <span className="font-mono">{user.matricula}</span>
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/programas" target="_blank">
                   <ExternalLink className="mr-1.5 h-3.5 w-3.5" />

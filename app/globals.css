@@ -158,6 +158,18 @@
   }
 }
 
+/* Tiras deslizables (p. ej. la barra de pestañas en móvil): se puede arrastrar
+   con el dedo, pero sin la barra de scroll a la vista, que en un menú estorba
+   más de lo que informa. El contenido sigue siendo accesible por teclado. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Animations */
 @keyframes fade-in {
   from {
