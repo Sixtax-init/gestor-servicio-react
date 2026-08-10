@@ -30,7 +30,7 @@ import {
 import { DepartamentosTab } from "./departamentos-tab"
 import { UsuariosTab } from "../admin/usuarios-tab"
 import { CursosTab } from "../admin/cursos-tab"
-import { InstitucionTab } from "./institucion-tab"
+import { CarrerasTab } from "./carreras-tab"
 import { InscripcionTab } from "../admin/inscripcion/inscripcion-tab"
 import type { SessionUser } from "@/lib/auth"
 import { apiFetch } from "@/lib/api-client"
@@ -176,9 +176,9 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                             <GraduationCap className="h-4 w-4 mr-2" />
                             Inscripción
                         </TabsTrigger>
-                        <TabsTrigger value="configuracion" className="rounded-lg">
-                            <Settings className="h-4 w-4 mr-2" />
-                            Institución
+                        <TabsTrigger value="carreras" className="rounded-lg">
+                            <GraduationCap className="h-4 w-4 mr-2" />
+                            Carreras
                         </TabsTrigger>
                     </TabsList>
 
@@ -198,8 +198,8 @@ export function MainAdminDashboard({ user }: MainAdminDashboardProps) {
                         <InscripcionTab />
                     </TabsContent>
 
-                    <TabsContent value="configuracion" className="mt-0">
-                        <InstitucionTab />
+                    <TabsContent value="carreras" className="animate-fade-in mt-0">
+                        <CarrerasTab />
                     </TabsContent>
                 </Tabs>
             </main>

@@ -15,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params
     const body = await request.json()
-    const { matricula, nombre, apellidos, email, tipo_usuario, activo, password, departamento_id } = body
+    const { matricula, nombre, apellidos, email, tipo_usuario, activo, password, departamento_id, carrera_id } = body
 
     // 1. Verificar si el admin tiene acceso a este usuario
     const [targetUser] = await sql`SELECT departamento_id, tipo_usuario FROM usuarios WHERE id = ${id}`
@@ -53,6 +53,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    // La carrera es un atributo del alumno (viene de su registro), a diferencia
+    // del departamento, que se hereda del programa. Por eso sí es editable aquí.
+    let carreraFinal: number | null = null
+    if (["alumno", "pre_candidato"].includes(tipo_usuario) && carrera_id != null && carrera_id !== "") {
+      const id = Number(carrera_id)
+      const [carrera] = await sql`SELECT id FROM carreras WHERE id = ${id} AND activo = true`
+      if (!carrera) {
+        return NextResponse.json({ error: "La carrera seleccionada no es válida" }, { status: 400 })
+      }
+      carreraFinal = id
+    }
+
     let hashedPass = null
     if (password && password.trim() != "") {
       hashedPass = await bcrypt.hash(password, 10)
@@ -72,6 +84,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             tipo_usuario = ${tipo_usuario},
             activo = ${activo},
             departamento_id = ${finalDepartamentoId},
+            carrera_id = ${carreraFinal},
             password_hash = ${hashedPass},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
@@ -87,6 +100,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             tipo_usuario = ${tipo_usuario},
             activo = ${activo},
             departamento_id = ${finalDepartamentoId},
+            carrera_id = ${carreraFinal},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, activo, departamento_id

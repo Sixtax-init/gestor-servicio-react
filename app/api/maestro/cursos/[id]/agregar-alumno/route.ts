@@ -15,20 +15,32 @@ export async function POST(
 
         const cursoId = Number((await context.params).id)
         const body = await req.json()
-        const { alumnoId } = body
+        const alumnoId = Number(body?.alumnoId)
 
-        if (!alumnoId) {
+        if (!Number.isInteger(alumnoId) || alumnoId <= 0) {
             return NextResponse.json({ error: "ID de alumno requerido" }, { status: 400 })
         }
 
         // 1. Verificar que el curso pertenece al maestro
         const curso = await sql`
-      SELECT id FROM cursos 
+      SELECT id FROM cursos
       WHERE id = ${cursoId} AND maestro_id = ${user.id} AND activo = true
     `
 
         if (curso.length === 0) {
             return NextResponse.json({ error: "Curso no encontrado o no autorizado" }, { status: 404 })
+        }
+
+        // 1b. El id llega del cliente y antes se insertaba tal cual: se podía
+        // inscribir a un administrador o main_admin en el curso y, a partir de
+        // ahí, leer sus datos por la lista de alumnos del grupo.
+        const [alumno] = await sql`
+      SELECT id FROM usuarios
+      WHERE id = ${alumnoId} AND tipo_usuario = 'alumno' AND activo = true
+    `
+
+        if (!alumno) {
+            return NextResponse.json({ error: "Alumno no encontrado" }, { status: 404 })
         }
 
         // 2. Verificar si ya está inscrito

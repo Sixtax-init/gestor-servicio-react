@@ -70,7 +70,10 @@ export async function createUser(data: {
   tipo_usuario: "main_admin" | "administrador" | "maestro" | "alumno" | "pre_candidato"
   departamento_id?: number | null
   pendiente_verificacion?: boolean
+  /** Texto histórico; se conserva por compatibilidad con registros anteriores. */
   carrera?: string | null
+  /** Referencia al catálogo de carreras — es la que se usa para filtrar programas. */
+  carrera_id?: number | null
   sexo?: string | null
   telefono?: string | null
   domicilio?: string | null
@@ -83,12 +86,12 @@ export async function createUser(data: {
       INSERT INTO usuarios (
         matricula, nombre, apellidos, email, tipo_usuario,
         departamento_id, password_hash, activo, pendiente_verificacion,
-        carrera, sexo, telefono, domicilio
+        carrera, carrera_id, sexo, telefono, domicilio
       )
       VALUES (
         ${data.matricula}, ${data.nombre}, ${data.apellidos}, ${data.email}, ${data.tipo_usuario},
         ${data.departamento_id || null}, ${password_hash}, true, ${debe_cambiar},
-        ${data.carrera ?? null}, ${data.sexo ?? null}, ${data.telefono ?? null}, ${data.domicilio ?? null}
+        ${data.carrera ?? null}, ${data.carrera_id ?? null}, ${data.sexo ?? null}, ${data.telefono ?? null}, ${data.domicilio ?? null}
       )
       RETURNING id, matricula, nombre, apellidos, email, tipo_usuario, departamento_id, pendiente_verificacion
     `

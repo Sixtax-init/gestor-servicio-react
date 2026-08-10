@@ -173,7 +173,10 @@ export function CreateUsuarioDialog({ open, onOpenChange, onSuccess, isAdminGlob
             />
           </div>
 
-          {isAdminGlobal && formData.tipo_usuario === "administrador" && (
+          {/* Sólo personal: maestro y administrador. El alumno NO lo elige aquí,
+              lo hereda del programa al confirmarse su inscripción. main_admin es
+              institucional y tampoco lleva departamento. */}
+          {isAdminGlobal && ["maestro", "administrador"].includes(formData.tipo_usuario) && (
             <div className="space-y-2">
               <Label htmlFor="departamento_id">Departamento</Label>
               <Select

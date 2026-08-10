@@ -83,10 +83,14 @@ ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS token_accion_expires_at TIMESTAMP;
 DO $$ 
 BEGIN 
     ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_tipo_usuario_check;
-    ALTER TABLE usuarios ADD CONSTRAINT usuarios_tipo_usuario_check 
-    CHECK (tipo_usuario IN ('main_admin', 'administrador', 'maestro', 'alumno'));
+    -- pre_candidato incluido: sin él, sobre una base con pre_candidatos este
+    -- ALTER fallaba siempre y el EXCEPTION de abajo se tragaba el error. El
+    -- esquema quedaba bien sólo porque más adelante se vuelve a definir el
+    -- constraint completo; bastaba reordenar el archivo para romperlo.
+    ALTER TABLE usuarios ADD CONSTRAINT usuarios_tipo_usuario_check
+    CHECK (tipo_usuario IN ('main_admin', 'administrador', 'maestro', 'alumno', 'pre_candidato'));
 EXCEPTION
-    WHEN others THEN 
+    WHEN others THEN
         RAISE NOTICE 'No se pudo actualizar el constraint de tipo_usuario automáticamente.';
 END $$;
 
@@ -305,30 +309,16 @@ CREATE INDEX IF NOT EXISTS idx_sesiones_token ON sesiones(refresh_token);
 CREATE INDEX IF NOT EXISTS idx_sesiones_activo ON sesiones(activo);
 
 -- =========================================================
--- Tabla de configuración institucional (fila única id=1)
+-- 017 — Retirada de configuracion_institucional
 -- =========================================================
-CREATE TABLE IF NOT EXISTS configuracion_institucional (
-  id INTEGER PRIMARY KEY DEFAULT 1,
-  nombre VARCHAR(200),
-  abreviatura VARCHAR(20),
-  direccion TEXT,
-  email VARCHAR(255),
-  telefono VARCHAR(50),
-  logo_url VARCHAR(500),
-  encargado_nombre VARCHAR(200),
-  encargado_cargo VARCHAR(200),
-  encargado_email VARCHAR(255),
-  encargado_telefono VARCHAR(50),
-  ciclo_nombre VARCHAR(100),
-  ciclo_inicio DATE,
-  ciclo_fin DATE,
-  horas_minimas INTEGER DEFAULT 480,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO configuracion_institucional (id)
-VALUES (1)
-ON CONFLICT (id) DO NOTHING;
+-- Guardaba los datos del ITNL para inyectarlos en documentos oficiales, pero
+-- nunca se llegó a conectar: la única lectura era su propia pantalla de edición.
+-- Los documentos llevan esos datos estáticos a propósito — son siempre los
+-- mismos y editarlos a mano es preferible a que un fallo de conexión deje un
+-- oficio oficial incompleto.
+--
+-- Se retiró junto con su pestaña del panel y su endpoint.
+DROP TABLE IF EXISTS configuracion_institucional;
 
 -- =========================================================
 -- 007 — Módulo de Inscripción Digital al Servicio Social
@@ -670,3 +660,120 @@ END $$;
 
 ALTER TABLE programas
     ADD COLUMN IF NOT EXISTS departamento_externo TEXT;
+
+-- Un programa pertenece a un departamento del Tec (interno) o a una
+-- organización de fuera (externo), nunca a los dos. El formulario y la API ya
+-- lo respetan; esto lo garantiza también ante escrituras directas a la BD.
+DO $$
+BEGIN
+    ALTER TABLE programas DROP CONSTRAINT IF EXISTS chk_programas_departamento;
+    ALTER TABLE programas ADD CONSTRAINT chk_programas_departamento CHECK (
+        (tipo_ubicacion = 'interno' AND departamento_externo IS NULL)
+     OR (tipo_ubicacion = 'externo' AND departamento_id      IS NULL)
+    );
+END $$;
+
+-- =========================================================
+-- 016 — Catálogo de carreras
+-- =========================================================
+-- Antes la carrera era texto libre en dos lados sin relación entre sí:
+-- el alumno la escribía al registrarse (usuarios.carrera) y el main_admin
+-- escribía las permitidas por programa (programas.carreras_permitidas TEXT[]).
+-- Comparar esos textos nunca podía funcionar ("ISC" vs "Ing. en Sistemas"),
+-- y de hecho no se comparaban en ningún lado: el filtro no existía.
+
+CREATE TABLE IF NOT EXISTS carreras (
+    id          SERIAL PRIMARY KEY,
+    nombre      VARCHAR(150) NOT NULL UNIQUE,
+    clave       VARCHAR(10)  NOT NULL UNIQUE,
+    activo      BOOLEAN      NOT NULL DEFAULT true,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_carreras_activo ON carreras(activo);
+
+-- Carreras del ITNL. ON CONFLICT permite re-ejecutar sin duplicar ni pisar
+-- cambios que se hayan hecho después desde el panel.
+INSERT INTO carreras (nombre, clave) VALUES
+    ('Ingeniería Ambiental',                  'IAMB'),
+    ('Ingeniería en Gestión Empresarial',     'IGE'),
+    ('Ingeniería Electromecánica',            'IEM'),
+    ('Ingeniería Electrónica',                'IE'),
+    ('Ingeniería Industrial',                 'II'),
+    ('Ingeniería Mecatrónica',                'IMT'),
+    ('Ingeniería en Sistemas Computacionales','ISC'),
+    ('Ingeniería en Semiconductores',         'ISEM')
+ON CONFLICT (clave) DO NOTHING;
+
+-- Referencia en usuarios. Se conserva la columna de texto `carrera` para no
+-- perder lo que ya hubieran escrito los alumnos registrados.
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS carrera_id INTEGER REFERENCES carreras(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_usuarios_carrera ON usuarios(carrera_id);
+
+-- Rescate de los textos ya capturados: se comparan ignorando acentos,
+-- mayúsculas y el prefijo "Ing./Ingeniería en". Se acepta también que el texto
+-- sea el principio del nombre oficial ("Sistemas" → "Sistemas Computacionales"),
+-- pero SÓLO si apunta a una única carrera: "Electro" casaría con Electrónica y
+-- con Electromecánica, y adivinar ahí sería peor que dejarlo sin emparejar.
+-- Lo que quede en NULL lo corrige el main_admin a mano.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = current_schema()
+                 AND table_name = 'usuarios' AND column_name = 'carrera') THEN
+        WITH norm_carreras AS (
+            SELECT id,
+                   regexp_replace(lower(translate(nombre, 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU')),
+                                  '^(ing\.?|ingenieria)\s+(en\s+)?', '') AS n
+            FROM carreras
+        ),
+        norm_usuarios AS (
+            SELECT id,
+                   regexp_replace(lower(translate(carrera, 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU')),
+                                  '^(ing\.?|ingenieria)\s+(en\s+)?', '') AS n
+            FROM usuarios
+            WHERE carrera IS NOT NULL AND carrera_id IS NULL
+        ),
+        candidatos AS (
+            SELECT nu.id AS usuario_id, MIN(nc.id) AS carrera_id, COUNT(*) AS coincidencias
+            FROM norm_usuarios nu
+            JOIN norm_carreras nc ON nc.n = nu.n OR nc.n LIKE nu.n || '%'
+            GROUP BY nu.id
+        )
+        UPDATE usuarios u
+        SET carrera_id = cand.carrera_id
+        FROM candidatos cand
+        WHERE u.id = cand.usuario_id AND cand.coincidencias = 1;
+    END IF;
+END $$;
+
+-- Las carreras permitidas de un programa pasan de texto a referencias.
+-- NULL o arreglo vacío sigue significando "todas las carreras".
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = current_schema()
+                 AND table_name = 'programas'
+                 AND column_name = 'carreras_permitidas'
+                 AND udt_name = '_text') THEN
+        -- Vía columna temporal: Postgres no admite subconsultas en el USING de
+        -- un ALTER COLUMN TYPE, y hace falta una para resolver cada texto.
+        -- Se emparejan por clave o por nombre; lo que no case se descarta,
+        -- lo que deja el programa abierto a todas (su valor por defecto).
+        ALTER TABLE programas ADD COLUMN IF NOT EXISTS carreras_permitidas_ids INTEGER[];
+
+        UPDATE programas p
+        SET carreras_permitidas_ids = (
+            SELECT COALESCE(array_agg(c.id), ARRAY[]::INTEGER[])
+            FROM unnest(p.carreras_permitidas) AS t(valor)
+            JOIN carreras c
+              ON lower(c.clave)  = lower(trim(t.valor))
+              OR lower(c.nombre) = lower(trim(t.valor))
+        )
+        WHERE p.carreras_permitidas IS NOT NULL;
+
+        ALTER TABLE programas DROP COLUMN carreras_permitidas;
+        ALTER TABLE programas RENAME COLUMN carreras_permitidas_ids TO carreras_permitidas;
+    END IF;
+END $$;

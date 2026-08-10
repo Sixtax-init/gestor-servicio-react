@@ -101,6 +101,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Punto autoritativo del filtro por carrera: el listado de programas ya
+    // oculta los que no aplican, pero eso es sólo comodidad — aquí es donde el
+    // alumno se queda con el programa, así que se comprueba en el servidor.
+    const [restriccion] = await sql`
+      SELECT
+        p.nombre,
+        p.carreras_permitidas,
+        u.carrera_id,
+        -- COALESCE porque si el alumno no tiene carrera, la comparación con
+        -- ANY() da NULL y no false: sin esto la decisión quedaría indefinida.
+        COALESCE(
+          p.carreras_permitidas IS NULL
+          OR cardinality(p.carreras_permitidas) = 0
+          OR u.carrera_id = ANY(p.carreras_permitidas),
+          false
+        ) AS permitida
+      FROM programas p
+      CROSS JOIN usuarios u
+      WHERE p.id = ${horario.programa_id} AND u.id = ${user.id}
+    `
+    if (restriccion && !restriccion.permitida) {
+      const [nombres] = await sql`
+        SELECT string_agg(c.nombre, ', ' ORDER BY c.nombre) AS lista
+        FROM carreras c
+        WHERE c.id = ANY(${restriccion.carreras_permitidas})
+      `
+      return NextResponse.json(
+        {
+          error: restriccion.carrera_id
+            ? `El programa "${restriccion.nombre}" sólo admite: ${nombres?.lista ?? "otras carreras"}.`
+            : "Tu cuenta no tiene una carrera asignada. Contacta a Servicio Social para corregirlo.",
+        },
+        { status: 422 }
+      )
+    }
+
     // Registrar selección + marcar turno como usado + actualizar solicitud
     const [inscripcion] = await sql`
       INSERT INTO inscripciones_programa (solicitud_id, convocatoria_id, horario_programa_id, estado)

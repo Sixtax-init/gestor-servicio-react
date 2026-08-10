@@ -14,9 +14,9 @@ export async function DELETE(
 
         const cursoId = Number((await context.params).id)
         const body = await req.json()
-        const { alumnoId } = body
+        const alumnoId = Number(body?.alumnoId)
 
-        if (!alumnoId) {
+        if (!Number.isInteger(alumnoId) || alumnoId <= 0) {
             return NextResponse.json({ error: "ID de alumno requerido" }, { status: 400 })
         }
 
