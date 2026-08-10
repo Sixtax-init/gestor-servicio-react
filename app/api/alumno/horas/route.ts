@@ -9,13 +9,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
-    const [usuario] = await sql`
-      SELECT horas_acumuladas
-      FROM usuarios
-      WHERE id = ${session.id}
+    // Las horas se acreditan en las inscripciones a cursos, no en el usuario:
+    // `usuarios.horas_acumuladas` no existe en el esquema y esta consulta
+    // fallaba siempre con un 500. Se suman las de todos sus cursos activos.
+    const [totales] = await sql`
+      SELECT COALESCE(SUM(horas_completadas), 0) AS horas_acumuladas
+      FROM inscripciones
+      WHERE alumno_id = ${session.id} AND activo = true
     `
 
-    return NextResponse.json({ horas_acumuladas: usuario?.horas_acumuladas || 0 })
+    return NextResponse.json({ horas_acumuladas: Number(totales?.horas_acumuladas ?? 0) })
   } catch (error) {
     console.error("Error al obtener horas:", error)
     return NextResponse.json({ error: "Error al obtener horas" }, { status: 500 })

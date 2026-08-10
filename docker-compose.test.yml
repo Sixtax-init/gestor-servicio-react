@@ -1,0 +1,36 @@
+# Base de datos EFÍMERA para la suite de pruebas.
+#
+# Puerto 5434 para no chocar con desarrollo (5432) ni con beta (5433): así una
+# cadena de conexión equivocada no puede alcanzar datos reales por accidente.
+#
+# Los datos viven en tmpfs (memoria): las pruebas corren más rápido y cada
+# reinicio del contenedor arranca de cero, sin estado colgando de una corrida
+# anterior. No hay volumen que limpiar.
+#
+#   docker compose -f docker-compose.test.yml up -d
+#   docker compose -f docker-compose.test.yml down
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: gestor-horas-db-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gestor_horas_test
+      # Sin fsync: sacrifica durabilidad por velocidad. En una base de pruebas
+      # que se tira entera al terminar, la durabilidad no aporta nada.
+      POSTGRES_INITDB_ARGS: "--nosync"
+    command: >
+      postgres
+      -c fsync=off
+      -c synchronous_commit=off
+      -c full_page_writes=off
+    ports:
+      - "5434:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gestor_horas_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15

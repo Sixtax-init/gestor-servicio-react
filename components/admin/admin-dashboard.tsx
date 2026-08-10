@@ -129,7 +129,7 @@ export function AdminDashboard({ user, stats }: AdminDashboardProps) {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50 rounded-xl" data-tour="tabs">
+          <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50 rounded-xl h-auto [&>button]:max-md:min-h-12" data-tour="tabs">
             <TabsTrigger value="usuarios" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-usuarios">Usuarios</TabsTrigger>
             <TabsTrigger value="cursos" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm" data-tour="tab-cursos">Cursos</TabsTrigger>
           </TabsList>
